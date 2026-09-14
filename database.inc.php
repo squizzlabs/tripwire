@@ -1,5 +1,7 @@
 <?php
 
+require_once(__DIR__ . '/environment.inc.php');
+
 if (is_file(__DIR__ . '/db.inc.php')) {
     $message = 'Tripwire database configuration migration required: an obsolete ' .
         'db.inc.php still exists. Run "php scripts/migrate-db-config.php" from ' .
@@ -13,17 +15,20 @@ if (is_file(__DIR__ . '/db.inc.php')) {
     exit($message);
 }
 
-// Docker Compose reads .env and supplies these values to PHP-FPM. Bare-metal
-// deployments should expose the same variables through their web server or
-// process manager. No database credentials belong in this tracked file.
+// Read .env directly for bare-metal installations. Docker and process-manager
+// environment values take precedence when they are supplied.
 try {
-    $host = getenv('DB_HOST') ?: 'mysql';
-    $port = getenv('DB_PORT') ?: '3306';
-    $database = getenv('MYSQL_DATABASE') ?: 'tripwire_database';
-    $username = getenv('MYSQL_USER');
-    $password = getenv('MYSQL_PASSWORD');
+    $dotenv = tripwireLoadDotenv(
+        __DIR__ . '/.env',
+        array('DB_HOST', 'DB_PORT', 'MYSQL_DATABASE', 'MYSQL_USER', 'MYSQL_PASSWORD')
+    );
+    $host = tripwireEnvironmentValue('DB_HOST', $dotenv, 'mysql');
+    $port = tripwireEnvironmentValue('DB_PORT', $dotenv, '3306');
+    $database = tripwireEnvironmentValue('MYSQL_DATABASE', $dotenv, 'tripwire_database');
+    $username = tripwireEnvironmentValue('MYSQL_USER', $dotenv);
+    $password = tripwireEnvironmentValue('MYSQL_PASSWORD', $dotenv);
 
-    if ($username === false || $username === '' || $password === false) {
+    if ($username === null || $username === '' || $password === null) {
         throw new RuntimeException('Database credentials are not configured');
     }
 

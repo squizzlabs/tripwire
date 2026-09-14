@@ -54,6 +54,7 @@ test('database bootstrap refuses to load while legacy config remains', async (co
   const directory = await mkdtemp(join(tmpdir(), 'tripwire-db-guard-'));
   context.after(() => rm(directory, { recursive: true, force: true }));
   await cp(join(projectRoot, 'database.inc.php'), join(directory, 'database.inc.php'));
+  await cp(join(projectRoot, 'environment.inc.php'), join(directory, 'environment.inc.php'));
   await writeFile(join(directory, 'db.inc.php'), '<?php // legacy');
 
   const result = spawnSync('php', ['database.inc.php'], {
@@ -63,4 +64,42 @@ test('database bootstrap refuses to load while legacy config remains', async (co
 
   assert.equal(result.status, 1);
   assert.match(result.stderr, /php scripts\/migrate-db-config\.php/);
+});
+
+test('bare-metal PHP loads database values directly from .env', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'tripwire-dotenv-'));
+  context.after(() => rm(directory, { recursive: true, force: true }));
+  await cp(join(projectRoot, 'environment.inc.php'), join(directory, 'environment.inc.php'));
+  await writeFile(
+    join(directory, '.env'),
+    `# Existing deployment
+DB_HOST=database.internal # local database
+DB_PORT="3307"
+MYSQL_DATABASE=tripwire_live
+MYSQL_USER='tripwire user'
+MYSQL_PASSWORD='p$#ss\\\\word'
+UNRELATED_SECRET=do-not-load
+`,
+  );
+  const php = `
+require $argv[1];
+$values = tripwireLoadDotenv($argv[2], array(
+    'DB_HOST', 'DB_PORT', 'MYSQL_DATABASE', 'MYSQL_USER', 'MYSQL_PASSWORD'
+));
+echo json_encode($values);
+`;
+  const result = spawnSync(
+    'php',
+    ['-r', php, join(directory, 'environment.inc.php'), join(directory, '.env')],
+    { encoding: 'utf8' },
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout), {
+    DB_HOST: 'database.internal',
+    DB_PORT: '3307',
+    MYSQL_DATABASE: 'tripwire_live',
+    MYSQL_USER: 'tripwire user',
+    MYSQL_PASSWORD: 'p$#ss\\word',
+  });
 });

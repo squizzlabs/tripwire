@@ -98,8 +98,9 @@ has no port, use `3306`. Keep the ignored backup until the site and
 - Create a `tripwire` database using the export located in `.docker/mysql/tripwire.sql`
 - For development: create an EVE dump database, define it's name later in `config.php`. Download from: https://www.fuzzwork.co.uk/dump/ To download the latest use the following link: https://www.fuzzwork.co.uk/dump/mysql-latest.tar.bz2. You do not need a copy of the SDE to run Tripwire (since 1.21).
 - Clone the Tripwire repo to where you are going to serve to the public OR manually download repo and copy files yourself
-- Expose `DB_HOST`, `DB_PORT`, `MYSQL_DATABASE`, `MYSQL_USER`, and
-  `MYSQL_PASSWORD` to PHP through your web server or process manager
+- Copy `.env.example` to `.env` and set `DB_HOST`, `DB_PORT`,
+  `MYSQL_DATABASE`, `MYSQL_USER`, and `MYSQL_PASSWORD`. Process-manager
+  environment variables can override the file when needed.
 - Copy `config.example.php` to `config.php` - modify file per your setup
 - Create an EVE developer application via https://developers.eveonline.com/applications
 - EVE SSO `Callback URL` should be: `https://your-domain.com/index.php?mode=sso`
@@ -166,9 +167,10 @@ Edit `.env`, replacing the blank secrets and example domain/email values.
 
 **database.inc.php**
 
-This file is tracked and contains no credentials. The Docker version reads
-`DB_HOST`, `DB_PORT`, `MYSQL_DATABASE`, `MYSQL_USER`, and `MYSQL_PASSWORD`
-from the container environment populated by `.env`.
+This file is tracked and contains no credentials. It reads `DB_HOST`, `DB_PORT`,
+`MYSQL_DATABASE`, `MYSQL_USER`, and `MYSQL_PASSWORD` directly from `.env` for
+bare-metal installations. Values supplied by Docker Compose, a web server, or
+a process manager take precedence over the file.
 
 **config.php**
 ```
