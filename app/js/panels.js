@@ -125,12 +125,14 @@ tripwire.panels = (function() {
 
     function apply() {
         var ids = order();
+        var current = layout();
         PANELS.forEach(function(p) {
             var $w = $("#" + p.id);
             $w.toggleClass("panel-hidden", !isVisible(p.id));
-            $w.toggleClass("panel-wide", p.id === layout().wide);
+            $w.toggleClass("panel-wide", p.id === current.wide);
             $w.css("order", ids.indexOf(p.id));
         });
+        $(document).trigger("panels:layout");
     }
 
     function setVisible(id, on) {

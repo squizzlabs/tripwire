@@ -55,6 +55,9 @@ var systemFit = new function() {
 	function fitRow(p, need) {
 		var grid = document.querySelector(".gridster > ul");
 		if (!grid || window.innerWidth < 960) return;
+		// A manually dragged splitter is authoritative. Do not make the row jump
+		// back to the automatic System-panel fit on the next render.
+		if (options.panels && parseFloat(options.panels.rowRatio)) return;
 		var widget = document.getElementById("infoWidget");
 		var chrome = widget.getBoundingClientRect().height - p.clientHeight;
 		var wanted = need + chrome;

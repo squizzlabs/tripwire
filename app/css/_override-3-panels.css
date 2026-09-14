@@ -14,3 +14,28 @@
    collapsing the gap would mean rewriting them and discarding the arrangement
    the user made. Bring it back from the palette. */
 .gridWidget.panel-hidden { display: none; }
+
+/* Invisible hit areas in the grid gaps become visible on hover/drag. */
+.gridster > ul { position: relative; }
+.panel-splitter {
+	position: absolute;
+	z-index: 20;
+	touch-action: none;
+}
+.panel-splitter::after {
+	content: "";
+	position: absolute;
+	background: transparent;
+	transition: background .12s ease;
+}
+.panel-splitter-column { cursor: col-resize; }
+.panel-splitter-column::after { top: 0; bottom: 0; left: 4px; width: 2px; }
+.panel-splitter-row { cursor: row-resize; }
+.panel-splitter-row::after { left: 0; right: 0; top: 4px; height: 2px; }
+.panel-splitter:hover::after,
+.panel-resizing .panel-splitter::after { background: var(--primary); }
+.panel-resizing { cursor: grabbing; user-select: none; }
+
+@media (max-width: 959px) {
+	.panel-splitter { display: none; }
+}

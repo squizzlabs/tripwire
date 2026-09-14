@@ -56,7 +56,7 @@
 	}
 
 	.gridster > ul {
-		position: static !important;
+		position: relative !important;
 		width: 100% !important;
 		max-width: 100%;
 		min-width: 0;
