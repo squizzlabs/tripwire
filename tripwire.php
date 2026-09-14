@@ -43,7 +43,7 @@ $system = $_REQUEST['system'] ?? '';
 <body class="transition">
 	<div id="wrapper">
 	<div id="inner-wrapper">
-	<div id="tripwire-app-header">
+	<div id="topbar">
 		<span class="align-left hdr-left">
 			<div class="hdr-sys">
 				<a id="hdr-system" href="#" title="Viewing"><?= htmlspecialchars($system, ENT_QUOTES, 'UTF-8') ?></a>

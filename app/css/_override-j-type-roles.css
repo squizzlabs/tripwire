@@ -31,7 +31,7 @@ table, td, th, h1, h2, h3, h4, h5, h6, p, div, span, a, li,
 }
 
 /* ---- brand surfaces keep the display face ---------------------------- */
-#tripwire-app-header #logo, #tripwire-app-header #logo a,
+#topbar #logo, #topbar #logo a,
 .panel-title,
 .ui-dialog .ui-dialog-title,
 .sys-panel .sys-name,

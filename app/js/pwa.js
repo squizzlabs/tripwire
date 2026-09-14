@@ -38,7 +38,7 @@
 			}).appendTo($tip);
 		}
 		$('<button type="button" class="tip-close" aria-label="Not now">×</button>').on("click", dismiss).appendTo($tip);
-		$("#tripwire-app-header").after($tip);
+		$("#topbar").after($tip);
 	}
 
 	window.addEventListener("beforeinstallprompt", function(e) {

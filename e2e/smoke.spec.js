@@ -18,7 +18,7 @@ test("the app loads clean and polls", async ({ page }) => {
 
 	// Centring the newly loaded root system must scroll only the chain map,
 	// never the page that contains the application header and panel tops.
-	await expect(page.locator("#tripwire-app-header")).toBeInViewport();
+	await expect(page.locator("#topbar")).toBeInViewport();
 	expect(await page.evaluate(() => ({
 		window: window.scrollY,
 		wrapper: document.getElementById("wrapper").scrollTop,

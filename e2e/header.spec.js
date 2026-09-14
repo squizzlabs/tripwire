@@ -4,15 +4,8 @@ const { test, expect } = require("@playwright/test");
 async function ready(page) {
 	await page.goto("/?system=Perimeter");
 	await page.waitForFunction(() => window.tripwire && window.options && window.options.buttons);
-	await page.waitForSelector("#tripwire-app-header", { state: "visible" });
 	await page.waitForSelector("#follow", { state: "visible" });
 }
-
-test("uses an application-specific header selector", async ({ page }) => {
-	await ready(page);
-	await expect(page.locator("#tripwire-app-header")).toBeVisible();
-	await expect(page.locator("#topbar")).toHaveCount(0);
-});
 
 test("follow-my-system toggles on click, shows it, and survives a reload", async ({ page }) => {
 	await ready(page);

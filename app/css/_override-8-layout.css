@@ -35,7 +35,7 @@
 		flex-direction: column;
 	}
 
-	#tripwire-app-header { flex: 0 0 auto; position: static; }
+	#topbar { flex: 0 0 auto; position: static; }
 
 	.gridster {
 		/* Gridster measures and writes a legacy pixel width during startup.
@@ -154,7 +154,7 @@
    Was a left cluster and a right cluster with ~1000px of nothing between.
    ========================================================================= */
 
-#tripwire-app-header {
+#topbar {
 	display: flex;
 	align-items: center;
 	gap: var(--space-4);
@@ -163,9 +163,9 @@
 	min-height: 2.6rem;
 	line-height: normal;
 }
-#tripwire-app-header > .align-left  { display: flex; align-items: center; gap: var(--space-3); flex: 1 1 auto; }
-#tripwire-app-header > .align-right { display: flex; align-items: center; gap: var(--space-2); flex: 0 0 auto; padding-right: 0; }
-#tripwire-app-header h1, #tripwire-app-header h3 { margin: 0; display: flex; align-items: center; gap: var(--space-1); }
+#topbar > .align-left  { display: flex; align-items: center; gap: var(--space-3); flex: 1 1 auto; }
+#topbar > .align-right { display: flex; align-items: center; gap: var(--space-2); flex: 0 0 auto; padding-right: 0; }
+#topbar h1, #topbar h3 { margin: 0; display: flex; align-items: center; gap: var(--space-1); }
 
 /* ============================================================================
    DENSITY AND EMPHASIS
@@ -274,7 +274,7 @@
 /* The version chip was absolutely positioned at top:4px right:20px inside the
    logo, which worked when the topbar was a line-height hack. In a flex row it
    lands on top of the wordmark. It is a sibling, so it sits like one. */
-#tripwire-app-header #logo { position: static; display: flex; align-items: baseline; gap: var(--space-2); }
+#topbar #logo { position: static; display: flex; align-items: baseline; gap: var(--space-2); }
 
 #version {
 	position: static;
@@ -334,7 +334,7 @@
 	box-shadow: 0 0 0 1px var(--border);
 }
 
-#tripwire-app-header #user {
+#topbar #user {
 	display: inline-flex;
 	align-items: center;
 	gap: var(--space-2);
@@ -351,7 +351,7 @@
 /* account.css sets `#login img { border-radius: 3px }` -- an id plus an
    element, which outranks .avatar and squared the portrait off again. */
 #login img.avatar,
-#tripwire-app-header img.avatar,
+#topbar img.avatar,
 img.avatar {
 	border-radius: 50%;
 }

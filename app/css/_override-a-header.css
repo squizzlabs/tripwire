@@ -14,7 +14,7 @@
    along the bottom -- they are ambient readings, not navigation.
    ========================================================================= */
 
-#tripwire-app-header {
+#topbar {
 	display: flex;
 	align-items: center;
 	gap: var(--space-4);
@@ -25,7 +25,7 @@
 	flex-wrap: nowrap;
 }
 
-#tripwire-app-header > .align-left {
+#topbar > .align-left {
 	display: flex;
 	align-items: center;
 	gap: var(--space-3);
@@ -33,7 +33,7 @@
 	min-width: 0;              /* lets the left side shrink instead of shoving */
 }
 
-#tripwire-app-header > .align-right {
+#topbar > .align-right {
 	display: flex;
 	align-items: center;
 	gap: var(--space-3);
@@ -41,26 +41,26 @@
 	padding-right: 0;
 }
 
-#tripwire-app-header #logo {
+#topbar #logo {
 	display: flex;
 	align-items: baseline;
 	gap: var(--space-2);
 	margin: 0;
 	flex: 0 0 auto;
 }
-#tripwire-app-header #logo a { font-size: 1.8rem; line-height: 1.1; }
+#topbar #logo a { font-size: 1.8rem; line-height: 1.1; }
 
-#tripwire-app-header h3 { margin: 0; display: flex; align-items: center; gap: var(--space-1); }
+#topbar h3 { margin: 0; display: flex; align-items: center; gap: var(--space-1); }
 
 /* Twice the previous portrait; the header height follows it. */
-#tripwire-app-header .avatar { width: 2.4rem; height: 2.4rem; }
-#tripwire-app-header #user { gap: var(--space-2); font-size: 1.05rem; }
+#topbar .avatar { width: 2.4rem; height: 2.4rem; }
+#topbar #user { gap: var(--space-2); font-size: 1.05rem; }
 
-#tripwire-app-header #settings,
-#tripwire-app-header #layout { font-size: 1.3rem; flex: 0 0 auto; }
+#topbar #settings,
+#topbar #layout { font-size: 1.3rem; flex: 0 0 auto; }
 
 /* The system search takes the slack in the middle rather than the icons. */
-#tripwire-app-header #systemSearch { flex: 1 1 auto; min-width: 0; }
+#topbar #systemSearch { flex: 1 1 auto; min-width: 0; }
 
 /* ============================================================================
    STATUS BAR

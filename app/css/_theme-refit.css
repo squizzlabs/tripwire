@@ -245,7 +245,7 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
    wordmark. Right: you -- a portrait you can actually make out, name and
    mask beside it, then the two tools. The app's own name lives in the
    footer with its version; the header is the corp's. */
-#tripwire-app-header {
+#topbar {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 	align-items: center;
@@ -255,10 +255,10 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 	background: linear-gradient(180deg, var(--card), var(--background));
 	border-bottom: 1px solid var(--border);
 }
-#tripwire-app-header > .align-left, #tripwire-app-header > .align-right, #tripwire-app-header > .align-center { display: flex; align-items: center; min-width: 0; }
-#tripwire-app-header > .align-left  { justify-content: flex-start; flex-direction: column; align-items: flex-start; gap: 2px; overflow: visible; }
-#tripwire-app-header > .align-center{ justify-content: center; }
-#tripwire-app-header > .align-right { justify-content: flex-end; gap: 14px; }
+#topbar > .align-left, #topbar > .align-right, #topbar > .align-center { display: flex; align-items: center; min-width: 0; }
+#topbar > .align-left  { justify-content: flex-start; flex-direction: column; align-items: flex-start; gap: 2px; overflow: visible; }
+#topbar > .align-center{ justify-content: center; }
+#topbar > .align-right { justify-content: flex-end; gap: 14px; }
 
 /* Left: the viewed system. */
 .hdr-sys { display: flex; align-items: center; gap: 8px; }
@@ -273,55 +273,55 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 	white-space: nowrap;
 }
 #hdr-system:hover { color: var(--primary); }
-#tripwire-app-header #search { color: var(--muted-foreground); cursor: pointer; }
-#tripwire-app-header #search:hover { color: var(--foreground); }
-#tripwire-app-header #systemSearch { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 11px; }
-#tripwire-app-header #currentSpan { display: inline-flex; align-items: center; gap: 6px; }
-#tripwire-app-header #currentSpan .bar-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted-foreground); }
-#tripwire-app-header #EVEsystem { font-family: var(--font-mono); font-size: 11px; color: var(--text-body); }
-#tripwire-app-header #follow { color: var(--muted-foreground); }
+#topbar #search { color: var(--muted-foreground); cursor: pointer; }
+#topbar #search:hover { color: var(--foreground); }
+#topbar #systemSearch { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 11px; }
+#topbar #currentSpan { display: inline-flex; align-items: center; gap: 6px; }
+#topbar #currentSpan .bar-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted-foreground); }
+#topbar #EVEsystem { font-family: var(--font-mono); font-size: 11px; color: var(--text-body); }
+#topbar #follow { color: var(--muted-foreground); }
 /* On is orange. The line above outranked the legacy .active colour, so the
    toggle worked and looked like it had not. */
-#tripwire-app-header #follow.active { color: var(--primary); }
-#tripwire-app-header #follow:hover { color: var(--foreground); }
-#tripwire-app-header #follow.active:hover { color: var(--primary); }
-#tripwire-app-header #searchSpan input {
+#topbar #follow.active { color: var(--primary); }
+#topbar #follow:hover { color: var(--foreground); }
+#topbar #follow.active:hover { color: var(--primary); }
+#topbar #searchSpan input {
 	font-family: var(--font-mono); font-size: 11px;
 	min-height: 24px; padding: 0 8px; max-width: 12rem;
 	background: var(--input); border: 1px solid var(--border); border-radius: 3px; color: var(--foreground);
 }
 
 /* Centre: the mark. Two files, one per theme. */
-#tripwire-app-header #logo { display: block; line-height: 0; }
-#tripwire-app-header #logo img { height: 46px; width: auto; display: block; }
-#tripwire-app-header #logo a::before, #tripwire-app-header #logo::before { content: none !important; }
-#tripwire-app-header #logo .logo-light { display: none; }
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) #tripwire-app-header #logo .logo-dark { display: none; } :root:not([data-theme="dark"]) #tripwire-app-header #logo .logo-light { display: block; } }
-:root[data-theme="light"] #tripwire-app-header #logo .logo-dark { display: none; }
-:root[data-theme="light"] #tripwire-app-header #logo .logo-light { display: block; }
+#topbar #logo { display: block; line-height: 0; }
+#topbar #logo img { height: 46px; width: auto; display: block; }
+#topbar #logo a::before, #topbar #logo::before { content: none !important; }
+#topbar #logo .logo-light { display: none; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) #topbar #logo .logo-dark { display: none; } :root:not([data-theme="dark"]) #topbar #logo .logo-light { display: block; } }
+:root[data-theme="light"] #topbar #logo .logo-dark { display: none; }
+:root[data-theme="light"] #topbar #logo .logo-light { display: block; }
 
 /* Right: you. */
-#tripwire-app-header #login h3 { margin: 0; }
-#tripwire-app-header #login h3 > a#user { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-#tripwire-app-header #user-avatar.avatar {
+#topbar #login h3 { margin: 0; }
+#topbar #login h3 > a#user { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+#topbar #user-avatar.avatar {
 	width: 44px; height: 44px; border-radius: 4px;
 	border: 1px solid var(--border); object-fit: cover; display: block;
 }
-#tripwire-app-header .hdr-pilot { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; line-height: 1.15; }
-#tripwire-app-header #user-no-track, #tripwire-app-header #user-track-name { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; color: var(--foreground); }
-#tripwire-app-header #user-track { display: inline-flex; align-items: center; gap: 4px; }
-#tripwire-app-header .hdr-mask, #tripwire-app-header .hdr-mask a, #tripwire-app-header #mask {
+#topbar .hdr-pilot { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; line-height: 1.15; }
+#topbar #user-no-track, #topbar #user-track-name { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; color: var(--foreground); }
+#topbar #user-track { display: inline-flex; align-items: center; gap: 4px; }
+#topbar .hdr-mask, #topbar .hdr-mask a, #topbar #mask {
 	font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase;
 	color: var(--muted-foreground); text-decoration: none;
 }
-#tripwire-app-header .hdr-mask a:hover, #tripwire-app-header .hdr-mask a:hover #mask { color: var(--foreground); }
-#tripwire-app-header .hdr-tools { display: flex; align-items: center; gap: 4px; margin-left: 4px; padding-left: 14px; border-left: 1px solid var(--border-soft); }
-#tripwire-app-header .hdr-tools i { color: var(--muted-foreground); cursor: pointer; }
-#tripwire-app-header .hdr-tools i:hover { color: var(--foreground); }
-#tripwire-app-header .hdr-tools [data-icon]::before { font-size: 18px; }
+#topbar .hdr-mask a:hover, #topbar .hdr-mask a:hover #mask { color: var(--foreground); }
+#topbar .hdr-tools { display: flex; align-items: center; gap: 4px; margin-left: 4px; padding-left: 14px; border-left: 1px solid var(--border-soft); }
+#topbar .hdr-tools i { color: var(--muted-foreground); cursor: pointer; }
+#topbar .hdr-tools i:hover { color: var(--foreground); }
+#topbar .hdr-tools [data-icon]::before { font-size: 18px; }
 
 /* The mask menu anchors to the letterhead, not to a pixel offset. */
-#tripwire-app-header #mask-menu { top: 64px; right: 18px; }
+#topbar #mask-menu { top: 64px; right: 18px; }
 
 /* Panel heads: a band under the title. */
 .gridWidget > .controls {
@@ -339,7 +339,7 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
    be written here or the grid above wins. One row: system name, portrait,
    tools. The mark and the location line are desktop and tablet things. */
 @media (max-width: 767px), (max-height: 599px) {
-	#tripwire-app-header {
+	#topbar {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -347,15 +347,15 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 		min-height: 0;
 		padding: 8px 12px;
 	}
-	#tripwire-app-header > .align-center { display: none; }
-	#tripwire-app-header > .align-left { flex: 1 1 auto; flex-direction: column; align-items: flex-start; }
-	#tripwire-app-header #systemSearch { display: none; }
-	#tripwire-app-header #hdr-system { font-size: 17px; }
-	#tripwire-app-header > .align-right { flex: 0 0 auto; width: auto; justify-content: flex-end; gap: 8px; }
-	#tripwire-app-header .hdr-pilot { display: none; }
-	#tripwire-app-header #user-avatar.avatar { width: 32px; height: 32px; }
-	#tripwire-app-header .hdr-tools { margin-left: 0; padding-left: 8px; }
-	#tripwire-app-header #mask-menu { top: 52px; right: 12px; }
+	#topbar > .align-center { display: none; }
+	#topbar > .align-left { flex: 1 1 auto; flex-direction: column; align-items: flex-start; }
+	#topbar #systemSearch { display: none; }
+	#topbar #hdr-system { font-size: 17px; }
+	#topbar > .align-right { flex: 0 0 auto; width: auto; justify-content: flex-end; gap: 8px; }
+	#topbar .hdr-pilot { display: none; }
+	#topbar #user-avatar.avatar { width: 32px; height: 32px; }
+	#topbar .hdr-tools { margin-left: 0; padding-left: 8px; }
+	#topbar #mask-menu { top: 52px; right: 12px; }
 }
 
 /* ── The tracking dropdown ────────────────────────────────────────────────
@@ -385,8 +385,8 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
    Was a star glyph and the word "Corp" run together. A capsule: a source
    dot -- orange for corporate, void for alliance, sage for personal, dim for
    global -- and the label in the label register. */
-#tripwire-app-header #mask-menu-link { display: inline-block; }
-#tripwire-app-header #mask .mask {
+#topbar #mask-menu-link { display: inline-block; }
+#topbar #mask .mask {
 	display: inline-flex; align-items: center; gap: 6px;
 	height: 18px; padding: 0 8px 0 7px;
 	border: 1px solid var(--border); border-radius: 999px;
@@ -394,13 +394,13 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 	font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase;
 	color: var(--muted-foreground);
 }
-#tripwire-app-header #mask-menu-link:hover .mask { border-color: var(--border-strong); color: var(--foreground); }
-#tripwire-app-header #mask .mask i[data-icon] { width: 7px; height: 7px; border-radius: 50%; background: var(--muted-foreground); display: inline-block; }
-#tripwire-app-header #mask .mask i[data-icon]::before { content: none; }
-#tripwire-app-header #mask .mask i.corporate { background: var(--primary); }
-#tripwire-app-header #mask .mask i.alliance  { background: var(--data-info); }
-#tripwire-app-header #mask .mask i.character { background: var(--data-good); }
-#tripwire-app-header #mask .mask i.global    { background: var(--muted-foreground); }
+#topbar #mask-menu-link:hover .mask { border-color: var(--border-strong); color: var(--foreground); }
+#topbar #mask .mask i[data-icon] { width: 7px; height: 7px; border-radius: 50%; background: var(--muted-foreground); display: inline-block; }
+#topbar #mask .mask i[data-icon]::before { content: none; }
+#topbar #mask .mask i.corporate { background: var(--primary); }
+#topbar #mask .mask i.alliance  { background: var(--data-info); }
+#topbar #mask .mask i.character { background: var(--data-good); }
+#topbar #mask .mask i.global    { background: var(--muted-foreground); }
 
 /* ── The mark, larger, riding the letterhead's edge ──────────────────────
    At 46px the wordmark read as a label. It is the letterhead; it gets the
@@ -410,11 +410,11 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 @media (min-width: 768px) and (min-height: 600px) {
 	/* The header keeps its height; the mark is taller than the header and
 	   hangs 14px past the hairline into the gap the panel area gives back. */
-	#tripwire-app-header { overflow: visible; height: 64px; min-height: 64px; padding-top: 0; padding-bottom: 0; }
-	#tripwire-app-header > .align-center { align-self: flex-start; position: relative; z-index: 3; }
+	#topbar { overflow: visible; height: 64px; min-height: 64px; padding-top: 0; padding-bottom: 0; }
+	#topbar > .align-center { align-self: flex-start; position: relative; z-index: 3; }
 	/* A pack may ask for a taller mark (logo.height); a round seal wants a
 	   little more than a wide wordmark. It rides the bar's bottom edge. */
-	#tripwire-app-header #logo img { height: 64px; margin-top: 0; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .55)); }
+	#topbar #logo img { height: 64px; margin-top: 0; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .55)); }
 	.gridster { padding-top: 10px; }
 }
 
@@ -423,7 +423,7 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
    underneath it (measured at 1100x700). The tablet page scrolls; the header
    stays in flow and sticks to the top as it goes. */
 @media (max-width: 1279px) {
-	#tripwire-app-header { position: sticky; top: 0; z-index: 30; }
+	#topbar { position: sticky; top: 0; z-index: 30; }
 }
 
 /* ── "Following you" ─────────────────────────────────────────────────────
@@ -449,13 +449,13 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 }
 
 /* ── The room lights: sun and moon on the letterhead ─────────────────── */
-#tripwire-app-header .hdr-tools .themebtn {
+#topbar .hdr-tools .themebtn {
 	background: none; border: 1px solid var(--border); border-radius: 3px; cursor: pointer;
 	color: var(--muted-foreground); font-size: 14px; line-height: 1; padding: 4px 8px;
 	height: 26px; display: inline-flex; align-items: center; flex: 0 0 auto;
 	font-family: var(--font-ui);
 }
-#tripwire-app-header .hdr-tools .themebtn:hover { color: var(--primary); border-color: var(--primary); }
+#topbar .hdr-tools .themebtn:hover { color: var(--primary); border-color: var(--primary); }
 
 /* ── The pilot dropdown: cards, not nested tables ──────────────────────
    The tracking list is a table per character (avatar cell spanning five
@@ -522,66 +522,66 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
    Was orange links stacked with a stray glyph each. Rows: the same source
    dot the capsule wears, the label, and a tick on the one you are in.
    Manage and admin sit under a rule in the quiet register. */
-#tripwire-app-header #mask-menu {
+#topbar #mask-menu {
 	min-width: 176px; padding: 4px 0;
 	background: var(--popover); border: 1px solid var(--border); border-radius: 4px;
 	box-shadow: 0 8px 24px rgba(0,0,0,.45);
 }
-#tripwire-app-header #mask-menu .triangle { display: none; }
-#tripwire-app-header #mask-menu a {
+#topbar #mask-menu .triangle { display: none; }
+#topbar #mask-menu a {
 	display: flex; align-items: center; gap: 8px;
 	padding: 6px 12px; margin: 0;
 	color: var(--foreground); font-size: var(--fs-sm); font-weight: 500; text-decoration: none;
 	line-height: 1.2;
 }
-#tripwire-app-header #mask-menu a:hover { background: var(--muted); color: var(--foreground); }
-#tripwire-app-header #mask-menu a .mask { display: inline-flex; align-items: center; gap: 8px; color: inherit; font-size: inherit; }
-#tripwire-app-header #mask-menu a .mask i[data-icon] {
+#topbar #mask-menu a:hover { background: var(--muted); color: var(--foreground); }
+#topbar #mask-menu a .mask { display: inline-flex; align-items: center; gap: 8px; color: inherit; font-size: inherit; }
+#topbar #mask-menu a .mask i[data-icon] {
 	width: 8px; height: 8px; border-radius: 50%; padding: 0; margin: 0; flex: 0 0 auto;
 	display: inline-block; transform: none; background: var(--muted-foreground);
 }
-#tripwire-app-header #mask-menu a .mask i[data-icon]::before { content: none; }
-#tripwire-app-header #mask-menu a .mask i.global    { background: var(--muted-foreground); }
-#tripwire-app-header #mask-menu a .mask i.personal,
-#tripwire-app-header #mask-menu a .mask i.character { background: var(--data-good); }
-#tripwire-app-header #mask-menu a .mask i.corporate { background: var(--primary); }
-#tripwire-app-header #mask-menu a .mask i.alliance  { background: var(--data-info); }
-#tripwire-app-header #mask .mask i.personal         { background: var(--data-good); }
-#tripwire-app-header #mask-menu a.active::after {
+#topbar #mask-menu a .mask i[data-icon]::before { content: none; }
+#topbar #mask-menu a .mask i.global    { background: var(--muted-foreground); }
+#topbar #mask-menu a .mask i.personal,
+#topbar #mask-menu a .mask i.character { background: var(--data-good); }
+#topbar #mask-menu a .mask i.corporate { background: var(--primary); }
+#topbar #mask-menu a .mask i.alliance  { background: var(--data-info); }
+#topbar #mask .mask i.personal         { background: var(--data-good); }
+#topbar #mask-menu a.active::after {
 	content: "\2713"; margin-left: auto; color: var(--primary); font-size: 12px; font-weight: 700;
 }
-#tripwire-app-header #mask-menu hr.bar { height: 1px; border: 0; margin: 4px 0; background: var(--border); }
-#tripwire-app-header #mask-menu #mask-link, #tripwire-app-header #mask-menu #admin {
+#topbar #mask-menu hr.bar { height: 1px; border: 0; margin: 4px 0; background: var(--border); }
+#topbar #mask-menu #mask-link, #topbar #mask-menu #admin {
 	color: var(--muted-foreground); font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
 }
-#tripwire-app-header #mask-menu #mask-link:hover, #tripwire-app-header #mask-menu #admin:hover { color: var(--foreground); }
+#topbar #mask-menu #mask-link:hover, #topbar #mask-menu #admin:hover { color: var(--foreground); }
 
 /* The eye and ship toggles sit in a row under the portrait. */
 #login #content #track .tracking-clone td.avatar .control-group { width: auto; min-width: 36px; justify-content: center; }
 
 /* ── The ship, under the name ─────────────────────────────────────────── */
-#tripwire-app-header .hdr-line2 { display: flex; align-items: center; gap: 8px; }
-#tripwire-app-header .hdr-ship {
+#topbar .hdr-line2 { display: flex; align-items: center; gap: 8px; }
+#topbar .hdr-ship {
 	font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
 	color: var(--muted-foreground); white-space: nowrap; line-height: 18px;
 }
-#tripwire-app-header .hdr-ship.hidden { display: none; }
+#topbar .hdr-ship.hidden { display: none; }
 
 /* ── Phone header: the mask dot is a dot, and the name gives way ───────
-   The coarse-pointer rule makes every #tripwire-app-header i a 44px target; the mask
+   The coarse-pointer rule makes every #topbar i a 44px target; the mask
    capsule's source dot is an i too, and became a 44px orange disc beside
    the avatar. And the system name did not shrink, so the pilot block sat
    on top of it. */
 @media (pointer: coarse) {
-	#tripwire-app-header #mask .mask i[data-icon], #tripwire-app-header #mask-menu a .mask i[data-icon] {
+	#topbar #mask .mask i[data-icon], #topbar #mask-menu a .mask i[data-icon] {
 		min-width: 0; min-height: 0; width: 7px; height: 7px; padding: 0;
 	}
 }
 @media (max-width: 767px), (max-height: 599px) {
-	#tripwire-app-header > .align-left { min-width: 0; }
-	#tripwire-app-header #hdr-system { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-	#tripwire-app-header > .align-right { flex-shrink: 0; }
-	#tripwire-app-header #login h3 > a#user { gap: 6px; }
+	#topbar > .align-left { min-width: 0; }
+	#topbar #hdr-system { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	#topbar > .align-right { flex-shrink: 0; }
+	#topbar #login h3 > a#user { gap: 6px; }
 }
 
 /* ── Install tip (phones) ─────────────────────────────────────────────── */
@@ -629,28 +629,28 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
 /* ── Brand packs ─────────────────────────────────────────────────────────
    A pack without a logo image shows the product name in the display face. */
-#tripwire-app-header #logo .logo-text { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: .02em; color: var(--foreground); line-height: 64px; }
+#topbar #logo .logo-text { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: .02em; color: var(--foreground); line-height: 64px; }
 
 /* ── Typographic lockup: a small line, the name, a small line ───────────
    Set in the page's own fonts (an <img> SVG cannot reach them). The name
    takes the brand face and the accent; the small lines the label register;
    optional rule-and-star flourishes either side of the name. */
-#tripwire-app-header #logo .logo-lockup { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; line-height: 1; padding: 6px 0; }
-#tripwire-app-header #logo .lockup-small {
+#topbar #logo .logo-lockup { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; line-height: 1; padding: 6px 0; }
+#topbar #logo .lockup-small {
 	font-family: var(--font-mono); font-size: 8.5px; font-weight: 500; letter-spacing: .26em; text-transform: uppercase;
 	color: var(--muted-foreground);
 }
-#tripwire-app-header #logo .lockup-main {
+#topbar #logo .lockup-main {
 	display: inline-flex; align-items: center; gap: 10px;
 	font-family: var(--font-brand, var(--font-display)); font-size: 19px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase;
 	color: var(--primary); padding-left: .2em; /* balances the trailing tracking */
 }
-#tripwire-app-header #logo .lockup-main.has-flourish::before,
-#tripwire-app-header #logo .lockup-main.has-flourish::after {
+#topbar #logo .lockup-main.has-flourish::before,
+#topbar #logo .lockup-main.has-flourish::after {
 	content: ""; width: 44px; height: 2px; background: var(--primary); flex: 0 0 auto;
 	-webkit-mask: linear-gradient(90deg, #000 0 26px, transparent 26px 30px, #000 30px) ; mask: linear-gradient(90deg, #000 0 26px, transparent 26px 30px, #000 30px);
 }
-#tripwire-app-header #logo .lockup-main.has-flourish::before { -webkit-mask: linear-gradient(90deg, #000 0 26px, transparent 26px 30px, #000 30px); }
+#topbar #logo .lockup-main.has-flourish::before { -webkit-mask: linear-gradient(90deg, #000 0 26px, transparent 26px 30px, #000 30px); }
 
 /* ── Signature dialog: compact, sides labelled in the gutter ──────────────
    Upstream's dialog was tighter and named each wormhole side with a
