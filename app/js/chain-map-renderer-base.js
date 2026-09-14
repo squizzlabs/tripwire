@@ -232,10 +232,20 @@ const ChainMapRendererBase = function(owner) {
 		// keeping the old offset is the thing that loses you.
 		if (rootChanged && rootNode && rootNode.domNode) {
 			_this.lastCentredSystemID = rootSystemID;
-			// scrollIntoView rather than arithmetic on offsets: #chainParent
-			// carries a CSS zoom, and the browser accounts for it correctly
-			// where hand-rolled offset maths does not.
-			rootNode.domNode.scrollIntoView({block: "center", inline: "center"});
+			// scrollIntoView also scrolls the page and every other scrollable
+			// ancestor. When the chain arrives after first paint that can move the
+			// application header and the tops of all three compact panels above
+			// the viewport. Centre only the map's own scroll container instead.
+			const nodePosition = positionRelativeTo(rootNode.domNode, chainParent);
+			const chainZoom = 1 * (window.getComputedStyle(chainParent).getPropertyValue('zoom') || '1');
+			const nodeRect = rootNode.domNode.getBoundingClientRect();
+			const parentRect = chainParent.getBoundingClientRect();
+			chainParent.scrollLeft = nodePosition.left
+				+ nodeRect.width / chainZoom / 2
+				- parentRect.width / chainZoom / 2;
+			chainParent.scrollTop = nodePosition.top
+				+ nodeRect.height / chainZoom / 2
+				- parentRect.height / chainZoom / 2;
 		} else {
 			chainParent.scrollLeft = previousScroll.x;
 			chainParent.scrollTop = previousScroll.y;

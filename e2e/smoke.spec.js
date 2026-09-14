@@ -16,6 +16,15 @@ test("the app loads clean and polls", async ({ page }) => {
 	expect(gridBounds.x).toBeLessThan(2);
 	expect(gridBounds.width).toBeGreaterThan(page.viewportSize().width - 2);
 
+	// Centring the newly loaded root system must scroll only the chain map,
+	// never the page that contains the application header and panel tops.
+	await expect(page.locator("#tripwire-app-header")).toBeInViewport();
+	expect(await page.evaluate(() => ({
+		window: window.scrollY,
+		wrapper: document.getElementById("wrapper").scrollTop,
+		inner: document.getElementById("inner-wrapper").scrollTop
+	}))).toEqual({window: 0, wrapper: 0, inner: 0});
+
 	// The poll loop reschedules: the timer id must change.
 	const t1 = await page.evaluate(() => tripwire.timer);
 	await page.waitForFunction((t) => tripwire.timer !== t, t1, { timeout: 20000 });
