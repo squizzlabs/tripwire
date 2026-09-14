@@ -1,121 +1,59 @@
 const gulp = require('gulp');
-const pump = require('pump');
-const shell = require('gulp-shell');
-const mocha = require('gulp-mocha');
-const notify = require('gulp-notify');
-const uglify = require('gulp-uglify-es').default;
-const cleancss = require('gulp-clean-css');
 const concat = require('gulp-concat');
-const sourcemaps = require('gulp-sourcemaps');
-const rename = require('gulp-rename');
 
-// The order of the files in `src` are important, be sure to include a file before something else uses it
-var jsFiles = [
-    {
-        name: 'app.js',
-        nameMin: 'app.min.js',
-        src: [
-            'app/js/helpers.js',
-			'app/js/data-mutators/*.js',
-			'app/js/map-data-suppliers/*.js',
-            'app/js/init.js',
-            'app/js/options.js',
-            'app/js/layout.js',
-            'app/js/tripwire.js',
-            'app/js/global-hooks.js',
-            'app/js/wormholeRendering.js',
-            'app/js/widget-*.js',
-            'app/js/systemAnalysis.js',
-			'app/js/system-mutators/*.js',
-            'app/js/guidance.js',
-            'app/js/systemRendering.js',
-            'app/js/chain-map-renderer*.js',
-            'app/js/chain-map.js',
-            'app/js/guidance_profiles.js',
-            'app/js/systemPanel.js',
-            'app/js/tripwire/*.js',
-            'app/js/*.js',
-            'app/js/**/*.js'
-        ],
-        output: 'public/js'
-    }
+// Source order is significant: several legacy scripts publish globals that
+// later modules extend. Keep the readable source files as the debugging unit
+// and concatenate them only to avoid dozens of requests on each page load.
+const jsSources = [
+	'app/js/helpers.js',
+	'app/js/data-mutators/*.js',
+	'app/js/map-data-suppliers/*.js',
+	'app/js/init.js',
+	'app/js/options.js',
+	'app/js/layout.js',
+	'app/js/tripwire.js',
+	'app/js/global-hooks.js',
+	'app/js/wormholeRendering.js',
+	'app/js/widget-*.js',
+	'app/js/systemAnalysis.js',
+	'app/js/system-mutators/*.js',
+	'app/js/guidance.js',
+	'app/js/systemRendering.js',
+	'app/js/chain-map-renderer*.js',
+	'app/js/chain-map.js',
+	'app/js/guidance_profiles.js',
+	'app/js/systemPanel.js',
+	'app/js/tripwire/*.js',
+	'app/js/*.js',
+	'app/js/**/*.js'
 ];
 
-var cssFiles = [
-    {
-        name: 'app.css',
-        nameMin: 'app.min.css',
-        src: ['app/css/_tokens.css', 'app/css/base.css', 'app/css/*.css', 'app/css/**/*.css',
-              // Load order is tokens -> components -> overrides -> theme. The
-              // last two groups override component rules at equal specificity,
-              // so they have to come after them -- and gulp.src dedupes, so the
-              // globs above must be told to skip them or the trailing entries
-              // are no-ops. (_override-* sorts before signatures.css otherwise,
-              // which silently lost every tie.)
-              '!app/css/_override-*.css', '!app/css/_theme-*.css',
-              'app/css/_override-*.css', 'app/css/_theme-base.css', 'app/css/_theme-refit.css'],
-        output: 'public/css'
-    }
+const cssSources = [
+	'app/css/_tokens.css',
+	'app/css/base.css',
+	'app/css/*.css',
+	'app/css/**/*.css',
+	// Overrides and themes must come last. Excluding them from the broad globs
+	// prevents gulp from deduplicating their explicitly ordered entries.
+	'!app/css/_override-*.css',
+	'!app/css/_theme-*.css',
+	'app/css/_override-*.css',
+	'app/css/_theme-base.css',
+	'app/css/_theme-refit.css'
 ];
 
-// Gulp v4 changed how you call .task with multiple subtasks, gulp parallel needed instead
-// gulp.task('default', ['js', 'css']);
-//gulp.task('default', gulp.parallel('js', 'css'));
+function buildJavaScript() {
+	return gulp.src(jsSources)
+		.pipe(concat('app.js'))
+		.pipe(gulp.dest('public/js'));
+}
 
-gulp.task('js', function(cb) {
-    for (var j in jsFiles) {
-        pump([
-            gulp.src(jsFiles[j].src),
-            sourcemaps.init(),
-            uglify(),
-            concat(jsFiles[j].name),
-            rename(jsFiles[j].nameMin),
-            sourcemaps.write('.'),
-            gulp.dest(jsFiles[j].output),
-            notify({
-                message: "Finished javascript",
-                onLast: true
-            })
-        ], cb);
-    }
-});
+function buildStyles() {
+	return gulp.src(cssSources)
+		.pipe(concat('app.css'))
+		.pipe(gulp.dest('public/css'));
+}
 
-gulp.task('js_dev', function(cb) {
-    for (var j in jsFiles) {
-        pump([
-            gulp.src(jsFiles[j].src),
-            sourcemaps.init(),
-            concat(jsFiles[j].name),
-            rename(jsFiles[j].nameMin),
-            sourcemaps.write('.'),
-            gulp.dest(jsFiles[j].output),
-            notify({
-                message: "Finished javascript",
-                onLast: true
-            })
-        ], cb);
-    }
-});
-
-gulp.task('css', function(cb) {
-    for (var c in cssFiles) {
-        pump([
-            gulp.src(cssFiles[c].src),
-            sourcemaps.init(),
-            cleancss({level: {1: {all: true}, 2: {all: false}}}) /* level 2 merges identical selectors into the first occurrence, which reorders the cascade; the theme relies on source order */,
-            concat(cssFiles[c].name),
-            rename(cssFiles[c].nameMin),
-            sourcemaps.write('.'),
-            gulp.dest(cssFiles[c].output),
-            notify({
-                message: "Finished css",
-                onLast: true
-            })
-        ], cb);
-    }
-});
-
-gulp.task('test', cb => {
-	gulp.src(['app/js-test/**/*.js']).pipe(mocha());
-	cb();
-});
+gulp.task('js', buildJavaScript);
+gulp.task('css', buildStyles);
+gulp.task('default', gulp.parallel(buildJavaScript, buildStyles));

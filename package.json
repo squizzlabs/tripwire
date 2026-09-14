@@ -8,17 +8,7 @@
     },
     "dependencies": {
         "gulp": "^4.0.0",
-        "gulp-clean-css": "^3.9.3",
-        "gulp-concat": "^2.6.1",
-        "gulp-mocha": "^8.0.0",
-        "gulp-notify": "^3.2.0",
-        "gulp-rename": "^1.2.2",
-        "gulp-shell": "^0.6.5",
-        "gulp-sourcemaps": "^2.6.4",
-        "gulp-uglify-es": "^1.0.1",
-        "gulp-util": "^3.0.8",
-        "gulp-watch": "^4.3.11",
-        "pump": "^1.0.3"
+        "gulp-concat": "^2.6.1"
     },
     "devDependencies": {
         "@playwright/test": "^1.62.1",
@@ -26,7 +16,7 @@
     },
     "scripts": {
         "test": "mocha \"app/js-test/**/*.test.js\"",
-        "build": "gulp js css",
+        "build": "gulp",
         "e2e": "playwright test",
         "e2e:headed": "playwright test --headed"
     }

@@ -34,7 +34,7 @@ $system = $_REQUEST['system'] ?? '';
 	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/jquery-ui-1.12.1.min.css?v=<?= VERSION ?>">
 	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/jquery-ui-custom.css?v=<?= VERSION ?>">
 	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/introjs.min.css?v=<?= VERSION ?>">
-	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/app.min.css?v=<?= VERSION ?>">
+	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/app.css?v=<?= VERSION ?>">
 <?php brand_head(); ?>
 
 	<title></title>
@@ -755,7 +755,7 @@ $system = $_REQUEST['system'] ?? '';
 			<section class="settings-pane" data-pane="display" role="tabpanel" hidden>
 				<h4 class="field-group">Panels</h4>
 				<div class="field field-block">
-					<span class="field-label">Show and order <small>the chain stays full width and can sit above or below the row of three</small></span>
+					<span class="field-label">Show and position <small>move compact panels left or right; move the full-width chain above or below them</small></span>
 					<div class="field-value" id="panel-settings"></div>
 				</div>
 				<h4 class="field-group">Appearance</h4>
@@ -1195,7 +1195,7 @@ $system = $_REQUEST['system'] ?? '';
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/moment.min.js?v=<?= VERSION ?>"></script>
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/intro.min.js?v=<?= VERSION ?>"></script>
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/combine.js?v=<?= VERSION ?>"></script>
-	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/app.min.js?v=<?= VERSION ?>"></script>
+	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/app.js?v=<?= VERSION ?>"></script>
 	<!-- JS Includes -->
 </body>
 </html>

@@ -96,6 +96,19 @@ tripwire.panels = (function() {
 
     function toggle(id) { setVisible(id, !isVisible(id)); }
 
+    // Directional names keep callers honest about what the responsive grid can
+    // actually do. Compact panels move horizontally within their shared row;
+    // the full-width Chain panel moves vertically above or below that row.
+    function moveHorizontal(id, dir) {
+        if (id === "chainWidget") { return; }
+        move(id, dir);
+    }
+
+    function moveVertical(id, dir) {
+        if (id !== "chainWidget") { return; }
+        move(id, dir);
+    }
+
     // Give each panel a titled header so it reads as a card rather than an
     // unlabelled box, and a control to put it away. Runs once; the title is
     // prepended into the existing .controls bar so no markup moves.
@@ -131,6 +144,8 @@ tripwire.panels = (function() {
         toggle: toggle,
         order: order,
         move: move,
+        moveHorizontal: moveHorizontal,
+        moveVertical: moveVertical,
         apply: apply
     };
 })();
