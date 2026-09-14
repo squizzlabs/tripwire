@@ -73,12 +73,41 @@
 }
 
 .jBox-Notice-yellow .jBox-container {
-	color: var(--data-brown);
-	text-shadow: 0 1px 0 var(--glow-60);
+	/* Fixed ink keeps normal text above 7:1 across both ends of the amber
+	   gradient, independent of the active light/dark theme tokens. */
+	color: #2b1a00;
+	text-shadow: none;
 	background: var(--ui-amber);
 	background-image: linear-gradient(to bottom, var(--ui-amber-lit), var(--ui-amber));
 }
 
 .jBox-Notice-yellow .jBox-container a {
-	color: var(--n-650);
+	color: #2b1a00;
+}
+
+.update-notice {
+	display: flex;
+	max-width: 30rem;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.update-notice-action {
+	align-self: flex-start;
+	font-weight: 700;
+	text-decoration: underline;
+	text-decoration-thickness: 2px;
+	text-underline-offset: 2px;
+}
+
+.update-notice-action:focus-visible {
+	border-radius: 2px;
+	outline: 3px solid #2b1a00;
+	outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.jBox-Notice {
+		animation: none !important;
+	}
 }

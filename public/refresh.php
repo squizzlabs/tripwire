@@ -70,7 +70,13 @@ $stmt->bindValue(':instance', $instance);
 $stmt->execute();
 $stmt->rowCount() ? $output['notify'] = $stmt->fetchColumn() : null;
 
-!isset($output['notify']) && isset($_REQUEST['version']) && $_REQUEST['version'] != VERSION ? $output['notify'] = 'Tripwire update available ('.VERSION.')<br/><a href="" OnClick="window.location.reload()">Reload to update!</a>' : null;
+if (!isset($output['notify']) && isset($_REQUEST['version']) && $_REQUEST['version'] != VERSION) {
+	$updateVersion = htmlspecialchars(VERSION, ENT_QUOTES, 'UTF-8');
+	$output['notify'] = '<div class="update-notice" role="status" aria-live="polite" aria-atomic="true">'
+		. '<strong>Tripwire update available (' . $updateVersion . ')</strong>'
+		. '<a class="update-notice-action" href="">Reload to update</a>'
+		. '</div>';
+}
 
 $query = 'SELECT characters.characterName, activity FROM active INNER JOIN characters ON active.userID = characters.userID WHERE maskID = :maskID AND instance <> :instance AND activity IS NOT NULL AND activity <> ""';
 $stmt = $mysql->prepare($query);
