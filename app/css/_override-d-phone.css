@@ -15,20 +15,20 @@
 	/* One row: avatar, name, corp, settings. The wordmark is redundant next to
 	   the wing mark on a screen this size, and the search field lives in the
 	   palette. */
-	#topbar {
+	#tripwire-app-header {
 		min-height: 0;
 		height: auto;
 		padding: 8px 12px;
 		gap: 8px;
 	}
-	#topbar { display: flex; min-height: 0; }
-	#topbar > .align-left { display: flex; flex: 1 1 auto; }
-	#topbar > .align-left #systemSearch { display: none; }
-	#topbar #hdr-system { font-size: 17px; }
-	#topbar > .align-center { display: none; }
-	#topbar .hdr-pilot { display: none; }
-	#topbar .hdr-tools { padding-left: 8px; }
-	#topbar > .align-right {
+	#tripwire-app-header { display: flex; min-height: 0; }
+	#tripwire-app-header > .align-left { display: flex; flex: 1 1 auto; }
+	#tripwire-app-header > .align-left #systemSearch { display: none; }
+	#tripwire-app-header #hdr-system { font-size: 17px; }
+	#tripwire-app-header > .align-center { display: none; }
+	#tripwire-app-header .hdr-pilot { display: none; }
+	#tripwire-app-header .hdr-tools { padding-left: 8px; }
+	#tripwire-app-header > .align-right {
 		flex: 1 1 auto;
 		width: 100%;
 		display: flex;
@@ -36,8 +36,8 @@
 		justify-content: space-between;
 		gap: 12px;
 	}
-	#topbar #user-avatar.avatar { width: 32px; height: 32px; }
-	#topbar h3 { margin: 0; font-size: 13px; }
+	#tripwire-app-header #user-avatar.avatar { width: 32px; height: 32px; }
+	#tripwire-app-header h3 { margin: 0; font-size: 13px; }
 
 	.gridster { padding: 12px; }
 
@@ -79,10 +79,10 @@
    its own row, which left the hide control alone on a third; and the chain
    bar showed five map icons before the tabs. */
 @media (max-width: 767px), (max-height: 599px) {
-	#topbar > .align-right { justify-content: flex-start; gap: 14px; }
-	#topbar > .align-right > #settings,
-	#topbar > .align-right > i#settings { margin-left: auto; }
-	#topbar > .align-right > #layout { display: none; }
+	#tripwire-app-header > .align-right { justify-content: flex-start; gap: 14px; }
+	#tripwire-app-header > .align-right > #settings,
+	#tripwire-app-header > .align-right > i#settings { margin-left: auto; }
+	#tripwire-app-header > .align-right > #layout { display: none; }
 
 	.gridWidget > .controls > .bar-right { flex: 0 0 auto; margin-left: auto; }
 	.gridWidget > .controls > .bar-right ~ .panel-hide { margin-left: var(--space-1); }

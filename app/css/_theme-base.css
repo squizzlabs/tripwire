@@ -130,7 +130,7 @@
    the template stays untouched and this whole theme remains one deletable
    file. Brand guidelines allow the standalone Wing Icon to form new lockups;
    the full lockup may not be modified, so it is not used here. */
-#topbar #logo a {
+#tripwire-app-header #logo a {
   color: var(--accent);
   letter-spacing: .01em;
 }
@@ -140,13 +140,13 @@
    guidelines call for, and which also fixes the contrast: #F07C00 on a light
    topbar measures 2.77:1. Orange stays the accent for state, not the mark. */
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) #topbar #logo a { color: var(--n-999); }
+  :root:not([data-theme="dark"]) #tripwire-app-header #logo a { color: var(--n-999); }
 }
-:root[data-theme="light"] #topbar #logo a { color: var(--n-999); }
+:root[data-theme="light"] #tripwire-app-header #logo a { color: var(--n-999); }
 
 /* Active/selected state, previously just a lighter grey. */
-#topbar i.active,
-#topbar a.active {
+#tripwire-app-header i.active,
+#tripwire-app-header a.active {
   color: var(--accent);
 }
 

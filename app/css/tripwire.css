@@ -40,7 +40,7 @@
 	opacity: 0.5;
 }
 
-#topbar {
+#tripwire-app-header {
 	position: fixed;
 	top: 0;
 	height: 45px;
@@ -50,17 +50,17 @@
 	line-height: 40px;
 }
 
-#topbar div { line-height: normal; } /** reset for children */
+#tripwire-app-header div { line-height: normal; } /** reset for children */
 
-#topbar h1, #topbar h2, #topbar h3, #topbar form {
+#tripwire-app-header h1, #tripwire-app-header h2, #tripwire-app-header h3, #tripwire-app-header form {
 	display: inline;
 }
 
-#topbar .align-right {
+#tripwire-app-header .align-right {
 	padding-right: 25px;
 }
 
-#topbar .align-left {
+#tripwire-app-header .align-left {
 	padding-left: 25px;
 }
 

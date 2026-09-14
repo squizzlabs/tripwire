@@ -82,8 +82,8 @@
 
 /* ── 4. AVATAR ───────────────────────────────────────────────────────────
    The header was given room for a larger portrait and then never used it. */
-#topbar #user-avatar.avatar { width: 34px; height: 34px; }
-#topbar #login h3 { display: inline-flex; align-items: center; gap: var(--space-2); }
+#tripwire-app-header #user-avatar.avatar { width: 34px; height: 34px; }
+#tripwire-app-header #login h3 { display: inline-flex; align-items: center; gap: var(--space-2); }
 
 /* ── 5. GRAPH AXIS ───────────────────────────────────────────────────────
    The chart borrowed --border for its gridlines and --muted-foreground for

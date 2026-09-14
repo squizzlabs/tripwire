@@ -39,7 +39,7 @@ body { font-size: var(--fs-base); }
 
 /* Icons take the token, not whatever size their parent happened to be. */
 [data-icon]::before { font-size: var(--icon); line-height: 1; }
-#topbar [data-icon]::before { font-size: var(--icon-lg); }
+#tripwire-app-header [data-icon]::before { font-size: var(--icon-lg); }
 
 /* Dialog inputs and buttons at the standard height; the bars stay dense. */
 .ui-dialog input[type="text"], .ui-dialog input[type="password"],
@@ -151,9 +151,9 @@ body { font-size: var(--fs-base); }
    component that never reached for a token.
    ========================================================================= */
 .sig-chip, .sig-filter .sig-chip        { font-size: var(--fs-xs); }
-#topbar h3, #topbar h3 a, #EVEsystem,
-#topbar #mask, #topbar #user-track-name { font-size: var(--fs-base); }
-#topbar #logo a                          { font-size: var(--fs-xl); }
+#tripwire-app-header h3, #tripwire-app-header h3 a, #EVEsystem,
+#tripwire-app-header #mask, #tripwire-app-header #user-track-name { font-size: var(--fs-base); }
+#tripwire-app-header #logo a                          { font-size: var(--fs-xl); }
 .sys-meta, #infoSecurity, .sys-meta .chip { font-size: var(--fs-sm); }
 .gate-chip .gate-sec                     { font-size: var(--fs-xs); height: 15px; padding: 0 5px; }
 kbd                                      { font-size: var(--fs-xs); }
@@ -169,8 +169,8 @@ kbd                                      { font-size: var(--fs-xs); }
 	align-items: center;
 	padding-top: 0; padding-bottom: 0;
 }
-#topbar > .align-right > i[data-icon],
-#topbar #search, #topbar #follow {
+#tripwire-app-header > .align-right > i[data-icon],
+#tripwire-app-header #search, #tripwire-app-header #follow {
 	box-sizing: border-box;
 	height: var(--control-dense);
 	min-width: var(--control-dense);
@@ -179,7 +179,7 @@ kbd                                      { font-size: var(--fs-xs); }
 	justify-content: center;
 	border-radius: var(--radius-sm);
 }
-#topbar > .align-right > i[data-icon]:hover { background: var(--muted); }
+#tripwire-app-header > .align-right > i[data-icon]:hover { background: var(--muted); }
 
 /* ── Graph legend as chips, in the controls row ──────────────────────── */
 #activityGraphControls { justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-2) var(--space-3); }

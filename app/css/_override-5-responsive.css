@@ -83,9 +83,9 @@
 
 	/* The topbar carries a lot for 393px. Keep identity, time and search. */
 	#serverStatus,
-	#topbar h3:nth-of-type(2) { display: none; }
+	#tripwire-app-header h3:nth-of-type(2) { display: none; }
 
-	#topbar { position: sticky; }
+	#tripwire-app-header { position: sticky; }
 
 	/* Signature table: drop the columns that only matter while editing. */
 	#sigTable th:nth-child(n+5),
@@ -153,7 +153,7 @@
 	.controls i,
 	.controls span.control,
 	.panel-hide,
-	#topbar i,
+	#tripwire-app-header i,
 	.quickSelectBar button {
 		min-width: 44px;
 		min-height: 44px;

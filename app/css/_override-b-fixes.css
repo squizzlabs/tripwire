@@ -21,7 +21,7 @@ table, td, th, h1, h2, h3, h4, h5, h6, p, div, span, a, li {
 code, pre, .mono,
 #sigTable td:nth-child(1),
 #statusbar .bar-value,
-#topbar #serverTime { font-variant-numeric: tabular-nums; }
+#tripwire-app-header #serverTime { font-variant-numeric: tabular-nums; }
 
 /* ============================================================================
    SETTINGS SECTION HEADINGS
@@ -46,12 +46,12 @@ code, pre, .mono,
    the edge. Truncating the left is always preferable to losing a control.
    ========================================================================= */
 
-#topbar > .align-left { overflow: hidden; }
-#topbar #systemSearch,
-#topbar #currentSpan,
-#topbar #searchSpan { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-#topbar #systemSearch input[type="text"] { max-width: 14rem; min-width: 0; }
-#topbar > .align-right { z-index: 2; }
+#tripwire-app-header > .align-left { overflow: hidden; }
+#tripwire-app-header #systemSearch,
+#tripwire-app-header #currentSpan,
+#tripwire-app-header #searchSpan { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+#tripwire-app-header #systemSearch input[type="text"] { max-width: 14rem; min-width: 0; }
+#tripwire-app-header > .align-right { z-index: 2; }
 
 /* ============================================================================
    SYSTEM PANEL: BREATHING ROOM AT THE TOP
@@ -96,7 +96,7 @@ code, pre, .mono,
 }
 
 /* ── The header overflow, root cause ─────────────────────────────────────
-   #topbar is content-box (this stylesheet predates border-box being the
+   #tripwire-app-header is content-box (this stylesheet predates border-box being the
    default anyone reaches for), so `width: 100%` plus `padding: 6px 9px`
    resolves to viewport + 18px. The bar hangs 18px off the right of the
    screen and the last control -- the layout icon -- is cut in half.
@@ -109,7 +109,7 @@ code, pre, .mono,
    right edge exceeds documentElement.clientWidth.
 
    Padding belongs inside the width. */
-#topbar {
+#tripwire-app-header {
 	box-sizing: border-box;
 	width: 100%;
 	max-width: 100%;

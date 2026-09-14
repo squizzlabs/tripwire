@@ -357,13 +357,13 @@ button[disabled], .disabled { opacity: .4; cursor: default; }
    NAVIGATION
    ========================================================================= */
 
-#topbar {
+#tripwire-app-header {
 	background: color-mix(in oklab, var(--background) 82%, transparent);
 	backdrop-filter: blur(8px);
 	border-bottom: 1px solid var(--border);
 }
 
-#topbar #logo a { font-size: var(--fs-xl); }
+#tripwire-app-header #logo a { font-size: var(--fs-xl); }
 #version { font-size: var(--fs-xs); color: var(--muted-foreground); }
 #legal   { font-size: var(--fs-xs); color: var(--muted-foreground); }
 
@@ -738,21 +738,21 @@ body .mask .corporate      { color: var(--foreground); }
    white; the count itself is the information.
    ========================================================================= */
 
-#topbar #serverStatus,
-#topbar #serverStatus .stable,
-#topbar #serverStatus .critical,
-#topbar #mask,
-#topbar #mask *,
-#topbar .mask .corporate,
-#topbar .mask .alliance,
-#topbar .mask .character,
-#topbar .mask .global {
+#tripwire-app-header #serverStatus,
+#tripwire-app-header #serverStatus .stable,
+#tripwire-app-header #serverStatus .critical,
+#tripwire-app-header #mask,
+#tripwire-app-header #mask *,
+#tripwire-app-header .mask .corporate,
+#tripwire-app-header .mask .alliance,
+#tripwire-app-header .mask .character,
+#tripwire-app-header .mask .global {
 	color: var(--foreground) !important;
 }
 
 /* A genuinely down server is worth the red, though. */
-#topbar #serverStatus.is-down,
-#topbar #serverStatus.is-down .critical {
+#tripwire-app-header #serverStatus.is-down,
+#tripwire-app-header #serverStatus.is-down .critical {
 	color: var(--data-critical) !important;
 }
 
