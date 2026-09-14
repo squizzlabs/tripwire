@@ -52,6 +52,36 @@ What the refit changes, in one screen:
 - Fixed upstream: the TQ counter flicker after the tab sits in the
   background, and the background poll that had stopped polling.
 
+### Updating an existing installation
+
+Database connections now use the tracked `database.inc.php`. The old
+`db.inc.php` name remains ignored so it cannot block `git pull`, but Tripwire
+will return a migration-required error while that legacy file exists. Pull the
+update, run the migration helper, and rebuild:
+
+```bash
+git pull
+php scripts/migrate-db-config.php
+docker compose up -d --build
+```
+
+The helper reads the standard legacy PDO configuration without executing it,
+writes these settings into `.env`, and preserves the old file as
+`db.inc.php.pre-env-backup`:
+
+```dotenv
+DB_HOST=mysql
+DB_PORT=3306
+MYSQL_DATABASE=tripwire_database
+MYSQL_USER=your-current-username
+MYSQL_PASSWORD=your-current-password
+```
+
+If a customized legacy file cannot be read automatically, copy those five
+values into `.env` manually and move `db.inc.php` aside. If its PDO connection
+has no port, use `3306`. Keep the ignored backup until the site and
+`tripwire-cron` have both connected successfully.
+
 ### Setup guide for Linux  
 
 **Requirements:**  
@@ -61,14 +91,15 @@ What the refit changes, in one screen:
 - MySQL (or some flavor of MySQL - needed because database EVENTS)
 - A my.cnf MySQL config file example is located in `.docker/mysql/my.cnf`
 - The `sql_mode` and `event_scheduler` my.cnf lines are important, make sure you have them in your my.cnf file & reboot MySQL
-- CRON or some other scheduler to execute PHP scripts
+- Node.js 24 for scheduled backend jobs
 
 **Setup: (Bare Metal, for docker see below)** 
 
 - Create a `tripwire` database using the export located in `.docker/mysql/tripwire.sql`
 - For development: create an EVE dump database, define it's name later in `config.php`. Download from: https://www.fuzzwork.co.uk/dump/ To download the latest use the following link: https://www.fuzzwork.co.uk/dump/mysql-latest.tar.bz2. You do not need a copy of the SDE to run Tripwire (since 1.21).
 - Clone the Tripwire repo to where you are going to serve to the public OR manually download repo and copy files yourself
-- Copy `db.inc.example.php` to `db.inc.php` - modify file per your setup
+- Expose `DB_HOST`, `DB_PORT`, `MYSQL_DATABASE`, `MYSQL_USER`, and
+  `MYSQL_PASSWORD` to PHP through your web server or process manager
 - Copy `config.example.php` to `config.php` - modify file per your setup
 - Create an EVE developer application via https://developers.eveonline.com/applications
 - EVE SSO `Callback URL` should be: `https://your-domain.com/index.php?mode=sso`
@@ -82,9 +113,8 @@ What the refit changes, in one screen:
   esi-characters.read_titles.v1
   esi-search.search_structures.v1
 - Settings go in the `config.php` file
-- Modify your web server to serve Tripwire from the `tripwire/public` folder so the files like `config.php` and `db.inc.php` are not accessible via URL
-- Setup a CRON or schedule for `system_activity.cron.php` to run at the top of every hour. CRON: `0 * * * * php /dir/to/system_activity.cron.php`
-- Setup a CRON or schedule for `account_update.cron.php` to run every 3 minutes or however often you want to check for corporation changes. CRON: `*/3 * * * * php /dir/to/account_update.cron.php`
+- Modify your web server to serve Tripwire from the `tripwire/public` folder so files such as `config.php` and `database.inc.php` are not accessible via URL
+- Start the Node scheduler with `cd cron && npm ci && npm start`. Its database connection is configured with `MYSQL_USER`, `MYSQL_PASSWORD`, and optional `DB_HOST`, `DB_PORT`, and `MYSQL_DATABASE` environment variables.
 - If you are using SELinux: Tripwire needs access to the 'cache' directory inside the deployment directory, usually /var/www/tripwire. You need to make this a write-access directory via SELinux labelling: `semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/tripwire/cache(/.*)?"` - then relabel the directory `restorecon -R -v /var/www/tripwire`
 
 
@@ -119,37 +149,26 @@ Once complete, your tripwire instance will be up and running.
 
 ### Manual Docker Setup
 
-- Copy db.inc.docker.example.php to db.inc.php
-`cp db.inc.docker.example.php db.inc.php`
 - Copy config.example.php to config.php
 `cp config.example.php config.php`
-- Modify the constants with your own settings in both files
+- Configure database and deployment values in `.env`, and application settings in `config.php`
 - Prep traefik acme file
 
 
 Required changes for setup:
 
 **docker-compose.yml**
-Create a .env file 
-`touch .env`
+Copy the provided environment template:
+`cp .env.example .env`
 
-Add the following variables to the .env using your text editor of choice: (and define them ovbiously)
-```
-ADM_EMAIL=
-TRDOMAIN=
-MYSQL_ROOT_PASSWORD=
-MYSQL_USER=
-MYSQL_PASSWORD=
-SSO_CLIENT=
-SSO_SECRET=
-```
+Edit `.env`, replacing the blank secrets and example domain/email values.
+`MYSQL_DATABASE`, `DB_HOST`, and `DB_PORT` already have Docker-ready defaults.
 
-**db.inc.php**
-```
-  - `host=` should be `mysql`
-  - `dbname=` should be `tripwire_database`
-  - `update `username` and `password` with the user name and password from docker-compose.yml
-```
+**database.inc.php**
+
+This file is tracked and contains no credentials. The Docker version reads
+`DB_HOST`, `DB_PORT`, `MYSQL_DATABASE`, `MYSQL_USER`, and `MYSQL_PASSWORD`
+from the container environment populated by `.env`.
 
 **config.php**
 ```
@@ -165,10 +184,16 @@ touch traefik-data/acme.json
 chmod 600 traefik-data/acme.json
 ```
 
-**CRON**
-```
-crontab -l | cat - crontab-tw.txt >/tmp/crontab.txt && crontab /tmp/crontab.txt
-```
+**SCHEDULED JOBS**
+
+The `tripwire-cron` service starts automatically with Docker Compose. It runs
+the activity collector hourly, account refresh every three minutes, and the
+activity retention sweep daily at 04:17 UTC. Follow it with
+`docker compose logs -f tripwire-cron`.
+
+Run a job manually with `docker exec tripwire-cron npm run job -- <job-name>`.
+The available names are `system-activity`, `account-update`, and
+`system-activity-prune`; append `--dry-run` to preview the prune job.
 
 **DOCKER BUILD**
 

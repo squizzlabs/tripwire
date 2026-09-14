@@ -62,8 +62,37 @@ services:
     container_name: php-fpm
     networks:
       - tripwire
+    environment:
+      - DB_HOST=$DB_HOST
+      - DB_PORT=$DB_PORT
+      - MYSQL_DATABASE=$MYSQL_DATABASE
+      - MYSQL_USER=$MYSQL_USER
+      - MYSQL_PASSWORD=$MYSQL_PASSWORD
     volumes:
       - "./:/opt/app"
+
+  #################################################################
+  # BACKEND CRON SERVICE
+  #################################################################
+  tripwire-cron:
+    build:
+      context: .
+      dockerfile: .docker/cron/Dockerfile
+    container_name: tripwire-cron
+    init: true
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    networks:
+      - tripwire
+    environment:
+      - DB_HOST=$DB_HOST
+      - DB_PORT=$DB_PORT
+      - MYSQL_DATABASE=$MYSQL_DATABASE
+      - MYSQL_USER=$MYSQL_USER
+      - MYSQL_PASSWORD=$MYSQL_PASSWORD
+      - ADM_EMAIL=$ADM_EMAIL
+      - CRON_TIMEZONE=UTC
 
   #################################################################
   # OFFICIAL MYSQL 8.0.40 SERVICE
@@ -75,7 +104,7 @@ services:
       - tripwire
     environment:
       - MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD # do not use quotes
-      - MYSQL_DATABASE=tripwire_database
+      - MYSQL_DATABASE=$MYSQL_DATABASE
       - MYSQL_USER=$MYSQL_USER # do not use quotes
       - MYSQL_PASSWORD=$MYSQL_PASSWORD # do not use quotes
     volumes:
@@ -105,11 +134,11 @@ services:
     networks:
       - tripwire
     environment:
-      - DB_HOST=mysql
-      - DB_PORT=3306
+      - DB_HOST=$DB_HOST
+      - DB_PORT=$DB_PORT
       - DB_ROOT_USER=root
       - DB_ROOT_PASS=$MYSQL_ROOT_PASSWORD
-      - TRIPWIRE_DB=tripwire_database
+      - TRIPWIRE_DB=$MYSQL_DATABASE
       - SDE_DB=eve_dump
     # No need for volumes or ports
     # The seed script will run once, then exit

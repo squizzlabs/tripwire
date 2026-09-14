@@ -9,7 +9,7 @@
 
 ini_set('display_errors', 'On');
 
-require_once('../db.inc.php');
+require_once('../database.inc.php');
 require('../api.class.php');
 
 date_default_timezone_set('UTC');

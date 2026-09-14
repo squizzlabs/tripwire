@@ -1,0 +1,45 @@
+export function createScheduler({ cron, jobs, context, timezone, logger = console }) {
+  const running = new Set();
+
+  async function run(job, options = {}) {
+    const started = Date.now();
+    logger.info(`[${job.name}] started`);
+
+    try {
+      const result = await job.run({ ...context, ...options });
+      logger.info(`[${job.name}] completed in ${Date.now() - started}ms`, result);
+      return result;
+    } catch (error) {
+      logger.error(`[${job.name}] failed in ${Date.now() - started}ms`, error);
+      throw error;
+    }
+  }
+
+  const tasks = jobs.map((job) => {
+    if (!cron.validate(job.schedule)) {
+      throw new Error(`Invalid schedule for ${job.name}: ${job.schedule}`);
+    }
+
+    const task = cron.schedule(
+      job.schedule,
+      () => {
+        const execution = run(job).catch(() => undefined);
+        running.add(execution);
+        execution.finally(() => running.delete(execution));
+        return execution;
+      },
+      { name: job.name, timezone, noOverlap: true },
+    );
+    logger.info(`[${job.name}] scheduled: ${job.schedule} (${timezone})`);
+    return task;
+  });
+
+  return {
+    run,
+    async stop() {
+      for (const task of tasks) task.stop();
+      await Promise.allSettled(running);
+      for (const task of tasks) await task.destroy();
+    },
+  };
+}

@@ -15,7 +15,7 @@ if(!isset($_SESSION['super']) || $_SESSION['super'] != 1) {
 }
 
 require_once('../config.php');
-require_once('../db.inc.php');
+require_once('../database.inc.php');
 
 if(isset($_REQUEST['map'])) {
 	$shortest = array();

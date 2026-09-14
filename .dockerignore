@@ -1,0 +1,10 @@
+.git
+.env*
+config.php
+db.inc.php*
+node_modules
+**/node_modules
+test-results
+playwright-report
+e2e/.auth
+traefik-data

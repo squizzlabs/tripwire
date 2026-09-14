@@ -1,5 +1,8 @@
 config.php
 db.inc.php
+db.inc.php.*
+.env.*
+!.env.example
 .idea
 node_modules
 tweetie/config.php
