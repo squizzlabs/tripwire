@@ -34,7 +34,7 @@ $system = $_REQUEST['system'] ?? '';
 	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/jquery-ui-1.12.1.min.css?v=<?= VERSION ?>">
 	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/jquery-ui-custom.css?v=<?= VERSION ?>">
 	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/introjs.min.css?v=<?= VERSION ?>">
-	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/app.css?v=<?= VERSION ?>">
+	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/app.min.css?v=<?= VERSION ?>">
 <?php brand_head(); ?>
 
 	<title></title>
@@ -1195,7 +1195,7 @@ $system = $_REQUEST['system'] ?? '';
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/moment.min.js?v=<?= VERSION ?>"></script>
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/intro.min.js?v=<?= VERSION ?>"></script>
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/combine.js?v=<?= VERSION ?>"></script>
-	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/app.js?v=<?= VERSION ?>"></script>
+	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/app.min.js?v=<?= VERSION ?>"></script>
 	<!-- JS Includes -->
 </body>
 </html>
