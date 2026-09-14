@@ -37,46 +37,90 @@ tripwire.panels = (function() {
         return !p || p.defaultVisible !== false;
     }
 
-    // The three compact panels share one row and the chain spans another. The
-    // saved order therefore has two useful states for the chain: before or
-    // after the compact-panel row. Compact panels retain their own saved order.
-    // CSS grid honours `order` on its items, so no markup moves.
-    function order() {
-        var saved = store().order;
+    // Four slots: three horizontal compact slots and one full-width slot. Any
+    // panel can occupy any slot, and the full-width row can sit above or below
+    // the compact row. This preserves the useful 3+1 dashboard proportions
+    // without tying either axis to a particular panel.
+    function layout() {
+        var saved = store();
         var ids = PANELS.map(function(p) { return p.id; });
-        if (!Array.isArray(saved)) { return ids; }
-        var known = saved.filter(function(id) { return ids.indexOf(id) > -1; });
-        ids.forEach(function(id) { if (known.indexOf(id) < 0) { known.push(id); } });
-        var chainFirst = known[0] === "chainWidget";
-        var compact = known.filter(function(id) { return id !== "chainWidget"; });
-        return chainFirst ? ["chainWidget"].concat(compact) : compact.concat(["chainWidget"]);
+        var wide = ids.indexOf(saved.widePanel) > -1 ? saved.widePanel : "chainWidget";
+        var compact = Array.isArray(saved.compactOrder) ? saved.compactOrder.slice() : [];
+
+        // Migrate the earlier Chain-only ordering without changing its visual
+        // position. New saves use explicit slot fields.
+        if (!compact.length && Array.isArray(saved.order)) {
+            var old = saved.order.filter(function(id) { return ids.indexOf(id) > -1; });
+            compact = old.filter(function(id) { return id !== wide; });
+        }
+        ids.forEach(function(id) {
+            if (id !== wide && compact.indexOf(id) < 0) { compact.push(id); }
+        });
+        compact = compact.filter(function(id) { return id !== wide; }).slice(0, 3);
+
+        return {
+            wide: wide,
+            wideFirst: saved.layoutVersion === 2
+                ? !!saved.wideFirst
+                : Array.isArray(saved.order) && saved.order[0] === "chainWidget",
+            compact: compact
+        };
     }
 
-    function move(id, dir) {
-        var current = order();
-        var compact = current.filter(function(x) { return x !== "chainWidget"; });
+    function order() {
+        var current = layout();
+        return current.wideFirst
+            ? [current.wide].concat(current.compact)
+            : current.compact.concat([current.wide]);
+    }
 
-        // A full-width panel cannot sit between two compact panels without
-        // creating a mostly empty third row. Its arrows move the whole chain
-        // row above or below the compact row instead.
-        if (id === "chainWidget") {
-            store().order = dir < 0
-                ? ["chainWidget"].concat(compact)
-                : compact.concat(["chainWidget"]);
-            apply();
-            options.save();
-            return;
-        }
-
-        var i = compact.indexOf(id);
-        var j = i + dir;
-        if (i < 0 || j < 0 || j >= compact.length) { return; }
-        compact.splice(i, 1); compact.splice(j, 0, id);
-        store().order = current[0] === "chainWidget"
-            ? ["chainWidget"].concat(compact)
-            : compact.concat(["chainWidget"]);
+    function saveLayout(current) {
+        var saved = store();
+        saved.layoutVersion = 2;
+        saved.widePanel = current.wide;
+        saved.wideFirst = current.wideFirst;
+        saved.compactOrder = current.compact.slice();
+        // Keep this for older clients sharing the same account settings.
+        saved.order = current.wideFirst
+            ? [current.wide].concat(current.compact)
+            : current.compact.concat([current.wide]);
         apply();
         options.save();
+    }
+
+    function moveHorizontal(id, dir) {
+        var current = layout();
+        var i = current.compact.indexOf(id);
+        var j = i + dir;
+        if (i < 0 || j < 0 || j >= current.compact.length) { return; }
+        current.compact.splice(i, 1);
+        current.compact.splice(j, 0, id);
+        saveLayout(current);
+    }
+
+    function moveVertical(id, dir) {
+        var current = layout();
+        if (id === current.wide) {
+            if ((dir < 0) === current.wideFirst) { return; }
+            current.wideFirst = dir < 0;
+        } else {
+            // A compact panel crosses into the full-width row by swapping slots
+            // with its occupant. Only the arrow pointing at that row is active.
+            var towardWide = current.wideFirst ? -1 : 1;
+            var i = current.compact.indexOf(id);
+            if (i < 0 || dir !== towardWide) { return; }
+            current.compact[i] = current.wide;
+            current.wide = id;
+        }
+        saveLayout(current);
+    }
+
+    function canMove(id, axis, dir) {
+        var current = layout();
+        var i = current.compact.indexOf(id);
+        if (axis === "horizontal") { return i > -1 && i + dir >= 0 && i + dir < current.compact.length; }
+        if (id === current.wide) { return (dir < 0) !== current.wideFirst; }
+        return i > -1 && dir === (current.wideFirst ? -1 : 1);
     }
 
     function apply() {
@@ -84,6 +128,7 @@ tripwire.panels = (function() {
         PANELS.forEach(function(p) {
             var $w = $("#" + p.id);
             $w.toggleClass("panel-hidden", !isVisible(p.id));
+            $w.toggleClass("panel-wide", p.id === layout().wide);
             $w.css("order", ids.indexOf(p.id));
         });
     }
@@ -95,19 +140,6 @@ tripwire.panels = (function() {
     }
 
     function toggle(id) { setVisible(id, !isVisible(id)); }
-
-    // Directional names keep callers honest about what the responsive grid can
-    // actually do. Compact panels move horizontally within their shared row;
-    // the full-width Chain panel moves vertically above or below that row.
-    function moveHorizontal(id, dir) {
-        if (id === "chainWidget") { return; }
-        move(id, dir);
-    }
-
-    function moveVertical(id, dir) {
-        if (id !== "chainWidget") { return; }
-        move(id, dir);
-    }
 
     // Give each panel a titled header so it reads as a card rather than an
     // unlabelled box, and a control to put it away. Runs once; the title is
@@ -143,7 +175,8 @@ tripwire.panels = (function() {
         setVisible: setVisible,
         toggle: toggle,
         order: order,
-        move: move,
+        layout: layout,
+        canMove: canMove,
         moveHorizontal: moveHorizontal,
         moveVertical: moveVertical,
         apply: apply

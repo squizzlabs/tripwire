@@ -105,7 +105,7 @@
 	overflow: auto;
 }
 
-#chainWidget { grid-column: 1 / -1; }
+.gridWidget.panel-wide { grid-column: 1 / -1; }
 
 /* Resize handles belong to a grid that no longer exists. */
 .grid-resize { display: none !important; }

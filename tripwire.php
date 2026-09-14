@@ -755,7 +755,7 @@ $system = $_REQUEST['system'] ?? '';
 			<section class="settings-pane" data-pane="display" role="tabpanel" hidden>
 				<h4 class="field-group">Panels</h4>
 				<div class="field field-block">
-					<span class="field-label">Show and position <small>move compact panels left or right; move the full-width chain above or below them</small></span>
+					<span class="field-label">Show and position <small>move any panel left, right, up, or down; the panel in the wide row spans the dashboard</small></span>
 					<div class="field-value" id="panel-settings"></div>
 				</div>
 				<h4 class="field-group">Appearance</h4>

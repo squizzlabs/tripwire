@@ -137,7 +137,7 @@
 	#notesWidget      { min-height: 26vh; }
 
 	/* The chain is the reason you are here; give it the full width. */
-	#chainWidget {
+	.gridWidget.panel-wide {
 		grid-column: 1 / -1;
 		min-height: 46vh;
 	}
