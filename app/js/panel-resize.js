@@ -60,6 +60,8 @@ tripwire.panelResize = (function() {
 	function beginColumnDrag(leftPanel, rightPanel, event) {
 		event.preventDefault();
 		var el = grid();
+		var splitter = event.currentTarget;
+		var splitterStart = parseFloat(splitter.style.left) || 0;
 		var leftRect = leftPanel.getBoundingClientRect();
 		var rightRect = rightPanel.getBoundingClientRect();
 		var startX = event.clientX;
@@ -78,6 +80,10 @@ tripwire.panelResize = (function() {
 			saved.columnWeights[leftId] = leftWidth;
 			saved.columnWeights[rightId] = rightWidth;
 			applySavedSize();
+			// The splitter is absolutely positioned rather than part of the grid,
+			// so moving the tracks does not move it. Keep its hit area and visible
+			// rule attached to the boundary throughout the drag.
+			splitter.style.left = Math.round(splitterStart + leftWidth - leftRect.width) + "px";
 		}
 		function stop() {
 			document.removeEventListener("pointermove", move);
@@ -94,11 +100,28 @@ tripwire.panelResize = (function() {
 	function beginRowDrag(event) {
 		event.preventDefault();
 		var el = grid();
+		var splitter = event.currentTarget;
+		var splitterStart = parseFloat(splitter.style.top) || 0;
 		var rect = el.getBoundingClientRect();
+		var startY = event.clientY;
+		var firstRowBottom = rect.top;
+		var firstRowTop = Infinity;
+		Array.prototype.forEach.call(document.querySelectorAll(".gridWidget"), function(panel) {
+			if (getComputedStyle(panel).display === "none") { return; }
+			var panelRect = panel.getBoundingClientRect();
+			if (panelRect.top < firstRowTop - 1) {
+				firstRowTop = panelRect.top;
+				firstRowBottom = panelRect.bottom;
+			} else if (Math.abs(panelRect.top - firstRowTop) <= 1) {
+				firstRowBottom = Math.max(firstRowBottom, panelRect.bottom);
+			}
+		});
+		var startTopHeight = firstRowBottom - rect.top;
 		function move(e) {
-			var topHeight = Math.max(MIN_ROW, Math.min(rect.height - MIN_ROW, e.clientY - rect.top));
+			var topHeight = Math.max(MIN_ROW, Math.min(rect.height - MIN_ROW, startTopHeight + e.clientY - startY));
 			settings().rowRatio = topHeight / rect.height;
 			el.style.setProperty("--top-row", Math.round(topHeight) + "px");
+			splitter.style.top = Math.round(splitterStart + topHeight - startTopHeight) + "px";
 		}
 		function stop() {
 			document.removeEventListener("pointermove", move);

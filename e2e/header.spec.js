@@ -40,3 +40,26 @@ test("follow-my-system toggles on click, shows it, and survives a reload", async
 	await page.waitForTimeout(1500);
 	expect((await state()).active).toBe(before.active);
 });
+
+test("system filter closes on Escape and after choosing a suggestion", async ({ page }) => {
+	await ready(page);
+	const filter = page.locator("#searchSpan");
+	const input = filter.locator("input.systemsAutocomplete");
+
+	await page.locator("#hdr-system").click();
+	await expect(input).toBeVisible();
+	await expect(input).toBeFocused();
+	await page.keyboard.press("Escape");
+	await expect(filter).toBeHidden();
+	await expect(page.locator("#search")).not.toHaveClass(/active/);
+
+	await page.locator("#hdr-system").click();
+	await input.fill("Jit");
+	const suggestion = page.locator(".ui-autocomplete:visible li").filter({hasText: /^Jita/}).first();
+	await expect(suggestion).toBeVisible();
+	await suggestion.click();
+
+	await expect(page.locator("#hdr-system")).toHaveText("Jita");
+	await expect(filter).toBeHidden();
+	await expect(page.locator("#search")).not.toHaveClass(/active/);
+});

@@ -68,6 +68,7 @@ COPY .docker/all-in-one/app-config.php /opt/app/config.php
 COPY .docker/all-in-one/nginx.conf /etc/nginx/nginx.conf
 COPY .docker/all-in-one/site.conf /etc/nginx/sites-enabled/default
 COPY .docker/all-in-one/php.ini /etc/php/8.3/fpm/conf.d/99-tripwire.ini
+COPY .docker/all-in-one/php-fpm.conf /etc/php/8.3/fpm/pool.d/99-tripwire.conf
 COPY .docker/all-in-one/supervisord.conf /etc/supervisor/conf.d/tripwire.conf
 COPY .docker/all-in-one/entrypoint.sh /usr/local/bin/tripwire-entrypoint
 
