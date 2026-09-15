@@ -206,7 +206,7 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 	border: 1px solid var(--border);
 	border-radius: 3px;
 }
-.sig-chip.on { background: var(--muted); border-color: var(--border-strong); color: var(--foreground); }
+.sig-chip.on { background: var(--primary); border-color: var(--primary); color: var(--primary-foreground); }
 
 /* Primary action: orange fill, ink text; brighter on approach. */
 .controls .bar-btn.bar-primary:hover,

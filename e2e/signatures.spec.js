@@ -111,6 +111,44 @@ test.describe("the traps", () => {
 	test.beforeEach(async ({ page }) => { await login(page, SYSTEM); await removeSigsByPrefix(page, PREFIX); });
 	test.afterEach(async ({ page }) => { await removeSigsByPrefix(page, PREFIX).catch(() => {}); });
 
+	test("signature type filters are exclusive and All restores every row", async ({ page }) => {
+		await page.evaluate(() => {
+			tripwire.client.signatures = tripwire.client.signatures || {};
+			const fixtures = [
+				{id: "filter-combat", type: "combat", name: "Filter combat fixture"},
+				{id: "filter-relic", type: "relic", name: "Filter relic fixture"}
+			];
+			fixtures.forEach((signature) => {
+				tripwire.client.signatures[signature.id] = signature;
+				$("#sigTable tbody").append("<tr data-id='" + signature.id + "'><td>" + signature.name + "</td></tr>");
+			});
+			tripwire.sigFilter.apply();
+		});
+
+		const combat = page.locator("#sigTable tbody tr[data-id='filter-combat']");
+		const relic = page.locator("#sigTable tbody tr[data-id='filter-relic']");
+
+		await page.locator("[data-group-chip='combat']").click();
+		await expect(combat).toBeVisible();
+		await expect(relic).toBeHidden();
+		await expect(page.locator("[data-group-chip='combat']")).toHaveAttribute("aria-pressed", "true");
+
+		await page.locator("[data-group-chip='relic']").click();
+		await expect(combat).toBeHidden();
+		await expect(relic).toBeVisible();
+
+		await page.locator("[data-group-chip='all']").click();
+		await expect(combat).toBeVisible();
+		await expect(relic).toBeVisible();
+		await expect(page.locator("[data-group-chip='all']")).toHaveAttribute("aria-pressed", "true");
+
+		await page.evaluate(() => {
+			delete tripwire.client.signatures["filter-combat"];
+			delete tripwire.client.signatures["filter-relic"];
+			$("#sigTable tbody tr[data-id^='filter-']").remove();
+		});
+	});
+
 	test("the signature dialog remains inside the viewport when it expands", async ({ page }) => {
 		const viewport = { width: 800, height: 600 };
 		await page.setViewportSize(viewport);

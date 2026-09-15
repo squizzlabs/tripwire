@@ -207,17 +207,6 @@
 	background: color-mix(in oklab, var(--primary) 14%, transparent);
 }
 
-/* The scan cycle earns its own colours: scanned reads as settled, unscanned as
-   outstanding work. */
-.sig-chip.sig-scan[data-state="scanned"].on {
-	border-color: var(--data-good); color: var(--data-good);
-	background: color-mix(in oklab, var(--data-good) 14%, transparent);
-}
-.sig-chip.sig-scan[data-state="unscanned"].on {
-	border-color: var(--data-info); color: var(--data-info);
-	background: color-mix(in oklab, var(--data-info) 14%, transparent);
-}
-
 .sig-stats {
 	margin-left: auto;
 	color: var(--muted-foreground);

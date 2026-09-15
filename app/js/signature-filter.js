@@ -1,6 +1,6 @@
 // Signature filter bar, after Aperture's SignatureModule.
 //
-// Group chips, a scan-state cycle, and live counts above the signature table.
+// Single-choice group filters and live counts above the signature table.
 // Everything is derived from data Tripwire already holds -- signature type,
 // name, and the linked wormhole -- so this adds no schema and no requests.
 //
@@ -29,14 +29,22 @@ tripwire.sigFilter = (function() {
 	var state = load();
 	var $bar, $stats;
 
+	function validGroup(key) {
+		return key === "all" || GROUPS.some(function(group) { return group.key === key; });
+	}
+
 	function load() {
 		try {
 			var raw = JSON.parse(localStorage.getItem(STORE));
-			if (raw && Array.isArray(raw.groups)) {
-				return {groups: raw.groups.slice(), scan: raw.scan || "all"};
+			if (raw && validGroup(raw.group)) {
+				return {group: raw.group};
+			}
+			// Migrate the original multi-select state when it has one clear choice.
+			if (raw && Array.isArray(raw.groups) && raw.groups.length === 1 && validGroup(raw.groups[0])) {
+				return {group: raw.groups[0]};
 			}
 		} catch (e) { /* absent or corrupt -- fall through to defaults */ }
-		return {groups: [], scan: "all"};
+		return {group: "all"};
 	}
 
 	function save() {
@@ -92,12 +100,7 @@ tripwire.sigFilter = (function() {
 			       .attr("data-activity", ACTIVITY[group] || "")
 			       .toggleClass("sig-unscanned", !scanned);
 
-			var groupOk = !state.groups.length || state.groups.indexOf(group) > -1;
-			var scanOk = state.scan === "all" ||
-			             (state.scan === "scanned" && scanned) ||
-			             (state.scan === "unscanned" && !scanned);
-
-			$(this).toggleClass("sig-filtered", !(groupOk && scanOk));
+			$(this).toggleClass("sig-filtered", state.group !== "all" && state.group !== group);
 		});
 
 		if ($stats) {
@@ -109,23 +112,14 @@ tripwire.sigFilter = (function() {
 
 		if ($bar) {
 			$bar.find("[data-group-chip]").each(function() {
-				$(this).toggleClass("on", state.groups.indexOf($(this).attr("data-group-chip")) > -1);
+				var selected = state.group === $(this).attr("data-group-chip");
+				$(this).toggleClass("on", selected).attr("aria-pressed", selected ? "true" : "false");
 			});
-			$bar.find("[data-scan-chip]")
-				.attr("data-state", state.scan)
-				.text(state.scan === "all" ? "All" : state.scan === "scanned" ? "Scanned" : "Unscanned")
-				.toggleClass("on", state.scan !== "all");
 		}
 	}
 
-	function toggleGroup(key) {
-		var i = state.groups.indexOf(key);
-		if (i > -1) { state.groups.splice(i, 1); } else { state.groups.push(key); }
-		save(); apply();
-	}
-
-	function cycleScan() {
-		state.scan = state.scan === "all" ? "scanned" : state.scan === "scanned" ? "unscanned" : "all";
+	function selectGroup(key) {
+		state.group = validGroup(key) ? key : "all";
 		save(); apply();
 	}
 
@@ -140,15 +134,16 @@ tripwire.sigFilter = (function() {
 			$('<button type="button" class="sig-chip"></button>')
 				.attr("data-group-chip", g.key)
 				.text(g.label)
-				.on("click", function() { toggleGroup(g.key); })
+				.on("click", function() { selectGroup(g.key); })
 				.appendTo($chips);
 		});
 
-		$('<button type="button" class="sig-chip sig-scan"></button>')
-			.attr("data-scan-chip", "1")
-			.attr("title", "Cycle: all / scanned only / unscanned only")
-			.on("click", cycleScan)
-			.appendTo($bar);
+		$('<button type="button" class="sig-chip"></button>')
+			.attr("data-group-chip", "all")
+			.attr("title", "Show all signature types")
+			.text("All")
+			.on("click", function() { selectGroup("all"); })
+			.appendTo($chips);
 
 		$stats = $('<span class="sig-stats"></span>').appendTo($bar);
 

@@ -694,12 +694,6 @@ html, body {
 	border-color: var(--primary);
 	color: var(--primary-foreground);
 }
-.sig-chip.sig-scan[data-state="scanned"].on {
-	background: var(--data-good); border-color: var(--data-good); color: #1b1b1b;
-}
-.sig-chip.sig-scan[data-state="unscanned"].on {
-	background: var(--data-info); border-color: var(--data-info); color: #1b1b1b;
-}
 
 #dialog-signature .mini-selector:checked + label,
 #dialog-options input[type="radio"]:checked + label {
