@@ -71,8 +71,7 @@ class esi {
 	public function validateJWT($token) {
 		if ( $jwks = $this->getJWKS() ) {
 			JWT::$leeway = 60;
-			$algs = array_column( $jwks['keys'], 'alg' );
-			$jwt = JWT::decode($token, JWK::parseKeySet($jwks), $algs);
+			$jwt = JWT::decode($token, JWK::parseKeySet($jwks));
 			$url = parse_url(self::$loginUrl);
 			$issuer = array(
 				$url['host'],

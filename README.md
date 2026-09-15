@@ -57,13 +57,16 @@ What the refit changes, in one screen:
 Database connections now use the tracked `database.inc.php`. The old
 `db.inc.php` name remains ignored so it cannot block `git pull`, but Tripwire
 will return a migration-required error while that legacy file exists. Pull the
-update, run the migration helper, and rebuild:
+update and run the migration helper:
 
 ```bash
 git pull
 php scripts/migrate-db-config.php
-docker compose up -d --build
 ```
+
+After migrating, rebuild whichever environment is actually in use: follow
+**Production: standalone cron container** for the production scheduler, or
+**Local testing: complete Docker environment** for the local all-in-one image.
 
 The helper reads the standard legacy PDO configuration without executing it,
 writes these settings into `.env`, and preserves the old file as
@@ -82,7 +85,7 @@ values into `.env` manually and move `db.inc.php` aside. If its PDO connection
 has no port, use `3306`. Keep the ignored backup until the site and
 `tripwire-cron` have both connected successfully.
 
-### Setup guide for Linux  
+### Production web application setup on Linux
 
 **Requirements:**  
 
@@ -91,9 +94,10 @@ has no port, use `3306`. Keep the ignored backup until the site and
 - MySQL (or some flavor of MySQL - needed because database EVENTS)
 - A my.cnf MySQL config file example is located in `.docker/mysql/my.cnf`
 - The `sql_mode` and `event_scheduler` my.cnf lines are important, make sure you have them in your my.cnf file & reboot MySQL
-- Node.js 24 for scheduled backend jobs
+- Docker for the production cron container (or Node.js 24 if running it without
+  Docker)
 
-**Setup: (Bare Metal, for docker see below)** 
+**Web application setup (bare metal)**
 
 - Create a `tripwire` database using the export located in `.docker/mysql/tripwire.sql`
 - For development: create an EVE dump database, define it's name later in `config.php`. Download from: https://www.fuzzwork.co.uk/dump/ To download the latest use the following link: https://www.fuzzwork.co.uk/dump/mysql-latest.tar.bz2. You do not need a copy of the SDE to run Tripwire (since 1.21).
@@ -115,12 +119,102 @@ has no port, use `3306`. Keep the ignored backup until the site and
   esi-search.search_structures.v1
 - Settings go in the `config.php` file
 - Modify your web server to serve Tripwire from the `tripwire/public` folder so files such as `config.php` and `database.inc.php` are not accessible via URL
-- Start the Node scheduler with `cd cron && npm ci && npm start`. Its database connection is configured with `MYSQL_USER`, `MYSQL_PASSWORD`, and optional `DB_HOST`, `DB_PORT`, and `MYSQL_DATABASE` environment variables.
+- Set up the production scheduler using **Production: standalone cron
+  container** below.
 - If you are using SELinux: Tripwire needs access to the 'cache' directory inside the deployment directory, usually /var/www/tripwire. You need to make this a write-access directory via SELinux labelling: `semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/tripwire/cache(/.*)?"` - then relabel the directory `restorecon -R -v /var/www/tripwire`
 
+### Production: standalone cron container
 
+Production keeps the existing web server, PHP, and MySQL installation. Only the
+Node scheduler runs in Docker, using `.docker/cron/Dockerfile`. These commands
+do not use Docker Compose and do not start another web server or database.
 
-### Setup guide for Docker  
+Run them from the Tripwire checkout containing `.docker/`, `cron/`, and `.env`:
+
+```sh
+cd /var/www/tw.whpd.space
+docker build --file .docker/cron/Dockerfile --tag tripwire-cron:local .
+docker run --detach \
+  --name tripwire-cron \
+  --init \
+  --restart unless-stopped \
+  --network host \
+  --env-file .env \
+  -e DB_HOST=127.0.0.1 \
+  -e CRON_TIMEZONE=UTC \
+  tripwire-cron:local
+```
+
+Host networking allows the container to reach the production MySQL server on
+the host. The explicit `DB_HOST` overrides `DB_HOST=mysql` if it remains in
+`.env`. The database must already be initialized, and `.env` must contain the
+correct `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`, and `DB_PORT` values.
+
+Verify that the scheduler is running and connected:
+
+```sh
+docker ps --filter name=tripwire-cron
+docker logs --follow tripwire-cron
+```
+
+Run a job manually:
+
+```sh
+docker exec tripwire-cron npm run job -- system-activity
+docker exec tripwire-cron npm run job -- account-update
+docker exec tripwire-cron npm run job -- system-activity-prune --dry-run
+```
+
+The scheduler runs `system-activity` hourly, `account-update` every three
+minutes, and `system-activity-prune` daily at 04:17 UTC. See
+[cron/README.md](cron/README.md) for updates and troubleshooting.
+
+### Local testing: complete Docker environment
+
+The root `Dockerfile` is a self-contained local test environment: Nginx,
+PHP-FPM, MySQL, the schema/migrations, Composer packages, compiled browser
+assets, and the Node scheduler are all included. It is separate from the
+production cron container. Build and run it without any external volumes:
+
+```bash
+docker build -t tripwire .
+docker run -d --name tripwire \
+  -p 8080:80 \
+  --restart unless-stopped \
+  tripwire
+```
+
+Open `http://localhost:8080`. The internal database is initialized on first
+boot and upgraded on later boots. It is bound only to container loopback and
+stored in the container itself. Removing the container also removes its data;
+stopping and restarting the same container preserves it.
+
+For EVE registration and sign-in, pass the credentials and callback registered
+at EVE Developers:
+
+```bash
+docker run -d --name tripwire \
+  -p 8080:80 \
+  --restart unless-stopped \
+  -e EVE_SSO_CLIENT='your-client-id' \
+  -e EVE_SSO_SECRET='your-secret' \
+  -e EVE_SSO_REDIRECT='https://tripwire.example.com/index.php?mode=sso' \
+  -e TRIPWIRE_DOMAIN='tripwire.example.com' \
+  tripwire
+```
+
+Optional settings include `TRIPWIRE_BRAND`, `TRIPWIRE_APP_NAME`,
+`TRIPWIRE_USER_AGENT`, and `MYSQL_PASSWORD`. The defaults are usable as-is
+because MySQL is not exposed outside the container. The existing `TRDOMAIN`,
+`SSO_CLIENT`, `SSO_SECRET`, and `ADM_EMAIL` names are accepted too, so the run
+command can use `--env-file .env` with the repository's current environment
+file format.
+
+### Multi-container Docker Compose deployment
+
+This is an alternative full deployment using separate containers and automatic
+TLS through Traefik. It is not required for either the all-in-one local test
+container or the standalone production cron container.
 
 - Install Docker for your environment: https://www.docker.com/
 - Setup Developer application on Eve developers
@@ -186,18 +280,7 @@ touch traefik-data/acme.json
 chmod 600 traefik-data/acme.json
 ```
 
-**SCHEDULED JOBS**
-
-The `tripwire-cron` service starts automatically with Docker Compose. It runs
-the activity collector hourly, account refresh every three minutes, and the
-activity retention sweep daily at 04:17 UTC. Follow it with
-`docker compose logs -f tripwire-cron`.
-
-Run a job manually with `docker exec tripwire-cron npm run job -- <job-name>`.
-The available names are `system-activity`, `account-update`, and
-`system-activity-prune`; append `--dry-run` to preview the prune job.
-
-**DOCKER BUILD**
+**COMPOSE BUILD**
 
 To start the stack run `docker compose up -d --build`
 To view logs in real time run `docker compose logs -f`

@@ -62,7 +62,7 @@ $system = $_REQUEST['system'] ?? '';
 		</span>
 		<span class="align-right hdr-right">
 			<span id="login">
-				<h3><a id="user" href=""><img id="user-avatar" class="avatar" alt="" src="https://images.evetech.net/characters/<?= htmlspecialchars($_SESSION['characterID'], ENT_QUOTES, 'UTF-8') ?>/portrait?size=128" /><span class="hdr-pilot"><span id="user-no-track"><?= htmlspecialchars($_SESSION['characterName'], ENT_QUOTES, 'UTF-8') ?></span><span id="user-track" style="display:none"><i data-icon="follow" data-tooltip="Tracking"></i><span id="user-track-name">...</span></span><span class="hdr-line2"><span id="hdr-ship" class="hdr-ship hidden" data-tooltip="What your tracked character is flying"></span><span class="hdr-mask"><a href="#" id="mask-menu-link" data-tooltip="Current mask"><span id="mask">(???)</span></a></span></span></span></a></h3>
+				<h3><a id="user" href=""><span class="hdr-pilot"><span id="user-no-track"><?= htmlspecialchars($_SESSION['characterName'], ENT_QUOTES, 'UTF-8') ?></span><span id="user-track" style="display:none"><span id="user-track-name">...</span><i data-icon="follow" data-tooltip="Tracking"></i></span><span class="hdr-line2"><span id="hdr-ship" class="hdr-ship hidden" data-tooltip="What your tracked character is flying"></span></span></span><img id="user-avatar" class="avatar" alt="" src="https://images.evetech.net/characters/<?= htmlspecialchars($_SESSION['characterID'], ENT_QUOTES, 'UTF-8') ?>/portrait?size=128" /></a></h3>
 				<div id="panel">
 					<div id="content" class="dialog-like">
 						<div class="triangle"></div>
@@ -128,7 +128,7 @@ $system = $_REQUEST['system'] ?? '';
 					</div>
 				</div>
 			</span>
-			<div id="mask-menu" class="toggle-panel" style="right: 68px; top:34px; display:none">
+			<div id="mask-menu" class="toggle-panel" style="display:none">
 				<div class="triangle"></div>
 				<div id="mask-menu-mask-list"></div>
 				<hr class="bar" />
@@ -137,8 +137,11 @@ $system = $_REQUEST['system'] ?? '';
 			</div>
 
 			<span class="hdr-tools">
-				<button id="theme-toggle" class="themebtn" type="button" aria-label="Switch to light" title="Switch to light">&#9788;</button>
-				<i id="settings" data-icon="settings" class="options" data-tooltip="Settings"></i>
+				<span class="hdr-tool-buttons">
+					<button id="theme-toggle" class="themebtn" type="button" aria-label="Switch to light" title="Switch to light">&#9788;</button>
+					<i id="settings" data-icon="settings" class="options" data-tooltip="Settings"></i>
+				</span>
+				<span class="hdr-mask"><a href="#" id="mask-menu-link" data-tooltip="Current mask"><span id="mask">(???)</span></a></span>
 			</span>
 		</span>
 	</div>

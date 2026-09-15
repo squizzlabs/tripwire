@@ -258,8 +258,8 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 /* ── The letterhead ──────────────────────────────────────────────────────
    Three zones. Left: the system you are viewing, large, with your own
    location and the search beneath it. Centre: the corp's mark and
-   wordmark. Right: you -- a portrait you can actually make out, name and
-   mask beside it, then the two tools. The app's own name lives in the
+   wordmark. Right: you -- name and ship followed by the portrait, then the
+   tools with the current mask beneath them. The app's own name lives in the
    footer with its version; the header is the corp's. */
 #topbar {
 	display: grid;
@@ -331,7 +331,11 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 	color: var(--muted-foreground); text-decoration: none;
 }
 #topbar .hdr-mask a:hover, #topbar .hdr-mask a:hover #mask { color: var(--foreground); }
-#topbar .hdr-tools { display: flex; align-items: center; gap: 4px; margin-left: 4px; padding-left: 14px; border-left: 1px solid var(--border-soft); }
+#topbar .hdr-tools {
+	display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 4px;
+	margin-left: 4px; padding-left: 14px; border-left: 1px solid var(--border-soft);
+}
+#topbar .hdr-tool-buttons { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
 #topbar .hdr-tools i { color: var(--muted-foreground); cursor: pointer; }
 #topbar .hdr-tools i:hover { color: var(--foreground); }
 #topbar .hdr-tools [data-icon]::before { font-size: 18px; }
