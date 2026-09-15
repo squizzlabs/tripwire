@@ -4,6 +4,8 @@ config.php
 db.inc.php*
 node_modules
 **/node_modules
+vendor
+composer.phar
 test-results
 playwright-report
 e2e/.auth

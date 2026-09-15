@@ -61,8 +61,14 @@ update and run the migration helper:
 
 ```bash
 git pull
+composer install --no-dev --prefer-dist --optimize-autoloader
 php scripts/migrate-db-config.php
 ```
+
+Composer dependencies are generated from the committed `composer.lock`; the
+`vendor/` directory is deliberately not stored in Git. Use `composer install`
+after each pull that changes `composer.lock`. Do not run `composer update` on a
+production checkout.
 
 After migrating, rebuild whichever environment is actually in use: follow
 **Production: standalone cron container** for the production scheduler, or
@@ -89,7 +95,8 @@ has no port, use `3306`. Keep the ignored backup until the site and
 
 **Requirements:**  
 
-- PHP7+ (older requires polyfill for public/login.php as documented in that file)
+- PHP 8.0 or newer
+- Composer 2
 - php-mbstring must be installed
 - MySQL (or some flavor of MySQL - needed because database EVENTS)
 - A my.cnf MySQL config file example is located in `.docker/mysql/my.cnf`
@@ -102,6 +109,9 @@ has no port, use `3306`. Keep the ignored backup until the site and
 - Create a `tripwire` database using the export located in `.docker/mysql/tripwire.sql`
 - For development: create an EVE dump database, define it's name later in `config.php`. Download from: https://www.fuzzwork.co.uk/dump/ To download the latest use the following link: https://www.fuzzwork.co.uk/dump/mysql-latest.tar.bz2. You do not need a copy of the SDE to run Tripwire (since 1.21).
 - Clone the Tripwire repo to where you are going to serve to the public OR manually download repo and copy files yourself
+- Install the locked PHP dependencies with
+  `composer install --no-dev --prefer-dist --optimize-autoloader`. Composer
+  creates the ignored `vendor/` directory; it is not part of the repository.
 - Copy `.env.example` to `.env` and set `DB_HOST`, `DB_PORT`,
   `MYSQL_DATABASE`, `MYSQL_USER`, and `MYSQL_PASSWORD`. Process-manager
   environment variables can override the file when needed.
@@ -246,6 +256,8 @@ Once complete, your tripwire instance will be up and running.
 
 - Copy config.example.php to config.php
 `cp config.example.php config.php`
+- Docker Compose installs the locked PHP dependencies into the ignored
+  `vendor/` directory before starting PHP-FPM.
 - Configure database and deployment values in `.env`, and application settings in `config.php`
 - Prep traefik acme file
 

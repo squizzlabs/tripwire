@@ -5,6 +5,8 @@ db.inc.php.*
 !.env.example
 .idea
 node_modules
+vendor/
+composer.phar
 tweetie/config.php
 .env
 backup.sql

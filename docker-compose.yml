@@ -1,5 +1,21 @@
 services:
   #################################################################
+  # COMPOSER DEPENDENCIES
+  #################################################################
+  composer:
+    image: composer:2
+    working_dir: /opt/app
+    command:
+      - install
+      - --no-dev
+      - --no-interaction
+      - --no-progress
+      - --prefer-dist
+      - --optimize-autoloader
+    volumes:
+      - "./:/opt/app"
+
+  #################################################################
   # TRAEFIK SERVICE
   #################################################################
   traefik:
@@ -60,6 +76,9 @@ services:
   php-fpm:
     build: .docker/php-fpm
     container_name: php-fpm
+    depends_on:
+      composer:
+        condition: service_completed_successfully
     networks:
       - tripwire
     environment:
