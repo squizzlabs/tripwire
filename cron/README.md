@@ -11,12 +11,12 @@ minutes, and the activity retention sweep daily at 04:17 UTC.
 ## Build
 
 Docker Compose is not required. Run every build command from the Tripwire
-repository root, not from this `cron/` directory. The build context must contain
-`.docker/cron/Dockerfile` and `cron/`.
+repository root. The production image is self-contained in `cron/`; use that
+directory as the Docker build context.
 
 ```sh
 cd /var/www/tw.whpd.space
-docker build --file .docker/cron/Dockerfile --tag tripwire-cron:local .
+docker build --file cron/Dockerfile --tag tripwire-cron:local cron
 ```
 
 ## Run in production
@@ -65,7 +65,7 @@ Build the new image before stopping the current scheduler:
 
 ```sh
 cd /var/www/tw.whpd.space
-docker build --file .docker/cron/Dockerfile --tag tripwire-cron:local .
+docker build --file cron/Dockerfile --tag tripwire-cron:local cron
 docker stop tripwire-cron
 docker rm tripwire-cron
 ```

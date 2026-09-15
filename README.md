@@ -126,14 +126,14 @@ has no port, use `3306`. Keep the ignored backup until the site and
 ### Production: standalone cron container
 
 Production keeps the existing web server, PHP, and MySQL installation. Only the
-Node scheduler runs in Docker, using `.docker/cron/Dockerfile`. These commands
+Node scheduler runs in Docker, using `cron/Dockerfile`. These commands
 do not use Docker Compose and do not start another web server or database.
 
-Run them from the Tripwire checkout containing `.docker/`, `cron/`, and `.env`:
+Run them from the Tripwire checkout containing `cron/` and `.env`:
 
 ```sh
 cd /var/www/tw.whpd.space
-docker build --file .docker/cron/Dockerfile --tag tripwire-cron:local .
+docker build --file cron/Dockerfile --tag tripwire-cron:local cron
 docker run --detach \
   --name tripwire-cron \
   --init \

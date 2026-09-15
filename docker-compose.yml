@@ -76,8 +76,8 @@ services:
   #################################################################
   tripwire-cron:
     build:
-      context: .
-      dockerfile: .docker/cron/Dockerfile
+      context: cron
+      dockerfile: Dockerfile
     container_name: tripwire-cron
     init: true
     restart: unless-stopped
