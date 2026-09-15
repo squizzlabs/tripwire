@@ -181,44 +181,91 @@ minutes, and `system-activity-prune` daily at 04:17 UTC. See
 
 ### Local testing: complete Docker environment
 
-The root `Dockerfile` is a self-contained local test environment: Nginx,
-PHP-FPM, MySQL, the schema/migrations, Composer packages, compiled browser
-assets, and the Node scheduler are all included. It is separate from the
-production cron container. Build and run it without any external volumes:
+The root `Dockerfile` is a complete local environment: Nginx, PHP-FPM, MySQL,
+the schema/migrations, Composer packages, compiled browser assets, and the Node
+scheduler are all included. It is separate from the production cron container.
+
+For day-to-day development, use `scripts/local-dev.sh`. The database lives in
+the named volume `tripwire-local-db`, so removing or rebuilding the application
+container does not remove its data. The checkout is mounted into the container:
+PHP/template changes appear on refresh, while a second container automatically
+rebuilds the browser JavaScript and CSS after a source file is saved. The script
+uses `sudo docker`; it never removes the database volume.
+
+The first start builds the images:
 
 ```bash
-docker build -t tripwire .
-docker run -d --name tripwire \
-  -p 8080:80 \
-  --restart unless-stopped \
-  tripwire
+scripts/local-dev.sh build
+scripts/local-dev.sh up
 ```
 
-Open `http://localhost:8080`. The internal database is initialized on first
-boot and upgraded on later boots. It is bound only to container loopback and
-stored in the container itself. Removing the container also removes its data;
-stopping and restarting the same container preserves it.
-
-For EVE registration and sign-in, pass the credentials and callback registered
-at EVE Developers:
+After that, start and stop it without rebuilding:
 
 ```bash
-docker run -d --name tripwire \
-  -p 8080:80 \
-  --restart unless-stopped \
-  -e EVE_SSO_CLIENT='your-client-id' \
-  -e EVE_SSO_SECRET='your-secret' \
-  -e EVE_SSO_REDIRECT='https://tripwire.example.com/index.php?mode=sso' \
-  -e TRIPWIRE_DOMAIN='tripwire.example.com' \
-  tripwire
+scripts/local-dev.sh up
+scripts/local-dev.sh down
+```
+
+Open `http://localhost:8080`. Check both containers or follow their logs with:
+
+```bash
+scripts/local-dev.sh status
+sudo docker logs --follow tripwire
+sudo docker logs --follow tripwire-assets
+```
+
+A rebuild is only needed after changing `Dockerfile`, `composer.lock`, either
+`package-lock.json`, or `scripts/local-dev.sh`:
+
+```bash
+scripts/local-dev.sh build
+scripts/local-dev.sh restart
+```
+
+Both `down` and `restart` preserve the database. To deliberately reset it, stop
+the environment and explicitly remove `tripwire-local-db`; that destructive
+operation is intentionally not part of the helper.
+
+#### Keep the database from an existing all-in-one container
+
+If a container named `tripwire` already contains data you want, make a logical
+backup before switching. The helper refuses to replace a container whose
+database is not already on `tripwire-local-db`.
+
+```bash
+sudo docker exec tripwire \
+  mysqldump --protocol=socket --user=root --single-transaction \
+  --routines --events --triggers tripwire_database \
+  > /tmp/tripwire-local-backup.sql
+sudo docker stop tripwire
+sudo docker rename tripwire tripwire-before-local-dev
+scripts/local-dev.sh build
+scripts/local-dev.sh up
+until sudo docker exec tripwire mysqladmin --protocol=socket --user=root --silent ping; do sleep 1; done
+sudo docker exec --interactive tripwire \
+  mysql --protocol=socket --user=root tripwire_database \
+  < /tmp/tripwire-local-backup.sql
+```
+
+Once the new instance has started and its data is present, the renamed old
+container is only a backup and can be removed when no longer needed.
+
+For EVE registration and sign-in, put the credentials and callback registered
+at EVE Developers in `.env`. The helper passes that file at runtime; `.env` is
+excluded from image builds so secrets are never baked into an image:
+
+```dotenv
+EVE_SSO_CLIENT=your-client-id
+EVE_SSO_SECRET=your-secret
+EVE_SSO_REDIRECT=http://localhost:8080/index.php?mode=sso
+TRIPWIRE_DOMAIN=localhost:8080
 ```
 
 Optional settings include `TRIPWIRE_BRAND`, `TRIPWIRE_APP_NAME`,
 `TRIPWIRE_USER_AGENT`, and `MYSQL_PASSWORD`. The defaults are usable as-is
 because MySQL is not exposed outside the container. The existing `TRDOMAIN`,
-`SSO_CLIENT`, `SSO_SECRET`, and `ADM_EMAIL` names are accepted too, so the run
-command can use `--env-file .env` with the repository's current environment
-file format.
+`SSO_CLIENT`, `SSO_SECRET`, and `ADM_EMAIL` names are accepted too, so the
+repository's existing `.env` format continues to work.
 
 ### Multi-container Docker Compose deployment
 

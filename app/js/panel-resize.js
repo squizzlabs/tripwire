@@ -81,8 +81,8 @@ tripwire.panelResize = (function() {
 			saved.columnWeights[rightId] = rightWidth;
 			applySavedSize();
 			// The splitter is absolutely positioned rather than part of the grid,
-			// so moving the tracks does not move it. Keep its hit area and visible
-			// rule attached to the boundary throughout the drag.
+			// so moving the tracks does not move it. Keep its hit area attached to
+			// the boundary throughout the drag.
 			splitter.style.left = Math.round(splitterStart + leftWidth - leftRect.width) + "px";
 		}
 		function stop() {

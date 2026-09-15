@@ -115,3 +115,12 @@ gulp.task('test', cb => {
 	gulp.src(['app/js-test/**/*.js']).pipe(mocha());
 	cb();
 });
+
+// Local Compose serves public/ from the checkout. Build once when the watcher
+// starts, then keep the browser bundles current as source files change.
+gulp.task('watch-files', function() {
+	gulp.watch('app/js/**/*.js', gulp.series('js'));
+	gulp.watch('app/css/**/*.css', gulp.series('css'));
+});
+
+gulp.task('watch', gulp.series(gulp.parallel('js', 'css'), 'watch-files'));
