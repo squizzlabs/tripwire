@@ -157,9 +157,14 @@
   outline-offset: 1px;
 }
 
-/* Selected signature rows read as "this is what you are acting on". */
-#sigTable tbody tr.selected td {
+/* Selected signature rows read as "this is what you are acting on".
+   Paint the row itself so the highlight remains one continuous band across
+   cell gutters and empty cells. */
+#sigTable tbody tr.selected {
   background: var(--accent-dim);
+}
+#sigTable tbody tr.selected > td {
+  background: transparent;
 }
 
 /* ============================================================================
