@@ -21,6 +21,7 @@ if(!isset($_SESSION['userID'])) {
 
 require_once('../config.php');
 require_once('../database.inc.php');
+require_once('../note-html.inc.php');
 
 header('Content-Type: application/json');
 
@@ -34,6 +35,7 @@ $mode = 		isset($_REQUEST['mode']) ? $_REQUEST['mode'] : null;
 $output = 		null;
 
 if ($mode == 'save') {
+	$comment = sanitizeNoteHtml($comment);
 	$query = 'INSERT INTO comments (id, systemID, comment, created, createdByID, createdByName, modifiedByID, modifiedByName, maskID)
 				VALUES (:commentID, :systemID, :comment, NOW(), :createdByID, :createdByName, :modifiedByID, :modifiedByName, :maskID)
 				ON DUPLICATE KEY UPDATE

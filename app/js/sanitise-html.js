@@ -51,9 +51,29 @@ var sanitiseHtml = (function() {
 	// style is kept because notes use colour, but anything that can fetch or
 	// execute from within CSS is removed.
 	var UNSAFE_CSS = /(?:expression|javascript:|vbscript:|url\s*\(|@import|behaviou?r\s*:|-moz-binding)/i;
+	var SAFE_STYLES = {
+		color: /^(?:#[0-9a-f]{3,8}|(?:rgb|hsl)a?\([0-9.,%\s+-]+\)|[a-z]+)$/i,
+		'background-color': /^(?:#[0-9a-f]{3,8}|(?:rgb|hsl)a?\([0-9.,%\s+-]+\)|[a-z]+)$/i,
+		'text-align': /^(?:left|right|center|justify|start|end)$/i,
+		'font-weight': /^(?:normal|bold|bolder|lighter|[1-9]00)$/i,
+		'font-style': /^(?:normal|italic|oblique)$/i,
+		'text-decoration': /^(?:(?:none|underline|overline|line-through)\s*)+$/i
+	};
 
 	function cleanStyle(value) {
-		return UNSAFE_CSS.test(value) ? null : value;
+		if (UNSAFE_CSS.test(value)) { return null; }
+
+		var declarations = [];
+		value.split(';').forEach(function(declaration) {
+			var colon = declaration.indexOf(':');
+			if (colon < 1) { return; }
+			var property = declaration.slice(0, colon).trim().toLowerCase();
+			var propertyValue = declaration.slice(colon + 1).trim();
+			if (SAFE_STYLES[property] && SAFE_STYLES[property].test(propertyValue)) {
+				declarations.push(property + ': ' + propertyValue);
+			}
+		});
+		return declarations.length ? declarations.join('; ') : null;
 	}
 
 	function cleanNode(node) {
@@ -62,6 +82,17 @@ var sanitiseHtml = (function() {
 		if (node.nodeType !== 1) { return; }
 
 		var tag = node.tagName.toLowerCase();
+
+		// Clean descendants before possibly unwrapping this element. Cleaning
+		// only the original top-level list lets a forbidden wrapper smuggle an
+		// unvisited child into the result, for example:
+		//
+		//     <section><img src=x onerror=alert(1)></section>
+		//
+		// Once section is removed, that img is a top-level node and would retain
+		// its event handler. Recursing first ensures every surviving descendant
+		// has passed the attribute allowlist.
+		Array.prototype.slice.call(node.childNodes).forEach(cleanNode);
 
 		if (!ALLOWED_TAGS[tag]) {
 			// Keep the text, lose the element -- so stripping <script> does not
@@ -88,6 +119,7 @@ var sanitiseHtml = (function() {
 			if (name === 'style') {
 				var safe = cleanStyle(value);
 				if (safe === null) { node.removeAttribute(attr.name); return; }
+				node.setAttribute('style', safe);
 			}
 		});
 
@@ -96,7 +128,6 @@ var sanitiseHtml = (function() {
 			node.setAttribute('rel', 'noopener noreferrer');
 		}
 
-		Array.prototype.slice.call(node.childNodes).forEach(cleanNode);
 	}
 
 	return function sanitiseHtml(html) {
