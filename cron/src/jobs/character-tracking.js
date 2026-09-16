@@ -40,6 +40,22 @@ function automapEnabled(options, characterId) {
   );
 }
 
+function logChange(logger, event, details) {
+  logger.info?.(`[character-tracking] ${event} ${JSON.stringify(details)}`);
+}
+
+function characterDetails(row) {
+  return {
+    characterID: Number(row.characterID),
+    characterName: row.characterName,
+  };
+}
+
+function sameId(left, right) {
+  if (left == null || right == null) return left == null && right == null;
+  return String(left) === String(right);
+}
+
 async function claim(database, column, row, cutoff, now) {
   const allowed = new Set(['onlineCheckedAt', 'locationCheckedAt']);
   if (!allowed.has(column)) throw new Error(`Invalid tracking claim column ${column}`);
@@ -140,10 +156,16 @@ export async function trackCharacters({
     `SELECT e.userID, e.characterID, e.characterName, e.accessToken,
             e.refreshToken, e.tokenExpire, e.online, e.onlineCheckedAt,
             e.locationCheckedAt, e.locationObservedAt,
-            e.lastLocationSystemID, c.corporationID, p.options
+            e.lastLocationSystemID, c.corporationID, p.options,
+            t.characterID AS trackedCharacterID,
+            t.shipID AS trackedShipID, t.shipName AS trackedShipName,
+            t.shipTypeID AS trackedShipTypeID,
+            t.shipTypeName AS trackedShipTypeName
        FROM esi e
        INNER JOIN characters c ON c.userID = e.userID
        LEFT JOIN preferences p ON p.userID = e.userID
+       LEFT JOIN tracking t
+         ON t.userID = e.userID AND t.characterID = e.characterID
       WHERE e.lastActive >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 4 HOUR)`,
   );
 
@@ -174,6 +196,11 @@ export async function trackCharacters({
             'UPDATE esi SET online = ? WHERE userID = ? AND characterID = ?',
             [online ? 1 : 0, row.userID, row.characterID],
           );
+          if (online !== Boolean(row.online)) {
+            logChange(logger, online ? 'character online' : 'character offline', {
+              ...characterDetails(row),
+            });
+          }
           if (!online) {
             await database.execute(
               'DELETE FROM tracking WHERE userID = ? AND characterID = ?',
@@ -209,6 +236,36 @@ export async function trackCharacters({
       const changed = previousSystemId && previousSystemId !== location.solar_system_id;
 
       if (changed) {
+        const previousSystem = staticData.system(previousSystemId);
+        logChange(logger, 'system changed', {
+          ...characterDetails(row),
+          fromSystemID: previousSystemId,
+          fromSystemName: previousSystem?.name || String(previousSystemId),
+          toSystemID: location.solar_system_id,
+          toSystemName: system.name,
+        });
+      }
+
+      const hasTrackedShip = row.trackedCharacterID != null;
+      const shipChanged = hasTrackedShip && (
+        !sameId(row.trackedShipID, ship?.ship_item_id) ||
+        !sameId(row.trackedShipTypeID, ship?.ship_type_id)
+      );
+      if (shipChanged) {
+        logChange(logger, 'ship changed', {
+          ...characterDetails(row),
+          fromShipID: row.trackedShipID ?? null,
+          fromShipName: row.trackedShipName ?? null,
+          fromShipTypeID: row.trackedShipTypeID ?? null,
+          fromShipTypeName: row.trackedShipTypeName ?? null,
+          toShipID: ship?.ship_item_id ?? null,
+          toShipName: ship?.ship_name ?? null,
+          toShipTypeID: ship?.ship_type_id ?? null,
+          toShipTypeName: staticData.shipTypeName(ship?.ship_type_id) ?? null,
+        });
+      }
+
+      if (changed) {
         result.transitions += 1;
         if (
           gap <= AUTOMAP_MAX_GAP_MS &&
@@ -226,7 +283,17 @@ export async function trackCharacters({
             ship,
             observedAt,
           });
-          if (mapped) result.automapped += 1;
+          if (mapped) {
+            result.automapped += 1;
+            logChange(logger, 'connection mapped', {
+              ...characterDetails(row),
+              maskID: maskId,
+              fromSystemID: previousSystemId,
+              fromSystemName: staticData.system(previousSystemId)?.name || String(previousSystemId),
+              toSystemID: location.solar_system_id,
+              toSystemName: system.name,
+            });
+          }
         }
       }
 

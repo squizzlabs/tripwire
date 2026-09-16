@@ -7,6 +7,7 @@ import {
   ONLINE_INTERVAL_MS,
   trackCharacters,
 } from '../src/jobs/character-tracking.js';
+import { jobs } from '../src/jobs.js';
 
 function row(overrides = {}) {
   return {
@@ -63,6 +64,7 @@ test('tracking intervals and transition gap constants match the ESI policy', () 
 test('online characters are location-polled and a fresh transition is automapped', async () => {
   const database = databaseFor([row()]);
   const automaps = [];
+  const messages = [];
   const esi = {
     getOnline: () => assert.fail('online cache is not due'),
     getLocation: async () => ({ solar_system_id: 31000005 }),
@@ -78,7 +80,7 @@ test('online characters are location-polled and a fresh transition is automapped
       automaps.push(transition);
       return true;
     },
-    logger: { error: assert.fail },
+    logger: { info: (message) => messages.push(message), error: assert.fail },
   });
 
   assert.equal(result.locationChecks, 1);
@@ -87,6 +89,60 @@ test('online characters are location-polled and a fresh transition is automapped
   assert.equal(result.errors, 0);
   assert.equal(automaps[0].fromSystemId, 30000142);
   assert.equal(automaps[0].toSystemId, 31000005);
+  assert.match(messages[0], /^\[character-tracking\] system changed /);
+  assert.match(messages[0], /"fromSystemID":30000142/);
+  assert.match(messages[1], /^\[character-tracking\] connection mapped /);
+});
+
+test('ship changes are logged with the previous and current ship', async () => {
+  const database = databaseFor([row({
+    lastLocationSystemID: 31000005,
+    trackedCharacterID: 9001,
+    trackedShipID: '99',
+    trackedShipName: 'Old Ship',
+    trackedShipTypeID: 11176,
+    trackedShipTypeName: 'Crow',
+  })]);
+  const messages = [];
+
+  await trackCharacters({
+    database,
+    staticData,
+    esi: {
+      getLocation: async () => ({ solar_system_id: 31000005 }),
+      getShip: async () => ({ ship_item_id: 100, ship_name: 'New Ship', ship_type_id: 11188 }),
+    },
+    now: () => new Date('2026-09-16T12:00:00.000Z'),
+    logger: { info: (message) => messages.push(message), error: assert.fail },
+  });
+
+  assert.equal(messages.length, 1);
+  assert.match(messages[0], /^\[character-tracking\] ship changed /);
+  assert.match(messages[0], /"fromShipName":"Old Ship"/);
+  assert.match(messages[0], /"toShipName":"New Ship"/);
+});
+
+test('online state changes are logged, but routine job summaries are suppressed', async () => {
+  const database = databaseFor([
+    row({ onlineCheckedAt: '2026-09-16T11:58:00.000Z', online: 0 }),
+  ]);
+  const messages = [];
+
+  await trackCharacters({
+    database,
+    staticData,
+    esi: {
+      getOnline: async () => ({ online: true }),
+      getLocation: async () => ({ solar_system_id: 30000142 }),
+      getShip: async () => ({}),
+    },
+    now: () => new Date('2026-09-16T12:00:00.000Z'),
+    logger: { info: (message) => messages.push(message), error: assert.fail },
+  });
+
+  assert.match(messages[0], /^\[character-tracking\] character online /);
+  const trackingJob = jobs.find((job) => job.name === 'character-tracking');
+  assert.equal(trackingJob.shouldLogResult({ errors: 1, transitions: 1 }), false);
 });
 
 test('a transition is not connected when its two observations are over ten seconds apart', async () => {

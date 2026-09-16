@@ -9,12 +9,9 @@ export const jobs = [
     name: 'character-tracking',
     schedule: '* * * * * *',
     logStart: false,
-    shouldLogResult: (result) =>
-      result.onlineChecks > 0 ||
-      result.locationChecks > 0 ||
-      result.transitions > 0 ||
-      result.automapped > 0 ||
-      result.errors > 0,
+    // The job itself logs state changes and per-character errors. Poll counts
+    // are operational noise at a one-second schedule.
+    shouldLogResult: () => false,
     run: (context) => trackCharacters({ ...context, automap: automapTransition }),
   },
   {
