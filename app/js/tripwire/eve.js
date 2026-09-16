@@ -9,6 +9,10 @@ function shouldFollowTrackedSystem(previousSystemID, currentSystemID, followEnab
         && currentSystemID !== null && previousSystemID !== currentSystemID;
 }
 
+function shouldUseTrackedSystemAsInitialView(defaultPending, currentSystemID) {
+    return defaultPending && currentSystemID !== null;
+}
+
 // Handles data from EVE in-game data
 tripwire.EVE = function(EVE, characterChange) {
     var systemChange = this.client.EVE && this.client.EVE.systemChange || false;
@@ -20,7 +24,12 @@ tripwire.EVE = function(EVE, characterChange) {
         // scheduler. The browser only follows and renders the selected pilot.
 
         // System follower
-        if (shouldFollowTrackedSystem(previousSystemID, currentSystemID, options.buttons.follow, characterChange)
+        if (shouldUseTrackedSystemAsInitialView(defaultToTrackedSystem, currentSystemID)) {
+            defaultToTrackedSystem = false;
+            if (currentSystemID != viewingSystemID) {
+                tripwire.systemChange(currentSystemID);
+            }
+        } else if (shouldFollowTrackedSystem(previousSystemID, currentSystemID, options.buttons.follow, characterChange)
             && $(".ui-dialog:visible").length == 0) {
             tripwire.systemChange(currentSystemID);
         }

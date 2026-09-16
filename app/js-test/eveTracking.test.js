@@ -29,4 +29,10 @@ describe('Backend ESI tracking handoff', function() {
         assert.equal(shouldFollowTrackedSystem(30000142, 30000144, false, false), false);
         assert.equal(shouldFollowTrackedSystem(30000142, 30000144, true, true), false);
     });
+
+    it('uses the first known tracked location as the initial view', function() {
+        assert.equal(shouldUseTrackedSystemAsInitialView(true, 30000142), true);
+        assert.equal(shouldUseTrackedSystemAsInitialView(true, null), false);
+        assert.equal(shouldUseTrackedSystemAsInitialView(false, 30000142), false);
+    });
 });
