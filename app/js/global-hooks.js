@@ -89,8 +89,12 @@ $("#chain-zoom-reset").on("click", function() {
 });
 
 $(document).keydown(function(e)	{
-	//Abort - user is in input or textarea
-	if ($(document.activeElement).is("textarea, input")) return;
+	// Let editable controls keep their native keyboard shortcuts. In particular,
+	// Ctrl+A inside a note must select the note text, not every signature row.
+	// Use the event target as well as activeElement because contenteditable events
+	// can originate from a formatted child element inside the editing surface.
+	if ($(e.target).closest("textarea, input, select, [contenteditable=true]").length ||
+		(document.activeElement && document.activeElement.isContentEditable)) return;
 
 	// Ctrl key hooks
 	if (e.metaKey || e.ctrlKey) {
