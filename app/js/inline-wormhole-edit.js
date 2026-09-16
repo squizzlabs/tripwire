@@ -15,13 +15,14 @@
 (function() {
 	var FIELDS = {
 		5: {key: "life", options: [
-			{value: "stable",   label: "Stable"},
-			{value: "critical", label: "EOL"}
+			{value: "stable",    label: "Stable", life: "stable"},
+			{value: "critical4", label: "4H",     life: "critical", lifeHours: 4, className: "critical"},
+			{value: "critical1", label: "1H",     life: "critical", lifeHours: 1, className: "critical"}
 		]},
 		6: {key: "mass", options: [
 			{value: "stable",   label: "Stable"},
-			{value: "destab",   label: "Destab"},
-			{value: "critical", label: "Critical"}
+			{value: "destab",   label: "<50%"},
+			{value: "critical", label: "<10%"}
 		]}
 	};
 
@@ -37,14 +38,21 @@
 			.attr("aria-label", "Set " + field.key);
 
 		field.options.forEach(function(opt) {
-			var current = wormhole[field.key] === opt.value;
+			var signature = tripwire.client.signatures[$td.closest("tr").data("id")];
+			var currentValue = field.key === "life" ? tripwire.signaturePayload.lifePreset(wormhole, signature) : wormhole[field.key];
+			var current = currentValue === opt.value;
 			$('<button type="button" role="option"></button>')
-				.addClass("inline-chip " + opt.value)
+				.addClass("inline-chip " + (opt.className || opt.value))
 				.attr("aria-selected", current ? "true" : "false")
 				.text(opt.label)
 				.on("click", function(e) {
 					e.preventDefault(); e.stopPropagation();
-					if (!current) { apply(wormhole.id, field.key, opt.value, $td); }
+					if (!current) {
+						var changes = {};
+						changes[field.key] = opt.life || opt.value;
+						if (opt.lifeHours) { changes.lifeHours = opt.lifeHours; }
+						apply(wormhole.id, changes, $td);
+					}
 					close();
 				})
 				.appendTo($pop);
@@ -69,8 +77,7 @@
 		}, 0);
 	}
 
-	function apply(wormholeId, key, value, $td) {
-		var changes = {}; changes[key] = value;
+	function apply(wormholeId, changes, $td) {
 		var built = tripwire.signaturePayload.changeWormhole(wormholeId, changes);
 		if (!built) { return; }
 

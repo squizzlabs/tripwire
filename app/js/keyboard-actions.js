@@ -143,7 +143,7 @@ tripwire.keyboard = (function() {
         if (!$rows.length || !tripwire.signaturePayload) { return []; }
         var whs = $rows.map(function() { var w = tripwire.signaturePayload.wormholeForSignature($(this).data("id")); return w ? w.id : null; }).get();
         if (!whs.length) { return []; }
-        var set = function(field, value, label) {
+        var set = function(field, value, label, lifeHours) {
             return {
                 id: "sel-" + field + "-" + value, label: label + (whs.length > 1 ? " (" + whs.length + " wormholes)" : ""), group: "Selected wormhole",
                 enabled: function() { return true; },
@@ -153,6 +153,7 @@ tripwire.keyboard = (function() {
                     var systemID = viewingSystemID;
                     whs.forEach(function(id) {
                         var c = {}; c[field] = value;
+                        if (lifeHours) { c.lifeHours = lifeHours; }
                         var built = tripwire.signaturePayload.changeWormhole(id, c);
                         if (!built) { return; }
                         tripwire.refresh("refresh", built.payload, function(data) {
@@ -164,8 +165,8 @@ tripwire.keyboard = (function() {
                 }
             };
         };
-        return [set("life", "stable", "Life: stable"), set("life", "critical", "Life: end of life"),
-                set("mass", "stable", "Mass: stable"), set("mass", "destab", "Mass: destabilised"), set("mass", "critical", "Mass: critical")];
+        return [set("life", "stable", "Life: stable"), set("life", "critical", "Life: 4H", 4), set("life", "critical", "Life: 1H", 1),
+                set("mass", "stable", "Mass: Stable"), set("mass", "destab", "Mass: <50%"), set("mass", "critical", "Mass: <10%")];
     }
 
     return {

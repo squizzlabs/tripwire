@@ -263,8 +263,8 @@ $system = $_REQUEST['system'] ?? '';
 					<i id="show-chainLegend" class="bar-btn bar-icon" data-tooltip="<table id='guide'>
 						<tr><td><div class='guide stable'></td><td>Stable</td><th>Auras</th></tr>
 						<tr><td><div class='guide eol'></div></td><td>End of Life</td><td><div class='guide aura jm-5kt frig'></div></td><td>Small</td></tr>
-						<tr><td><div class='guide destab'></div></td><td>Mass Destabbed</td><td><div class='guide aura jm-62kt'></div></td><td>Medium</td></tr>
-						<tr><td><div class='guide critical'></div></td><td>Mass Critical</td><td><div class='guide aura jm-375kt'></div></td><td>Large</td></tr>
+						<tr><td><div class='guide destab'></div></td><td>Mass &lt;50%</td><td><div class='guide aura jm-62kt'></div></td><td>Medium</td></tr>
+						<tr><td><div class='guide critical'></div></td><td>Mass &lt;10%</td><td><div class='guide aura jm-375kt'></div></td><td>Large</td></tr>
 						<tr><td><div class='guide frig'></div></td><td>Frigate</td><td><div class='guide aura jm-2000kt'></div></td><td>X-Large</td></tr>
 					</table>">&equiv;</i>
 					<span class="bar-sep"></span>
@@ -454,17 +454,19 @@ $system = $_REQUEST['system'] ?? '';
 						<span class="label">Life:</span>
 						<input type="radio" class="mini-selector" name="wormholeLife" id="wormholeLifeStable"  value="stable"/>
 						<label for="wormholeLifeStable" class="stable">Stable</label>
-						<input type="radio" class="mini-selector" name="wormholeLife" id="wormholeLifeEOL"  value="critical"/>
-						<label for="wormholeLifeEOL" class="critical">EOL</label>
+						<input type="radio" class="mini-selector" name="wormholeLife" id="wormholeLife4H" value="critical4"/>
+						<label for="wormholeLife4H" class="critical">4H</label>
+						<input type="radio" class="mini-selector" name="wormholeLife" id="wormholeLife1H" value="critical1"/>
+						<label for="wormholeLife1H" class="critical">1H</label>
 					</div>
 					<div class="row">
 						<span class="label">Mass:</span>
 						<input type="radio" class="mini-selector" name="wormholeMass" id="wormholeMassStable"  value="stable"/>
 						<label for="wormholeMassStable" class="stable">Stable</label>
 						<input type="radio" class="mini-selector" name="wormholeMass" id="wormholeMassDestab" value="destab"/>
-						<label for="wormholeMassDestab" class="destab">Destab</label>
+						<label for="wormholeMassDestab" class="destab">&lt;50%</label>
 						<input type="radio" class="mini-selector" name="wormholeMass" id="wormholeMassCritical" value="critical" />
-						<label for="wormholeMassCritical" class="critical">Critical</label>
+						<label for="wormholeMassCritical" class="critical">&lt;10%</label>
 					</div>
 				</div>
 				<hr/>

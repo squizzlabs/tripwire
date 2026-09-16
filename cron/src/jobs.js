@@ -18,21 +18,30 @@ export const jobs = [
   {
     name: 'system-activity',
     schedule: '0 * * * *',
+    logStart: false,
     run: collectSystemActivity,
   },
   {
     name: 'account-update',
     schedule: '*/3 * * * *',
+    logStart: false,
+    shouldLogResult: (result) => result.updated > 0,
     run: updateAccounts,
   },
   {
     name: 'corporation-name-update',
     schedule: '0 0 * * *',
+    logStart: false,
+    shouldLogResult: (result) => result.updated > 0,
     run: updateCorporationNames,
   },
   {
     name: 'system-activity-prune',
     schedule: '17 4 * * *',
+    logStart: false,
+    // The job logs its cutoff, retained-row count, deletion count, and cap
+    // status itself. A scheduler completion line would repeat that summary.
+    shouldLogResult: () => false,
     run: pruneSystemActivity,
   },
 ];

@@ -123,3 +123,33 @@ test('createScheduler can suppress start and idle-result messages', async () => 
 
   await scheduler.stop();
 });
+
+test('scheduled jobs avoid redundant start and no-op messages', async () => {
+  const { jobs } = await import('../src/jobs.js');
+  const accountUpdate = jobs.find((job) => job.name === 'account-update');
+  const characterTracking = jobs.find((job) => job.name === 'character-tracking');
+  const corporationNames = jobs.find(
+    (job) => job.name === 'corporation-name-update',
+  );
+  const systemActivity = jobs.find((job) => job.name === 'system-activity');
+  const activityPrune = jobs.find(
+    (job) => job.name === 'system-activity-prune',
+  );
+
+  assert.equal(characterTracking.logStart, false);
+  assert.equal(characterTracking.shouldLogResult({}), false);
+
+  assert.equal(systemActivity.logStart, false);
+  assert.equal(systemActivity.shouldLogResult, undefined);
+
+  assert.equal(accountUpdate.logStart, false);
+  assert.equal(accountUpdate.shouldLogResult({ checked: 3, updated: 0 }), false);
+  assert.equal(accountUpdate.shouldLogResult({ checked: 3, updated: 1 }), true);
+
+  assert.equal(corporationNames.logStart, false);
+  assert.equal(corporationNames.shouldLogResult({ checked: 3, updated: 0 }), false);
+  assert.equal(corporationNames.shouldLogResult({ checked: 3, updated: 1 }), true);
+
+  assert.equal(activityPrune.logStart, false);
+  assert.equal(activityPrune.shouldLogResult({ deleted: 10 }), false);
+});

@@ -474,6 +474,15 @@ if (isset($_POST['signatures'])) {
                             $child = $signature2;
                             $request['wormhole']['secondaryID'] = $signature2->id;
                             list($result, $wormhole, $msg) = addWormhole($request['wormhole'], $mysql);
+                            $lifeHours = isset($request['wormhole']['lifeHours']) ? (int)$request['wormhole']['lifeHours'] : null;
+                            if ($result && isset($request['wormhole']['life']) && $request['wormhole']['life'] == 'critical' && in_array($lifeHours, [1, 4], true)) {
+                                $signature->lifeLeft = date('Y-m-d H:i:s', strtotime('+'.$lifeHours.' hour'));
+                                $signature2->lifeLeft = $signature->lifeLeft;
+                                updateSignature($signature, $mysql);
+                                updateSignature($signature2, $mysql);
+                                $parent = $signature;
+                                $child = $signature2;
+                            }
                             if(isset($_REQUEST['automap'])) {
                                 addAutomapMass($wormhole, $signature, $signature2, $_REQUEST['automap'], $mysql);
                             }
@@ -552,10 +561,17 @@ if (isset($_POST['signatures'])) {
                         if (isset($request['wormhole']['id'])) {
                             list($result, $wormhole, $msg) = fetchWormhole($request['wormhole']['id'], $mysql);
                             if ($result && $wormhole) {
-                                // Set wormhole to/from critical life
-                                if (isset($request['wormhole']['life']) && $wormhole->life != $request['wormhole']['life'] && $request['wormhole']['life'] == 'critical') {
-                                    $signature->lifeLeft = date('Y-m-d H:i:s', strtotime('4 hour'));
-                                    $signature2->lifeLeft = date('Y-m-d H:i:s', strtotime('4 hour'));
+                                // A critical life choice can explicitly set either
+                                // four hours or one hour without adding new DB states.
+                                $lifeHours = isset($request['wormhole']['lifeHours']) ? (int)$request['wormhole']['lifeHours'] : null;
+                                if (isset($request['wormhole']['life']) && $request['wormhole']['life'] == 'critical' && in_array($lifeHours, [1, 4], true)) {
+                                    $signature->lifeLeft = date('Y-m-d H:i:s', strtotime('+'.$lifeHours.' hour'));
+                                    $signature2->lifeLeft = date('Y-m-d H:i:s', strtotime('+'.$lifeHours.' hour'));
+                                    updateSignature($signature, $mysql);
+                                    updateSignature($signature2, $mysql);
+                                } else if (isset($request['wormhole']['life']) && $wormhole->life != $request['wormhole']['life'] && $request['wormhole']['life'] == 'critical') {
+                                    $signature->lifeLeft = date('Y-m-d H:i:s', strtotime('+4 hour'));
+                                    $signature2->lifeLeft = date('Y-m-d H:i:s', strtotime('+4 hour'));
                                     updateSignature($signature, $mysql);
                                     updateSignature($signature2, $mysql);
                                 } else if (isset($request['wormhole']['life']) && $wormhole->life != $request['wormhole']['life'] && $request['wormhole']['life'] == 'stable') {

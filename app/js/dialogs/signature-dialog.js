@@ -238,6 +238,7 @@ sigDialog.openSignatureDialog = function(e) {
 				$("#form-signature").submit(function(e) {
 					e.preventDefault();
 					var form = $(this).serializeObject();
+					var lifePresets = {critical4: 4, critical1: 1};
 					var valid = true;
 					ValidationTooltips.close();
 
@@ -339,9 +340,12 @@ sigDialog.openSignatureDialog = function(e) {
 						var wormhole = {
 							"type": type,
 							"parent": parent,
-							"life": form.wormholeLife,
+							"life": lifePresets[form.wormholeLife] ? "critical" : "stable",
 							"mass": form.wormholeMass
 						};
+						if (lifePresets[form.wormholeLife]) {
+							wormhole.lifeHours = lifePresets[form.wormholeLife];
+						}
 						if (sigDialogVM.mode == "update") {
 							signature.id = $("#dialog-signature").data("signatureid");
 							signature2.id = $("#dialog-signature").data("signature2id");
@@ -474,7 +478,8 @@ sigDialog.openSignatureDialog = function(e) {
 						$("#dialog-signature input[name='signatureID2_Alpha']").val(otherSignature.signatureID ? otherSignature.signatureID.substr(0, 3) : "???");
 						$("#dialog-signature input[name='signatureID2_Numeric']").val(otherSignature.signatureID ? otherSignature.signatureID.substr(3, 5) : "");
 						$("#dialog-signature [name='wormholeName2']").val(otherSignature.name);
-						$("#dialog-signature [name='wormholeLife'][value='"+wormhole.life+"']").prop("checked", true);
+						var lifePreset = tripwire.signaturePayload.lifePreset(wormhole, signature);
+						$("#dialog-signature [name='wormholeLife'][value='"+lifePreset+"']").prop("checked", true);
 						$("#dialog-signature [name='wormholeMass'][value='"+wormhole.mass+"']").prop("checked", true);
 						if (wormhole[wormhole.parent+"ID"] == signature.id) {
 							$("#dialog-signature input[name='wormholeType']").val(wormhole.type).change();
