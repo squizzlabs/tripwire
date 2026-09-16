@@ -911,7 +911,7 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 @media (min-width: 960px) and (max-width: 1099px) {
 	#infoWidget > .controls .bar-right #sys-range { display: none; }
 	#sigTable th:nth-child(5), #sigTable td:nth-child(5),
-	#sigTable th:nth-child(6), #sigTable td:nth-child(6) { width: 3.2rem; padding-left: 2px; padding-right: 4px; }
+	#sigTable th:nth-child(6), #sigTable td:nth-child(6) { width: 3.2rem; padding-left: min(2px, var(--signature-cell-padding, 6px)); padding-right: min(4px, var(--signature-cell-padding, 6px)); }
 	#sigTable th:nth-child(2), #sigTable td:nth-child(2) { width: 4.6rem; }
 }
 
@@ -923,7 +923,7 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 		grid-template-columns: auto minmax(0, 1fr) auto auto;
 		grid-template-areas: "id type type age" "leads leads life mass";
 		column-gap: 10px; row-gap: 2px;
-		padding: 7px 10px;
+		padding: var(--signature-mobile-padding-y, 7px) var(--signature-mobile-padding-x, 10px);
 	}
 	#sigTable tbody td { display: block; width: auto !important; padding: 0 !important; height: auto; line-height: 18px; text-align: left !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 	#sigTable tbody td:nth-child(1) { grid-area: id; font-weight: 600; }

@@ -753,6 +753,9 @@ $system = $_REQUEST['system'] ?? '';
 				<div class="field"><label class="field-label" for="copySeparator">Separator when copying</label>
 					<input type="text" id="copySeparator" maxlength="20" />
 				</div>
+				<div class="field"><span class="field-label">Row padding <small>0 is compact; 6 is the original spacing</small></span>
+					<span class="slider-wrap"><div id="signature-row-padding-slider"></div><label for="signature-row-padding-slider" class="slider-value"></label></span>
+				</div>
 			</section>
 
 			<section class="settings-pane" data-pane="display" role="tabpanel" hidden>

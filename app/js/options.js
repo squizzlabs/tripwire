@@ -12,7 +12,7 @@ var options = new function() {
 	this.tracking = {active: "new", characterOptions: {}};
 	this.masks = {active: init.corporationID + ".2"};
 	this.chain = {gridlines: true, aura: true, lineWeight: 1.0, scrollWithoutCtrl: false, active: 0, tabs: [], "node-reference": "type", zoom: 1.0, sigNameLocation: 'name', routingLimit: 15, routeSecurity: 'shortest', routeIgnore: { enabled: false, systems: [ 'Tama', 'Rancer' ] }, renderer: 'radial', nodeSpacing: { x: 1.0, y: 1.0 } };
-	this.signatures = {editType: "unknown", copySeparator: ",", pasteLife: 72, alignment: {sigID: "leftAlign", sigType: "leftAlign", sigAge: "leftAlign", leadsTo: "leftAlign", sigLife: "rightAlign", sigMass: "rightAlign"}};
+	this.signatures = {editType: "unknown", copySeparator: ",", pasteLife: 72, rowPadding: 6, alignment: {sigID: "leftAlign", sigType: "leftAlign", sigAge: "leftAlign", leadsTo: "leftAlign", sigLife: "rightAlign", sigMass: "rightAlign"}};
 	this.buttons = {follow: false, chainWidget: {viewing: false, favorites: false}, signaturesWidget: {autoMapper: false}};
 
 	this.saveDelay = function(delay) {
@@ -123,6 +123,18 @@ var options = new function() {
 		if (this.uiscale) {
 			$("body").css("zoom", this.uiscale);
 		}
+
+		// Signature table density. Six pixels is the existing spacing; clamp
+		// older or hand-edited settings so they cannot break the table layout.
+		var signaturePadding = parseFloat(this.signatures.rowPadding);
+		if (!isFinite(signaturePadding)) signaturePadding = 6;
+		signaturePadding = Math.max(0, Math.min(6, signaturePadding));
+		this.signatures.rowPadding = signaturePadding;
+		$("#sigTable").css({
+			"--signature-cell-padding": signaturePadding + "px",
+			"--signature-mobile-padding-y": (signaturePadding * 7 / 6) + "px",
+			"--signature-mobile-padding-x": (signaturePadding * 10 / 6) + "px"
+		});
 
 		// Chain zoom
 		if (this.chain.zoom) {

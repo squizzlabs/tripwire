@@ -301,13 +301,13 @@ button[disabled], .disabled { opacity: .4; cursor: default; }
 	letter-spacing: .09em;
 	text-transform: uppercase;
 	text-align: left;
-	padding: var(--space-2) var(--space-2);
+	padding: var(--signature-cell-padding, var(--space-2));
 	box-shadow: none;
 }
 
 #sigTable td {
 	border: 0;
-	padding: var(--space-2);
+	padding: var(--signature-cell-padding, var(--space-2));
 	font-size: var(--fs-base);
 	color: var(--card-foreground);
 }

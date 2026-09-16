@@ -41,6 +41,8 @@ $(".options").click(function(e) {
 
 				options.signatures.copySeparator = $("#dialog-options #copySeparator").val();
 
+				options.signatures.rowPadding = $("#dialog-options #signature-row-padding-slider").slider("value");
+
 				options.background = $("#dialog-options #background-image").val();
 
 				options.uiscale = $("#dialog-options #uiscale-slider").slider("value");
@@ -95,6 +97,7 @@ $(".options").click(function(e) {
 			$("#dialog-options #editType").val(options.signatures.editType);
 			$("#dialog-options #pasteLife").val(options.signatures.pasteLife);
 			$("#dialog-options #copySeparator").val(options.signatures.copySeparator);
+			$("#dialog-options #signature-row-padding-slider").slider("value", options.signatures.rowPadding);
 			$("#dialog-options #chainRoutingLimit").val(options.chain.routingLimit);
 			$("#dialog-options #chainSigNameLocation").val(options.chain.sigNameLocation);
 			$("#dialog-options #chainRouteSecurity").val(options.chain.routeSecurity);
@@ -134,8 +137,11 @@ $(".options").click(function(e) {
 					min: range.min,
 					max: range.max,
 					step: range.step,
-					value: value || 1.0,
-					change: change,
+					value: value == null ? 1.0 : value,
+					change: function(e, ui) {
+						$("label[for='" + id + "']").text(ui.value);
+						if (change) change(e, ui);
+					},
 					slide: function(e, ui) {
 						$("label[for='" + id + "']").text(ui.value);
 					}
@@ -149,6 +155,14 @@ $(".options").click(function(e) {
 			setUpSlider('node-spacing-x-slider', options.chain.nodeSpacing.x);
 			setUpSlider('node-spacing-y-slider', options.chain.nodeSpacing.y);
 			setUpSlider('node-spacing-line-weight-slider', options.chain.lineWeight, undefined, { min: 0.5, max: 1.5 });
+			setUpSlider('signature-row-padding-slider', options.signatures.rowPadding, function(e, ui) {
+				var value = ui.value;
+				$("#sigTable").css({
+					"--signature-cell-padding": value + "px",
+					"--signature-mobile-padding-y": (value * 7 / 6) + "px",
+					"--signature-mobile-padding-x": (value * 10 / 6) + "px"
+				});
+			}, { min: 0, max: 6, step: 1 });
 
 			$("#dialog-pwChange").dialog({
 				autoOpen: false,
