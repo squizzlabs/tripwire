@@ -88,21 +88,19 @@ tripwire.addSig = function(add, option, disabled) {
         $(tr).find('span[data-age]').countdown({since: moment.utc(add.lifeTime).toDate(), compact: true, format: this.ageFormat, serverSync: this.serverTime.getTime});
     }
 
-    // Same reasoning as deleteSig: the wrapper is only unwrapped by the
-    // slideDown callback, so animating in a hidden tab leaves the new row
-    // invisible until the backlog drains. Show it outright instead.
+    // Keep the row at its final layout from the first frame. The old
+    // wrapInner/slideDown animation temporarily controlled the content height,
+    // so pasted rows ignored the configured table density until they settled.
+    // A row-level colour pulse provides the same feedback without changing
+    // padding or height (and keeps the highlight continuous across cells).
     if (animate && !document.hidden) {
         $(tr)
-            .find('td')
-            .wrapInner('<div class="hidden" />')
-            .parent()
-            .find('td > div')
-            .slideDown(700, function(){
-                $set = $(this);
-                $set.replaceWith($set.contents());
+            .addClass("sig-added")
+            .animate({backgroundColor: "#004D16"}, 1000)
+            .delay(1000)
+            .animate({backgroundColor: "#111"}, 1000, null, function() {
+                $(this).removeClass("sig-added").css({backgroundColor: ""});
             });
-
-        $(tr).find("td").animate({backgroundColor: "#004D16"}, 1000).delay(1000).animate({backgroundColor: "#111"}, 1000, null, function() {$(this).css({backgroundColor: ""});});
     }
 }
 

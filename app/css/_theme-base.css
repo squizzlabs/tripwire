@@ -167,6 +167,17 @@
   background: transparent;
 }
 
+/* Deletion is a final row state, not a collection of highlighted cells.
+   Disable the normal background transition so the full-width destructive
+   band is present from the first frame. */
+#sigTable tbody tr.sig-deleting {
+  background: #4d0000;
+  transition: none;
+}
+#sigTable tbody tr.sig-deleting > td {
+  background: transparent;
+}
+
 /* ============================================================================
    Background.
 

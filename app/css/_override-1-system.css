@@ -312,10 +312,18 @@ button[disabled], .disabled { opacity: .4; cursor: default; }
 	color: var(--card-foreground);
 }
 
+/* The legacy alignment rules use a more specific selector and retain a 2px
+   inset. Scale that inset down with the density setting so zero is truly
+   padding-free while the 6px maximum preserves the existing alignment. */
+#sigTable td.leftAlign { padding-left: min(2px, var(--signature-cell-padding, 6px)); }
+#sigTable td.rightAlign { padding-right: min(2px, var(--signature-cell-padding, 6px)); }
+
 #sigTable tbody tr { transition: background-color .1s ease; }
 #sigTable tbody tr:nth-child(even) > td { background-color: oklch(1 0 0 / 3%); }
 #sigTable tbody tr:hover > td { background-color: var(--muted); }
 #sigTable tbody tr.selected > td { background-color: color-mix(in oklab, var(--primary) 18%, transparent); }
+#sigTable tbody tr.sig-added > td,
+#sigTable tbody tr.sig-deleting > td { background-color: transparent; }
 
 /* Chips. Life, mass and security are small closed sets; they read faster as
    pills, and it keeps state out of the same register as the data beside it. */
