@@ -130,6 +130,17 @@
 }
 .rte-btn:hover { background: var(--accent-surface); color: var(--foreground); border-color: var(--border); }
 
+.rte-size {
+	height: 1.9rem;
+	min-height: 1.9rem;
+	width: 5.5rem;
+	padding: 0 var(--space-2);
+	border-color: var(--border);
+	background: var(--input);
+	color: var(--foreground);
+	font-size: var(--fs-sm);
+}
+
 .rte-sep { width: 1px; align-self: stretch; margin: 2px var(--space-1); background: var(--border); }
 
 .rte-swatch {
@@ -155,3 +166,17 @@
 .rte-area:focus { background: var(--background); }
 .rte-area a { color: var(--primary); }
 .rte-area ul, .rte-area ol { padding-left: 1.4em; margin: .3em 0; }
+
+/* execCommand emits legacy <font size> markup. Map it explicitly so authored
+   sizes look identical in the editor and in a displayed note regardless of
+   browser defaults or the dashboard's compact root font size. */
+.commentBody font[size="1"], .rte-area font[size="1"] { font-size: 10px; }
+.commentBody font[size="2"], .rte-area font[size="2"] { font-size: 12px; }
+.commentBody font[size="3"], .rte-area font[size="3"] { font-size: 14px; }
+.commentBody font[size="4"], .rte-area font[size="4"] { font-size: 18px; }
+.commentBody font[size="5"], .rte-area font[size="5"] { font-size: 24px; }
+.commentBody font[size="6"], .rte-area font[size="6"] { font-size: 32px; }
+.commentBody font[size="7"], .rte-area font[size="7"] { font-size: 40px; }
+
+.commentBody img, .rte-area img { max-width: 100%; height: auto; }
+.commentBody table, .rte-area table { max-width: 100%; overflow-wrap: anywhere; }

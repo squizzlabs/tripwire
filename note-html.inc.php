@@ -45,6 +45,7 @@ function sanitizeNoteHtml($html) {
     $safeStyles = [
         'color' => '/^(?:#[0-9a-f]{3,8}|(?:rgb|hsl)a?\([0-9.,%\s+-]+\)|[a-z]+)$/i',
         'background-color' => '/^(?:#[0-9a-f]{3,8}|(?:rgb|hsl)a?\([0-9.,%\s+-]+\)|[a-z]+)$/i',
+        'font-size' => '/^(?:(?:8|9|10|11|12|13|14|16|18|20|24|28|32|36|48)px|(?:0\.75|0\.875|1|1\.125|1\.25|1\.5|2|2\.5|3)(?:em|rem)|(?:75|80|87\.5|100|112\.5|125|150|200|250|300)%|xx-small|x-small|small|medium|large|x-large|xx-large)$/i',
         'text-align' => '/^(?:left|right|center|justify|start|end)$/i',
         'font-weight' => '/^(?:normal|bold|bolder|lighter|[1-9]00)$/i',
         'font-style' => '/^(?:normal|italic|oblique)$/i',
@@ -134,6 +135,10 @@ function sanitizeNoteHtml($html) {
                 } else {
                     $node->removeAttributeNode($attribute);
                 }
+            }
+
+            if ($tag === 'font' && $name === 'size' && !preg_match('/^[1-7]$/', trim($value))) {
+                $node->removeAttribute($attribute->nodeName);
             }
         }
 

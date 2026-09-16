@@ -41,6 +41,24 @@ tripwire.editor = (function() {
 	function build($host, id) {
 		var $wrap = $('<div class="rte"></div>');
 		var $bar = $('<div class="rte-bar" role="toolbar"></div>').appendTo($wrap);
+		var $area = $('<div class="rte-area" contenteditable="true"></div>')
+			.attr("id", id + "-rte")
+			.html($host.html());
+		var savedRange = null;
+
+		function rememberSelection() {
+			var selection = window.getSelection();
+			if (selection.rangeCount && $area[0].contains(selection.anchorNode)) {
+				savedRange = selection.getRangeAt(0).cloneRange();
+			}
+		}
+
+		function restoreSelection() {
+			if (!savedRange) { return; }
+			var selection = window.getSelection();
+			selection.removeAllRanges();
+			selection.addRange(savedRange);
+		}
 
 		TOOLS.forEach(function(t) {
 			if (t.sep) { $('<span class="rte-sep"></span>').appendTo($bar); return; }
@@ -64,6 +82,29 @@ tripwire.editor = (function() {
 				.appendTo($bar);
 		});
 
+		// Keep the selection while the native select has focus. The values are
+		// legacy HTML font sizes because execCommand applies them reliably to a
+		// partial selection; note CSS maps those values to predictable pixels.
+		$('<select class="rte-size" title="Text size" aria-label="Text size">' +
+			'<option value="" selected>Size</option>' +
+			'<option value="1">Small</option>' +
+			'<option value="2">Default</option>' +
+			'<option value="3">Medium</option>' +
+			'<option value="4">Large</option>' +
+			'<option value="5">X-large</option>' +
+		'</select>')
+			.on("mousedown", rememberSelection)
+			.on("change", function() {
+				var value = this.value;
+				if (!value) { return; }
+				restoreSelection();
+				document.execCommand("fontSize", false, value);
+				this.value = "";
+				$area.trigger("focus");
+				rememberSelection();
+			})
+			.appendTo($bar);
+
 		$('<span class="rte-sep"></span>').appendTo($bar);
 		COLOURS.forEach(function(token) {
 			var colour = resolve(token) || "#ccc";
@@ -77,10 +118,6 @@ tripwire.editor = (function() {
 				.appendTo($bar);
 		});
 
-		var $area = $('<div class="rte-area" contenteditable="true"></div>')
-			.attr("id", id + "-rte")
-			.html($host.html());
-
 		// Paste as text unless it is already ours: pasting from a browser drags
 		// in spans, classes and inline styles that the sanitiser would strip
 		// anyway, leaving surprising gaps.
@@ -90,6 +127,7 @@ tripwire.editor = (function() {
 			e.preventDefault();
 			document.execCommand("insertText", false, cb.getData("text/plain"));
 		});
+		$area.on("keyup mouseup input focus", rememberSelection);
 
 		$wrap.append($area);
 		$host.after($wrap).hide();

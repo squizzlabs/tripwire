@@ -35,11 +35,17 @@ describe('system note HTML sanitiser', function() {
 	});
 
 	it('keeps supported note formatting', function() {
-		const result = sanitise('<p><strong>Safe</strong> <span style="color: #fff; position: fixed">colour</span> <a href="https://example.com" target="_blank">link</a></p>');
+		const result = sanitise('<p><strong>Safe</strong> <span style="color: #fff; font-size: 18px; position: fixed">sized colour</span> <font size="5">large</font> <a href="https://example.com" target="_blank">link</a></p>');
 		assert.match(result, /<strong>Safe<\/strong>/);
-		assert.match(result, /style="color: #fff"/);
+		assert.match(result, /style="color: #fff; font-size: 18px"/);
+		assert.match(result, /<font size="5">large<\/font>/);
 		assert.doesNotMatch(result, /position/i);
 		assert.match(result, /href="https:\/\/example\.com"/);
 		assert.match(result, /rel="noopener noreferrer"/);
+	});
+
+	it('removes unsafe or disruptive note sizes', function() {
+		const result = sanitise('<span style="font-size: 999px">huge</span><font size="99">also huge</font>');
+		assert.doesNotMatch(result, /font-size|size=/i);
 	});
 });
