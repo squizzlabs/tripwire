@@ -47,3 +47,74 @@ test('updateAccounts does not call ESI when nobody is active', async () => {
     updated: 0,
   });
 });
+
+test('updateAccounts skips name lookups when corporations are unchanged', async () => {
+  const database = {
+    query: async () => [[{ characterID: 10, corporationID: 100 }]],
+    execute: () => assert.fail('No account update should be written'),
+  };
+  const esi = {
+    getAffiliations: async () => [
+      { character_id: 10, corporation_id: 100 },
+    ],
+    getNames: () => assert.fail('Corporation names are refreshed daily'),
+  };
+
+  assert.deepEqual(await updateAccounts({ database, esi }), {
+    checked: 1,
+    updated: 0,
+  });
+});
+
+test('updateAccounts resolves a shared corporation only once', async () => {
+  const database = {
+    query: async () => [[{ characterID: 10 }, { characterID: 11 }]],
+    execute: async () => [{ affectedRows: 0 }],
+  };
+  const esi = {
+    getAffiliations: async () => [
+      { character_id: 10, corporation_id: 100 },
+      { character_id: 11, corporation_id: 100 },
+    ],
+    getNames: async (ids) => {
+      assert.deepEqual(ids, [100]);
+      return [{ id: 100, name: 'Shared Corporation' }];
+    },
+  };
+
+  assert.deepEqual(await updateAccounts({ database, esi }), {
+    checked: 2,
+    updated: 0,
+  });
+});
+
+test('updateAccounts batches ESI bulk requests at 1000 IDs', async () => {
+  const characterIds = Array.from({ length: 1001 }, (_, index) => index + 1);
+  const affiliationBatches = [];
+  const nameBatches = [];
+  const database = {
+    query: async () => [
+      characterIds.map((characterID) => ({ characterID })),
+    ],
+    execute: async () => [{ affectedRows: 0 }],
+  };
+  const esi = {
+    getAffiliations: async (ids) => {
+      affiliationBatches.push(ids);
+      return ids.map((characterId) => ({
+        character_id: characterId,
+        corporation_id: characterId + 10_000,
+      }));
+    },
+    getNames: async (ids) => {
+      nameBatches.push(ids);
+      return ids.map((id) => ({ id, name: `Corporation ${id}` }));
+    },
+  };
+
+  const result = await updateAccounts({ database, esi });
+
+  assert.deepEqual(result, { checked: 1001, updated: 0 });
+  assert.deepEqual(affiliationBatches.map((batch) => batch.length), [1000, 1]);
+  assert.deepEqual(nameBatches.map((batch) => batch.length), [1000, 1]);
+});

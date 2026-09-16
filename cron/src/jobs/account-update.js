@@ -1,23 +1,35 @@
+import { resolveCharacterAffiliations } from '../character-affiliations.js';
+import { resolveCorporationNames } from '../corporation-names.js';
+
 export async function updateAccounts({ database, esi }) {
   const [rows] = await database.query(`
-    SELECT c.characterID
+    SELECT c.characterID, c.corporationID
     FROM active a
     INNER JOIN characters c ON a.userID = c.userID
   `);
-  const characterIds = rows.map((row) => row.characterID);
+  const characterIds = [...new Set(rows.map((row) => row.characterID))];
+  const currentCorporationByCharacter = new Map(
+    rows.map((row) => [row.characterID, row.corporationID]),
+  );
 
   if (characterIds.length === 0) return { checked: 0, updated: 0 };
 
-  const affiliations = await esi.getAffiliations(characterIds);
+  const affiliations = await resolveCharacterAffiliations(esi, characterIds);
   const affiliationByCharacter = new Map(
     affiliations.map((affiliation) => [affiliation.character_id, affiliation]),
   );
 
-  // Preserve the old job's request shape, including duplicate corporation IDs.
-  const corporationIds = affiliations.map(
-    (affiliation) => affiliation.corporation_id,
+  const changedAffiliations = affiliations.filter(
+    (affiliation) =>
+      currentCorporationByCharacter.get(affiliation.character_id) !==
+      affiliation.corporation_id,
   );
-  const names = await esi.getNames(corporationIds);
+  const corporationIds = [
+    ...new Set(
+      changedAffiliations.map((affiliation) => affiliation.corporation_id),
+    ),
+  ];
+  const names = await resolveCorporationNames(esi, corporationIds);
   const nameById = new Map(names.map((name) => [name.id, name]));
 
   const sql = `

@@ -1,3 +1,12 @@
+export class EsiRequestError extends Error {
+  constructor(response, path) {
+    super(`ESI ${response.status} ${response.statusText} for ${path}`);
+    this.name = 'EsiRequestError';
+    this.status = response.status;
+    this.path = path;
+  }
+}
+
 export class EsiClient {
   constructor(
     {
@@ -35,6 +44,18 @@ export class EsiClient {
 
   getNames(ids) {
     return this.request('/v3/universe/names', ids);
+  }
+
+  getCharacter(characterId) {
+    return this.request(`/latest/characters/${characterId}/`);
+  }
+
+  getCorporation(corporationId) {
+    return this.request(`/latest/corporations/${corporationId}/`);
+  }
+
+  getAlliance(allianceId) {
+    return this.request(`/latest/alliances/${allianceId}/`);
   }
 
   getOnline(characterId, accessToken) {
@@ -105,7 +126,7 @@ export class EsiClient {
     });
 
     if (!response.ok) {
-      throw new Error(`ESI ${response.status} ${response.statusText} for ${path}`);
+      throw new EsiRequestError(response, path);
     }
 
     return response.json();

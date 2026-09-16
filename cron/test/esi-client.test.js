@@ -3,7 +3,7 @@ import test from 'node:test';
 
 import { EsiClient } from '../src/esi-client.js';
 
-test('EsiClient uses the same ESI routes and request bodies as the PHP jobs', async () => {
+test('EsiClient uses the expected ESI routes and request bodies', async () => {
   const calls = [];
   const fetchImplementation = async (url, options) => {
     calls.push({ url, options });
@@ -22,6 +22,9 @@ test('EsiClient uses the same ESI routes and request bodies as the PHP jobs', as
   await esi.getKills();
   await esi.getAffiliations([10, 11]);
   await esi.getNames([100, 101]);
+  await esi.getCharacter(10);
+  await esi.getCorporation(100);
+  await esi.getAlliance(1000);
 
   assert.deepEqual(
     calls.map(({ url }) => url),
@@ -30,6 +33,9 @@ test('EsiClient uses the same ESI routes and request bodies as the PHP jobs', as
       'https://esi.example.test/v2/universe/system_kills/',
       'https://esi.example.test/v2/characters/affiliation/',
       'https://esi.example.test/v3/universe/names',
+      'https://esi.example.test/latest/characters/10/',
+      'https://esi.example.test/latest/corporations/100/',
+      'https://esi.example.test/latest/alliances/1000/',
     ],
   );
   assert.equal(calls[0].options.method, 'GET');
@@ -37,15 +43,20 @@ test('EsiClient uses the same ESI routes and request bodies as the PHP jobs', as
   assert.equal(calls[2].options.body, '[10,11]');
   assert.equal(calls[2].options.headers['Content-Type'], 'application/json');
   assert.equal(calls[2].options.headers['User-Agent'], 'Tripwire test');
+  assert.equal(calls[4].options.method, 'GET');
 });
 
-test('EsiClient rejects non-success responses', async () => {
+test('EsiClient rejects non-success responses with the response status', async () => {
   const esi = new EsiClient(
     { baseUrl: 'https://esi.example.test', timeoutMs: 1000, userAgent: 'test' },
     async () => ({ ok: false, status: 503, statusText: 'Unavailable' }),
   );
 
-  await assert.rejects(esi.getJumps(), /ESI 503 Unavailable/);
+  await assert.rejects(esi.getJumps(), (error) => {
+    assert.match(error.message, /ESI 503 Unavailable/);
+    assert.equal(error.status, 503);
+    return true;
+  });
 });
 
 test('EsiClient authenticates character tracking requests with bearer tokens', async () => {

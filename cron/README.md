@@ -7,7 +7,8 @@ or MySQL database. The complete local test environment uses the root
 
 The scheduler tracks recently active linked characters in the background,
 runs the activity collector hourly, refreshes accounts every three minutes,
-and performs the activity retention sweep daily at 04:17 UTC. Character
+refreshes corporation names daily, and performs the activity retention sweep
+daily at 04:17 UTC. Character
 online checks are limited to once per minute and online characters' locations
 to once every six seconds.
 
@@ -66,6 +67,7 @@ docker logs -f tripwire-cron
 ```sh
 docker exec tripwire-cron npm run job -- system-activity
 docker exec tripwire-cron npm run job -- account-update
+docker exec tripwire-cron npm run job -- corporation-name-update
 docker exec tripwire-cron npm run job -- character-tracking
 docker exec tripwire-cron npm run job -- system-activity-prune --dry-run
 ```

@@ -175,6 +175,7 @@ Run a job manually:
 ```sh
 docker exec tripwire-cron npm run job -- system-activity
 docker exec tripwire-cron npm run job -- account-update
+docker exec tripwire-cron npm run job -- corporation-name-update
 docker exec tripwire-cron npm run job -- character-tracking
 docker exec tripwire-cron npm run job -- system-activity-prune --dry-run
 ```
@@ -182,8 +183,9 @@ docker exec tripwire-cron npm run job -- system-activity-prune --dry-run
 The scheduler checks linked characters with a session in the last four hours,
 polling online state at most once per minute and locations for online pilots at
 most once every six seconds. It also runs `system-activity` hourly,
-`account-update` every three minutes, and `system-activity-prune` daily at
-04:17 UTC. See
+`account-update` every three minutes, `corporation-name-update` daily at
+midnight, and `system-activity-prune` daily at 04:17. These times use the
+configured `CRON_TIMEZONE`. See
 [cron/README.md](cron/README.md) for updates and troubleshooting.
 
 OAuth access and refresh tokens remain server-side. Authenticated ESI search,
