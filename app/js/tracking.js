@@ -20,6 +20,17 @@ const tracking = {
 		
 		return $clone;
 	},
+	update: function(character) {
+		var $row = $("#tracking .tracking-clone[data-characterid='"+ character.characterID +"']");
+		var system = character.systemID ? systemAnalysis.analyse(character.systemID) : null;
+		$row.find(".system").html(system ? systemRendering.renderSystem(system) : "&nbsp;");
+		$row.find(".station").text(character.stationName || "");
+		$row.find(".shipname").text(character.shipName || "");
+		$row.find(".ship").text(character.shipTypeName || "");
+		$row.find(".online")
+			.toggleClass("stable", character.online == true)
+			.toggleClass("critical", character.online != true);
+	},
 	defaultCharacterOptions: { show: true, showShip: true }
 	
 };
@@ -37,7 +48,8 @@ $("#track").on("click", ".tracking-clone", function() {
 
 		if (tripwire.esi.characters[options.tracking.active]) {
 			$("#tracking .tracking-clone[data-characterid='"+ options.tracking.active +"']").addClass("active");
-			tripwire.EVE(tripwire.esi.characters[options.tracking.active], true);
+			var activeCharacter = tripwire.esi.characters[options.tracking.active];
+			tripwire.EVE(activeCharacter.online == true ? activeCharacter : false, true);
 		}
 
 		$("#removeESI").removeAttr("disabled");

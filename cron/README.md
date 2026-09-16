@@ -5,25 +5,38 @@ installation. It does not contain or start Tripwire's web server, PHP runtime,
 or MySQL database. The complete local test environment uses the root
 `Dockerfile` and is documented separately in the main README.
 
-The scheduler runs the activity collector hourly, account refresh every three
-minutes, and the activity retention sweep daily at 04:17 UTC.
+The scheduler tracks recently active linked characters in the background,
+runs the activity collector hourly, refreshes accounts every three minutes,
+and performs the activity retention sweep daily at 04:17 UTC. Character
+online checks are limited to once per minute and online characters' locations
+to once every six seconds.
 
 ## Build
 
 Docker Compose is not required. Run every build command from the Tripwire
-repository root. The production image is self-contained in `cron/`; use that
-directory as the Docker build context.
+repository root. The image also copies the browser's generated static EVE data
+so backend and frontend mapping decisions use the same systems, gates,
+wormhole types, and ship names; the repository root is therefore the Docker
+build context.
 
 ```sh
 cd /var/www/tw.whpd.space
-docker build --file cron/Dockerfile --tag tripwire-cron:local cron
+docker build --file cron/Dockerfile --tag tripwire-cron:local .
 ```
 
 ## Run in production
 
-The production MySQL database must already be initialized. Confirm that `.env`
+The production MySQL database must already be initialized and upgraded with
+the cumulative `tripwire_update.sql` migration (take a backup first):
+
+```sh
+mysql --database=tripwire_database < tripwire_update.sql
+```
+
+Confirm that `.env`
 exists in the repository root and contains the correct `MYSQL_USER`,
-`MYSQL_PASSWORD`, `MYSQL_DATABASE`, and `DB_PORT` values, then run:
+`MYSQL_PASSWORD`, `MYSQL_DATABASE`, `DB_PORT`, `SSO_CLIENT`, and `SSO_SECRET`
+values, then run:
 
 ```sh
 docker run --detach \
@@ -53,6 +66,7 @@ docker logs -f tripwire-cron
 ```sh
 docker exec tripwire-cron npm run job -- system-activity
 docker exec tripwire-cron npm run job -- account-update
+docker exec tripwire-cron npm run job -- character-tracking
 docker exec tripwire-cron npm run job -- system-activity-prune --dry-run
 ```
 
@@ -65,7 +79,7 @@ Build the new image before stopping the current scheduler:
 
 ```sh
 cd /var/www/tw.whpd.space
-docker build --file cron/Dockerfile --tag tripwire-cron:local cron
+docker build --file cron/Dockerfile --tag tripwire-cron:local .
 docker stop tripwire-cron
 docker rm tripwire-cron
 ```

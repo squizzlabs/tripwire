@@ -157,10 +157,12 @@
 #sigTable td.sigID { font-variant-numeric: tabular-nums; letter-spacing: .03em; }
 
 /* An empty table should say so rather than being a blank rectangle. */
-#sigTable tbody:empty::after,
+#sigTableWrapper:has(#sigTable tbody:empty)::after,
 #sigTableWrapper > .sig-empty {
 	content: "No signatures in this system";
 	display: block;
+	box-sizing: border-box;
+	width: 100%;
 	padding: var(--space-5) var(--space-3);
 	text-align: center;
 	color: var(--muted-foreground);

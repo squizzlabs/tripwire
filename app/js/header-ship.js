@@ -1,6 +1,6 @@
-// The ship under the pilot's name. ESI already polls the tracked character's
-// ship every five seconds and writes it into the tracking dropdown; this
-// mirrors the active character's hull into the letterhead, and clears it when nothing is tracked.
+// The ship under the pilot's name. The backend tracker writes ESI state into
+// the tracking dropdown; this mirrors the active character's hull into the
+// letterhead, and clears it when nothing is tracked.
 (function() {
 	function sync() {
 		var $el = $("#hdr-ship");

@@ -22,7 +22,8 @@ test('createScheduler applies UTC scheduling and overlap protection', async () =
       return task;
     },
   };
-  const logger = { info() {}, error() {} };
+  const messages = [];
+  const logger = { info: (...values) => messages.push(values), error() {} };
   const jobs = [
     { name: 'example', schedule: '*/3 * * * *', run: async () => ({ ok: true }) },
   ];
@@ -45,4 +46,6 @@ test('createScheduler applies UTC scheduling and overlap protection', async () =
   await scheduler.stop();
   assert.equal(scheduled[0].task.stopCalled, true);
   assert.equal(scheduled[0].task.destroyCalled, true);
+  assert.match(messages.at(-1)[0], /\{"ok":true\}$/);
+  assert.equal(messages.at(-1).length, 1);
 });

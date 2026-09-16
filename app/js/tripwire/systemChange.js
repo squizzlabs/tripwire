@@ -1,7 +1,7 @@
 // Change the currently viewed system
 tripwire.systemChange = function(systemID, mode) {
 	const system = systemAnalysis.analyse(systemID);
-	if(!system) { return; }
+	if(!system || !system.name) { return; }
 		
     if (mode != "init") {
         $("#infoSecurity").removeClass();

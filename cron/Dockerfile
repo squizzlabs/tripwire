@@ -2,10 +2,11 @@ FROM node:24-alpine
 
 WORKDIR /opt/cron
 
-COPY package.json package-lock.json ./
+COPY cron/package.json cron/package-lock.json ./
 RUN npm ci --omit=dev
 
-COPY src ./src
+COPY cron/src ./src
+COPY public/js/combine.js /opt/public/js/combine.js
 
 USER node
 

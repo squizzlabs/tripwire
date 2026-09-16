@@ -95,8 +95,8 @@ services:
   #################################################################
   tripwire-cron:
     build:
-      context: cron
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: cron/Dockerfile
     container_name: tripwire-cron
     init: true
     restart: unless-stopped
@@ -111,6 +111,8 @@ services:
       - MYSQL_USER=$MYSQL_USER
       - MYSQL_PASSWORD=$MYSQL_PASSWORD
       - ADM_EMAIL=$ADM_EMAIL
+      - SSO_CLIENT=$SSO_CLIENT
+      - SSO_SECRET=$SSO_SECRET
       - CRON_TIMEZONE=UTC
 
   #################################################################

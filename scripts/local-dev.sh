@@ -99,14 +99,73 @@ status() {
         --filter "name=^/${assets_container}$"
 }
 
+diagnose() {
+    local attempt container_state tracking_query
+    if ! exists "$app_container"; then
+        printf 'The %s container does not exist. Run: scripts/local-dev.sh up\n' "$app_container" >&2
+        exit 1
+    fi
+
+    tracking_query='SELECT characterID, characterName, lastActive, TIMESTAMPDIFF(MINUTE, lastActive, UTC_TIMESTAMP()) AS leaseAgeMinutes, online, onlineCheckedAt, locationCheckedAt, locationObservedAt, lastLocationSystemID FROM esi ORDER BY userID, characterID; SELECT userID, characterID, characterName, systemID, systemName, maskID FROM tracking ORDER BY userID, characterID;'
+
+    # A fresh container initializes/migrates MySQL before supervisord starts.
+    # Make `restart && diagnose` reliable instead of racing that bootstrap.
+    for attempt in {1..60}; do
+        container_state=$("${docker_cmd[@]}" inspect --format '{{.State.Status}}' "$app_container")
+        if [[ "$container_state" != "running" ]]; then
+            printf 'The %s container stopped during initialization (state: %s).\n' \
+                "$app_container" "$container_state" >&2
+            "${docker_cmd[@]}" logs --tail 150 "$app_container" >&2
+            exit 1
+        fi
+        if "${docker_cmd[@]}" exec "$app_container" test -S /var/run/supervisor.sock 2>/dev/null; then
+            break
+        fi
+        if [[ "$attempt" == 1 ]]; then
+            printf '%s\n' 'Waiting for database initialization and supervised services...'
+        fi
+        sleep 1
+    done
+
+    if ! "${docker_cmd[@]}" exec "$app_container" test -S /var/run/supervisor.sock 2>/dev/null; then
+        printf 'Supervisor did not start within 60 seconds. Recent container logs:\n' >&2
+        "${docker_cmd[@]}" logs --tail 150 "$app_container" >&2
+        exit 1
+    fi
+
+    printf '%s\n' '=== Container and supervised services ==='
+    "${docker_cmd[@]}" ps --all --filter "name=^/${app_container}$"
+    "${docker_cmd[@]}" exec "$app_container" supervisorctl status
+
+    printf '%s\n' '=== Tracking configuration ==='
+    "${docker_cmd[@]}" exec "$app_container" /bin/sh -c '
+        if [ -n "$SSO_CLIENT" ] && [ -n "$SSO_SECRET" ]; then
+            echo "SSO_CLIENT/SSO_SECRET: configured"
+        else
+            echo "SSO_CLIENT/SSO_SECRET: MISSING"
+        fi
+    '
+
+    printf '%s\n' '=== Linked-character polling state (no tokens shown) ==='
+    "${docker_cmd[@]}" exec "$app_container" /bin/sh -c \
+        'mysql --protocol=socket --user=root --database="$MYSQL_DATABASE" --table --execute="$1"' \
+        tripwire-diagnose "$tracking_query"
+
+    printf '%s\n' '=== Recent scheduler messages ==='
+    "${docker_cmd[@]}" logs --tail 250 "$app_container" 2>&1 \
+        | grep -E '\[character-tracking\]|tripwire-cron|scheduler' \
+        | tail -80 || true
+}
+
 case "${1:-}" in
     build) build ;;
     up) up ;;
     down) down ;;
     restart) down; up ;;
     status) status ;;
+    diagnose) diagnose ;;
     *)
-        printf 'Usage: %s {build|up|down|restart|status}\n' "$0" >&2
+        printf 'Usage: %s {build|up|down|restart|status|diagnose}\n' "$0" >&2
         exit 2
         ;;
 esac

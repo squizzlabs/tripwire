@@ -5,11 +5,13 @@ import { loadConfig } from './config.js';
 import { EsiClient } from './esi-client.js';
 import { jobs } from './jobs.js';
 import { createScheduler } from './scheduler.js';
+import { loadStaticData } from './static-data.js';
 
 const config = loadConfig();
 const database = mysql.createPool(config.database);
 const esi = new EsiClient(config.esi);
-const context = { database, esi, logger: console };
+const staticData = loadStaticData();
+const context = { database, esi, logger: console, staticData };
 const runOnce = process.argv[2] === '--run';
 const requestedJob = runOnce ? process.argv[3] : undefined;
 

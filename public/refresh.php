@@ -60,6 +60,13 @@ $systemName 	= isset($_REQUEST['systemName']) && !empty($_REQUEST['systemName'])
 $activity 		= isset($_REQUEST['activity']) ? json_encode($_REQUEST['activity']) : null;
 $refresh 		= array('sigUpdate' => false, 'chainUpdate' => false);
 
+// Backend character tracking remains active for four hours after the user's
+// most recent authenticated Tripwire request. This persistent lease is not
+// tied to the short-lived `active` rows, which intentionally expire quickly.
+$stmt = $mysql->prepare('UPDATE esi SET lastActive = UTC_TIMESTAMP() WHERE userID = :userID');
+$stmt->bindValue(':userID', $userID);
+$stmt->execute();
+
 /**
 // *********************
 // Server notifications & user activity
@@ -103,119 +110,42 @@ if (isset($_SESSION['oauth']) && isset($_SESSION['oauth']['tokenExpire'])) {
 			error_log("unable to refresh account oauth token");
 		}
 	}
-	$output['oauth'] = $_SESSION['oauth'];
-}
-
-/**
-// *********************
-// Character Tracking
-// *********************
-*/
-if (isset($_REQUEST['tracking'])) {
-	foreach ($_REQUEST['tracking'] as $track) {
-		if(!isset($track['systemID'])) { continue; }	// can't track if we didn't get location yet
-		
-		$track['characterID'] 		= isset($track['characterID']) ? $track['characterID'] : null;
-		$track['characterName'] 	= isset($track['characterName']) ? $track['characterName'] : null;
-		$track['systemName'] 		= isset($track['systemName']) ? $track['systemName'] : null;
-		$track['stationID'] 		= isset($track['stationID']) && !empty($track['stationID']) ? $track['stationID'] : null;
-		$track['stationName'] 		= isset($track['stationName']) && !empty($track['stationName']) ? $track['stationName'] : null;
-		$track['shipID'] 			= isset($track['shipID']) ? $track['shipID'] : null;
-		$track['shipName'] 			= isset($track['shipName']) ? $track['shipName'] : null;
-		$track['shipTypeID'] 		= isset($track['shipTypeID']) ? $track['shipTypeID'] : null;
-		$track['shipTypeName'] 		= isset($track['shipTypeName']) ? $track['shipTypeName'] : null;
-		
-		// Tracking mass mods
-		if($track['shipTypeName'] != null) {			
-			$mods = ($track['massOptions']['higgs'] == 'true' ? 'h' : '') . ($track['massOptions']['prop'] == 'true' ? 'p' : '');
-			if(strlen($mods) > 0) { $track['shipTypeName'] .= '|' . $mods; }
-		}
-		
-		// ... and tracking mods
-		$mods = !isset($track['characterOptions']) ? 'P' : (
-			$track['characterOptions']['show'] == 'true' ? (
-				$track['characterOptions']['showShip'] == 'true' ? 'P' : 'p'
-			) : 'x');
-		$track['characterName'] .= '|' . $mods;
-
-
-		$query = 'INSERT INTO tracking (userID, characterID, characterName, systemID, systemName, stationID, stationName, shipID, shipName, shipTypeID, shipTypeName, maskID)
-		VALUES (:userID, :characterID, :characterName, :systemID, :systemName, :stationID, :stationName, :shipID, :shipName, :shipTypeID, :shipTypeName, :maskID)
-		ON DUPLICATE KEY UPDATE
-		systemID = :systemID, systemName = :systemName, stationID = :stationID, stationName = :stationName, 
-		characterName = :characterName,
-		shipID = :shipID, shipName = :shipName, shipTypeID = :shipTypeID, shipTypeName = :shipTypeName';
-		$stmt = $mysql->prepare($query);
-		$stmt->bindValue(':userID', $userID);
-		$stmt->bindValue(':characterID', $track['characterID']);
-		$stmt->bindValue(':characterName', $track['characterName']);
-		$stmt->bindValue(':systemID', $track['systemID']);
-		$stmt->bindValue(':systemName', $track['systemName']);
-		$stmt->bindValue(':stationID', $track['stationID']);
-		$stmt->bindValue(':stationName', $track['stationName']);
-		$stmt->bindValue(':shipID', $track['shipID']);
-		$stmt->bindValue(':shipName', $track['shipName']);
-		$stmt->bindValue(':shipTypeID', $track['shipTypeID']);
-		$stmt->bindValue(':shipTypeName', $track['shipTypeName']);
-		$stmt->bindValue(':maskID', $maskID);
-		$stmt->execute();
-	}
 }
 
 /**
 // *********************
 // ESI
-// note: must be below Character Tracking
 // *********************
 */
-if ($_REQUEST['mode'] == 'init' || isset($_REQUEST['esi']) || isset($_REQUEST['esiDelete'])) {
-	$output['esi'] = array();
+// Linked-character state is now produced by the background npm scheduler and
+// returned on every refresh. Browsers render this state; they no longer poll
+// ESI themselves.
+$output['esi'] = array();
 
-	if (isset($_REQUEST['esiDelete'])) {
-		foreach ($_REQUEST['esiDelete'] as $characterID) {
-			$query = 'DELETE FROM esi WHERE userID = :userID AND characterID = :characterID';
-			$stmt = $mysql->prepare($query);
-			$stmt->bindValue(':userID', $userID);
-			$stmt->bindValue(':characterID', $characterID);
-			$stmt->execute();
-		}
+if (isset($_REQUEST['esiDelete'])) {
+	foreach ($_REQUEST['esiDelete'] as $characterID) {
+		$query = 'DELETE FROM esi WHERE userID = :userID AND characterID = :characterID';
+		$stmt = $mysql->prepare($query);
+		$stmt->bindValue(':userID', $userID);
+		$stmt->bindValue(':characterID', $characterID);
+		$stmt->execute();
 	}
+}
 
-	$query = 'SELECT characterID, characterName, accessToken, refreshToken, tokenExpire FROM esi WHERE userID = :userID';
-	$stmt = $mysql->prepare($query);
-	$stmt->bindValue(':userID', $userID);
-	$stmt->execute();
-	$characters = $stmt->fetchAll(PDO::FETCH_OBJ);
-	foreach ($characters as $character) {
-		if (strtotime($character->tokenExpire) < strtotime('+5 minutes')) {
-			require_once("../esi.class.php");
-
-			$esi = new esi();
-			if ($esi->refresh($character->refreshToken)) {
-				$query = 'UPDATE esi SET accessToken = :accessToken, refreshToken = :refreshToken, tokenExpire = :tokenExpire WHERE characterID = :characterID';
-				$stmt = $mysql->prepare($query);
-				$stmt->bindValue(':accessToken', $esi->accessToken);
-				$stmt->bindValue(':refreshToken', $esi->refreshToken);
-				$stmt->bindValue(':tokenExpire', date('Y-m-d H:i:s', strtotime($esi->tokenExpire)));
-				$stmt->bindValue(':characterID', $character->characterID);
-				$stmt->execute();
-
-				$character->accessToken = $esi->accessToken;
-				$character->refreshToken = $esi->refreshToken;
-				$character->tokenExpire = $esi->tokenExpire;
-			} else if ($esi->httpCode >= 400 && $esi->httpCode < 500) {
-				$query = 'DELETE FROM esi WHERE characterID = :characterID';
-				$stmt = $mysql->prepare($query);
-				$stmt->bindValue(':characterID', $character->characterID);
-				$stmt->execute();
-
-				unset($character);
-				continue;
-			}
-		}
-
-		$output['esi'][$character->characterID] = $character;
-	}
+$query = 'SELECT e.characterID, e.characterName,
+		e.online, t.systemID, t.systemName, t.stationID,
+		t.stationName, t.shipID, t.shipName, t.shipTypeID, t.shipTypeName
+		FROM esi e
+		LEFT JOIN tracking t ON t.userID = e.userID
+			AND t.characterID = e.characterID AND t.maskID = :maskID
+		WHERE e.userID = :userID';
+$stmt = $mysql->prepare($query);
+$stmt->bindValue(':userID', $userID);
+$stmt->bindValue(':maskID', $maskID);
+$stmt->execute();
+$characters = $stmt->fetchAll(PDO::FETCH_OBJ);
+foreach ($characters as $character) {
+	$output['esi'][$character->characterID] = $character;
 }
 
 /**

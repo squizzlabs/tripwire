@@ -495,6 +495,10 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
 #login #content #track .tracking-clone,
 #login #content #track .tracking-clone > tbody { display: block; }
+#login #content #track .tracking-clone {
+	box-sizing: border-box;
+	overflow: hidden;
+}
 #login #content #track .tracking-clone > tbody > tr { display: contents; }
 #login #content #track .tracking-clone > tbody {
 	display: grid;
@@ -502,11 +506,15 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 	grid-template-rows: repeat(5, auto);
 	column-gap: 10px; row-gap: 1px;
 	padding: 8px 10px;
+	box-sizing: border-box;
+	width: 100%;
 }
 #login #content #track .tracking-clone td { padding: 0; border: 0; line-height: 1.3; }
 #login #content #track .tracking-clone td.avatar {
 	grid-column: 1; grid-row: 1 / span 5;
 	display: flex; flex-direction: column; align-items: center; gap: 4px;
+	width: 44px; min-width: 44px; height: auto;
+	box-sizing: border-box;
 }
 #login #content #track .tracking-clone td.avatar img.avatar { display: block; }
 #login #content #track .tracking-clone td.avatar hr.bar { width: 36px; margin: 0; height: 3px; border: 0; border-radius: 2px; }

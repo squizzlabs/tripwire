@@ -139,11 +139,13 @@ Production keeps the existing web server, PHP, and MySQL installation. Only the
 Node scheduler runs in Docker, using `cron/Dockerfile`. These commands
 do not use Docker Compose and do not start another web server or database.
 
-Run them from the Tripwire checkout containing `cron/` and `.env`:
+Take a database backup first, then run these from the Tripwire checkout
+containing `cron/` and `.env`:
 
 ```sh
 cd /var/www/tw.whpd.space
-docker build --file cron/Dockerfile --tag tripwire-cron:local cron
+mysql --database=tripwire_database < tripwire_update.sql
+docker build --file cron/Dockerfile --tag tripwire-cron:local .
 docker run --detach \
   --name tripwire-cron \
   --init \
@@ -158,7 +160,8 @@ docker run --detach \
 Host networking allows the container to reach the production MySQL server on
 the host. The explicit `DB_HOST` overrides `DB_HOST=mysql` if it remains in
 `.env`. The database must already be initialized, and `.env` must contain the
-correct `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`, and `DB_PORT` values.
+correct `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`, `DB_PORT`,
+`SSO_CLIENT`, and `SSO_SECRET` values.
 
 Verify that the scheduler is running and connected:
 
@@ -172,12 +175,20 @@ Run a job manually:
 ```sh
 docker exec tripwire-cron npm run job -- system-activity
 docker exec tripwire-cron npm run job -- account-update
+docker exec tripwire-cron npm run job -- character-tracking
 docker exec tripwire-cron npm run job -- system-activity-prune --dry-run
 ```
 
-The scheduler runs `system-activity` hourly, `account-update` every three
-minutes, and `system-activity-prune` daily at 04:17 UTC. See
+The scheduler checks linked characters with a session in the last four hours,
+polling online state at most once per minute and locations for online pilots at
+most once every six seconds. It also runs `system-activity` hourly,
+`account-update` every three minutes, and `system-activity-prune` daily at
+04:17 UTC. See
 [cron/README.md](cron/README.md) for updates and troubleshooting.
+
+OAuth access and refresh tokens remain server-side. Authenticated ESI search,
+waypoint, and information-window requests are proxied through `public/esi.php`;
+browser refresh responses contain only character identity and tracking state.
 
 ### Local testing: complete Docker environment
 
@@ -210,9 +221,16 @@ Open `http://localhost:8080`. Check both containers or follow their logs with:
 
 ```bash
 scripts/local-dev.sh status
+scripts/local-dev.sh diagnose
 sudo docker logs --follow tripwire
 sudo docker logs --follow tripwire-assets
 ```
+
+`diagnose` is safe to run while Tripwire is active. It reports the scheduler
+process, whether backend SSO credentials are present, linked-character polling
+timestamps, current tracking rows, and recent character-tracking messages. It
+does not print access or refresh tokens. Immediately after a restart it waits
+up to 60 seconds for database initialization and migrations to finish.
 
 A rebuild is only needed after changing `Dockerfile`, `composer.lock`, either
 `package-lock.json`, or `scripts/local-dev.sh`:

@@ -12,3 +12,15 @@ if (strpos($gitHash, 'ref: ') === 0) {
 }
 
 define('VERSION', preg_match('/^[0-9a-f]{40}$/i', $gitHash) ? substr($gitHash, 0, 7) : 'unknown');
+
+function assetVersion($relativePath) {
+	static $versions = array();
+	if (isset($versions[$relativePath])) return $versions[$relativePath];
+
+	$path = __DIR__ . '/public/' . ltrim($relativePath, '/');
+	if (!is_readable($path)) return VERSION;
+
+	$hash = hash_file('sha256', $path);
+	$versions[$relativePath] = $hash ? substr($hash, 0, 12) : VERSION;
+	return $versions[$relativePath];
+}

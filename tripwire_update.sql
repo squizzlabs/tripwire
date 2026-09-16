@@ -54,6 +54,32 @@ END;;
 
 DELIMITER ;
 
+-- Add a column only when upgrading a schema that does not have it yet.
+DELIMITER ;;
+DROP PROCEDURE IF EXISTS `tripwire_add_column`;;
+CREATE PROCEDURE `tripwire_add_column`(
+    IN table_name_in VARCHAR(64),
+    IN column_name_in VARCHAR(64),
+    IN definition_in VARCHAR(255)
+)
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = @tripwire_database
+           AND TABLE_NAME = table_name_in
+           AND COLUMN_NAME = column_name_in
+    ) THEN
+        SET @tripwire_ddl = CONCAT(
+            'ALTER TABLE `', REPLACE(table_name_in, '`', '``'),
+            '` ADD COLUMN `', REPLACE(column_name_in, '`', '``'), '` ', definition_in
+        );
+        PREPARE tripwire_statement FROM @tripwire_ddl;
+        EXECUTE tripwire_statement;
+        DEALLOCATE PREPARE tripwire_statement;
+    END IF;
+END;;
+DELIMITER ;
+
 -- Column changes introduced since the original self-hosted schema. These are
 -- widening changes and retain existing values.
 ALTER TABLE `tracking`
@@ -69,10 +95,20 @@ ALTER TABLE `tokens`
 ALTER TABLE `signatures`
     MODIFY COLUMN `name` VARCHAR(100) CHARACTER SET utf8mb4 DEFAULT NULL;
 
+CALL `tripwire_add_column`('esi', 'lastActive',
+    'TIMESTAMP NULL DEFAULT NULL');
+CALL `tripwire_add_column`('esi', 'online', 'TINYINT(1) DEFAULT NULL');
+CALL `tripwire_add_column`('esi', 'onlineCheckedAt', 'DATETIME(3) DEFAULT NULL');
+CALL `tripwire_add_column`('esi', 'locationCheckedAt', 'DATETIME(3) DEFAULT NULL');
+CALL `tripwire_add_column`('esi', 'locationObservedAt', 'DATETIME(3) DEFAULT NULL');
+CALL `tripwire_add_column`('esi', 'lastLocationSystemID', 'INT DEFAULT NULL');
+DROP PROCEDURE `tripwire_add_column`;
+
 -- Indexes added by later Tripwire releases. Existing equivalent indexes are
 -- retained even when they have an older name.
 CALL `tripwire_add_index`('esi', 'characterID', 'characterID');
 CALL `tripwire_add_index`('esi', 'userID', 'userID');
+CALL `tripwire_add_index`('esi', 'lastActive', 'lastActive');
 CALL `tripwire_add_index`('comments', 'system_mask_idx', 'maskID,systemID');
 CALL `tripwire_add_index`('signatures', 'system_mask_idx', 'systemID,maskID');
 CALL `tripwire_add_index`('signatures', 'life_idx', 'lifeLeft,lifeLength');
@@ -296,4 +332,3 @@ DELIMITER ;
 
 -- The server must have event_scheduler=ON for these events to execute.
 SELECT @@event_scheduler AS event_scheduler;
-

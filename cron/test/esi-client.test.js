@@ -47,3 +47,31 @@ test('EsiClient rejects non-success responses', async () => {
 
   await assert.rejects(esi.getJumps(), /ESI 503 Unavailable/);
 });
+
+test('EsiClient authenticates character tracking requests with bearer tokens', async () => {
+  const calls = [];
+  const esi = new EsiClient(
+    {
+      baseUrl: 'https://esi.example.test',
+      timeoutMs: 1000,
+      userAgent: 'Tripwire test',
+      compatibilityDate: '2026-09-15',
+    },
+    async (url, options) => {
+      calls.push({ url, options });
+      return { ok: true, json: async () => ({ online: true }) };
+    },
+  );
+
+  await esi.getOnline(9001, 'secret-token');
+  await esi.getLocation(9001, 'secret-token');
+  await esi.getShip(9001, 'secret-token');
+
+  assert.deepEqual(calls.map(({ url }) => url), [
+    'https://esi.example.test/latest/characters/9001/online/',
+    'https://esi.example.test/latest/characters/9001/location/',
+    'https://esi.example.test/latest/characters/9001/ship/',
+  ]);
+  assert.equal(calls[0].options.headers.Authorization, 'Bearer secret-token');
+  assert.equal(calls[0].options.headers['X-Compatibility-Date'], '2026-09-15');
+});

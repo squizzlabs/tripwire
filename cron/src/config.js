@@ -75,6 +75,17 @@ export function loadConfig(environment = process.env) {
       userAgent:
         environmentValue(environment, 'CRON_USER_AGENT') ||
         `Tripwire Server - ${environmentValue(environment, 'ADM_EMAIL') || 'administrator'}`,
+      clientId:
+        environmentValue(environment, 'SSO_CLIENT') ||
+        environmentValue(environment, 'EVE_SSO_CLIENT'),
+      clientSecret:
+        environmentValue(environment, 'SSO_SECRET') ||
+        environmentValue(environment, 'EVE_SSO_SECRET'),
+      loginUrl:
+        environmentValue(environment, 'SSO_TOKEN_URL') ||
+        'https://login.eveonline.com/v2/oauth/token',
+      compatibilityDate:
+        environmentValue(environment, 'ESI_COMPATIBILITY_DATE') || '2026-09-15',
     },
     timezone: environmentValue(environment, 'CRON_TIMEZONE') || 'UTC',
   };

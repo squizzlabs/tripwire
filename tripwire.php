@@ -34,7 +34,7 @@ $system = $_REQUEST['system'] ?? '';
 	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/jquery-ui-1.12.1.min.css?v=<?= VERSION ?>">
 	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/jquery-ui-custom.css?v=<?= VERSION ?>">
 	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/introjs.min.css?v=<?= VERSION ?>">
-	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/app.min.css?v=<?= VERSION ?>">
+	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/app.min.css?v=<?= assetVersion('css/app.min.css') ?>">
 <?php brand_head(); ?>
 
 	<title></title>
@@ -1142,10 +1142,14 @@ $system = $_REQUEST['system'] ?? '';
 		$analytics_enabled = defined('ENABLE_ANALYTICS') && ENABLE_ANALYTICS;
 		$analytics_file = dirname( __FILE__ ) . "/analytics.inc.php";
 		if ( $analytics_enabled && file_exists( $analytics_file ) ) include_once( $analytics_file );
+		if (empty($_SESSION['csrfToken'])) {
+			$_SESSION['csrfToken'] = bin2hex(random_bytes(32));
+		}
 		$init_fields = [
 			'characterID' => $_SESSION['characterID'],
 			'characterName' => $_SESSION['characterName'],
-			'options' => $_SESSION['options']
+			'options' => $_SESSION['options'],
+			'csrfToken' => $_SESSION['csrfToken']
 		];
 	?>
 
@@ -1200,8 +1204,8 @@ $system = $_REQUEST['system'] ?? '';
 	<script type="text/javascript">google.charts.load('current', {packages: ['corechart', 'orgchart']});</script>
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/moment.min.js?v=<?= VERSION ?>"></script>
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/intro.min.js?v=<?= VERSION ?>"></script>
-	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/combine.js?v=<?= VERSION ?>"></script>
-	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/app.min.js?v=<?= VERSION ?>"></script>
+	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/combine.js?v=<?= assetVersion('js/combine.js') ?>"></script>
+	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/app.min.js?v=<?= assetVersion('js/app.min.js') ?>"></script>
 	<!-- JS Includes -->
 </body>
 </html>

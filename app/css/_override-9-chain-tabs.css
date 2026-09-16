@@ -33,9 +33,6 @@
 	overflow-y: hidden;
 	scrollbar-width: thin;
 	scroll-snap-type: x proximity;
-	/* Fade the edges so it is obvious there are more chains off-screen. */
-	mask-image: linear-gradient(to right, transparent 0, #000 12px,
-	                            #000 calc(100% - 12px), transparent 100%);
 }
 
 #chainTabs::-webkit-scrollbar { height: 4px; }

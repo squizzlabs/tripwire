@@ -18,10 +18,13 @@ class esi {
 	public $refreshToken = null;
 	public $tokenExpire = null;
 
-	private function getAPI($url, $headers = array(), $params = false) {
+	private function getAPI($url, $headers = array(), $params = false, $method = null) {
 		$curl = curl_init();
 		curl_setopt($curl, CURLOPT_URL, $url);
 		curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+		if ($method === 'POST') {
+			curl_setopt($curl, CURLOPT_POST, true);
+		}
 
 		if ($params) {
 			curl_setopt($curl, CURLOPT_POST, true);
@@ -153,9 +156,55 @@ class esi {
 
 		$this->accessToken = $response->access_token;
 		$this->tokenExpire = date('Y-m-d H:i:sP', time() + $response->expires_in);
-		$this->refreshToken = $response->refresh_token;
+		$this->refreshToken = isset($response->refresh_token)
+			? $response->refresh_token
+			: $refreshToken;
 
 		return true;
+	}
+
+	public function search($accessToken, $characterID, $search, $categories, $strict) {
+		$query = http_build_query(array(
+			'search' => $search,
+			'categories' => $categories,
+			'strict' => $strict ? 'true' : 'false'
+		));
+		return $this->getAPI(
+			self::$esiUrl.'/latest/characters/'.intval($characterID).'/search/?'.$query,
+			$this->authenticatedHeaders($accessToken)
+		);
+	}
+
+	public function setDestination($accessToken, $destinationID, $clear, $beginning) {
+		$query = http_build_query(array(
+			'destination_id' => intval($destinationID),
+			'clear_other_waypoints' => $clear ? 'true' : 'false',
+			'add_to_beginning' => $beginning ? 'true' : 'false'
+		));
+		return $this->getAPI(
+			self::$esiUrl.'/latest/ui/autopilot/waypoint/?'.$query,
+			$this->authenticatedHeaders($accessToken),
+			false,
+			'POST'
+		);
+	}
+
+	public function showInfo($accessToken, $targetID) {
+		$query = http_build_query(array('target_id' => intval($targetID)));
+		return $this->getAPI(
+			self::$esiUrl.'/latest/ui/openwindow/information/?'.$query,
+			$this->authenticatedHeaders($accessToken),
+			false,
+			'POST'
+		);
+	}
+
+	private function authenticatedHeaders($accessToken) {
+		return array(
+			'Accept: application/json',
+			'Authorization: Bearer '.$accessToken,
+			'X-Compatibility-Date: 2026-09-15'
+		);
 	}
 
 	public function getCharacter($characterID) {

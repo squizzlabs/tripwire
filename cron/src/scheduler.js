@@ -7,7 +7,9 @@ export function createScheduler({ cron, jobs, context, timezone, logger = consol
 
     try {
       const result = await job.run({ ...context, ...options });
-      logger.info(`[${job.name}] completed in ${Date.now() - started}ms`, result);
+      logger.info(
+        `[${job.name}] completed in ${Date.now() - started}ms ${JSON.stringify(result)}`,
+      );
       return result;
     } catch (error) {
       logger.error(`[${job.name}] failed in ${Date.now() - started}ms`, error);

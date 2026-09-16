@@ -46,3 +46,15 @@ test('loadConfig decodes dotenv quoting passed literally by docker run', () => {
   assert.equal(config.esi.timeoutMs, 45_000);
   assert.equal(config.timezone, 'America/New_York');
 });
+
+test('loadConfig accepts the all-in-one EVE SSO environment names', () => {
+  const config = loadConfig({
+    MYSQL_USER: 'tripwire',
+    MYSQL_PASSWORD: 'secret',
+    EVE_SSO_CLIENT: 'client-id',
+    EVE_SSO_SECRET: 'client-secret',
+  });
+
+  assert.equal(config.esi.clientId, 'client-id');
+  assert.equal(config.esi.clientSecret, 'client-secret');
+});
