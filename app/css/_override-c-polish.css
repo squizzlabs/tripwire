@@ -34,6 +34,11 @@
 	min-height: 0;
 }
 
+/* The signature filter and table are already padded at the control/cell
+   level. A second panel inset wastes space and keeps the divider from running
+   edge to edge. */
+#signaturesWidget > .content { padding: 0; }
+
 /* The map is the exception and stays edge to edge: it is a canvas that pans,
    and an inset would clip it rather than frame it. The breathing room goes
    inside the scroll area instead, so nodes never butt against the divider. */
@@ -41,7 +46,14 @@
 #chainParent { padding: var(--space-3); box-sizing: border-box; max-height: 100%; overflow: auto; }
 
 /* Rhythm between the blocks inside a panel, which previously had none. */
-#sigFilterBar { margin-bottom: var(--space-3); }
+#sigFilterBar {
+	margin-bottom: 0;
+	padding: 4px 8px;
+}
+#sigFilterBar .sig-stats {
+	font-size: 9px;
+	letter-spacing: .08em;
+}
 .sys-panel > * + * { margin-top: var(--space-3); }
 #activityGraphControls { margin-top: var(--space-2); }
 
