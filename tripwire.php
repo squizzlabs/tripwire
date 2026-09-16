@@ -231,13 +231,12 @@ $system = $_REQUEST['system'] ?? '';
 						<div class="comment hidden">
 							<div class="commentToolbar">
 								<div class="commentTitle">
-									<span class="commentModified"></span>
-									<span class="commentCreated"></span>
+									<span class="commentOwner"></span>
 									<i class="commentSticky" data-icon="pin" data-tooltip="Sticky"></i>
 								</div>
 								<div class="commentControls">
-									<a class="commentEdit" href="">Edit</a>
-									<a class="commentDelete" href="">Delete</a>
+									<button class="commentAction commentEdit" type="button"><i data-icon="edit" aria-hidden="true"></i><span>Edit</span></button>
+									<button class="commentAction commentDelete" type="button"><i data-icon="trash" aria-hidden="true"></i><span>Delete</span></button>
 								</div>
 								<div style="clear: both;"></div>
 							</div>
@@ -245,8 +244,8 @@ $system = $_REQUEST['system'] ?? '';
 							<div class="commentFooter hidden">
 								<div class="commentStatus"></div>
 								<div class="commentControls">
-									<a href="" class="commentSave">Save</a>
-									<a href="" class="commentCancel">Cancel</a>
+									<button class="commentAction commentCancel" type="button"><i data-icon="times" aria-hidden="true"></i><span>Cancel</span></button>
+									<button class="commentAction commentSave" type="button"><i data-icon="check" aria-hidden="true"></i><span>Save</span></button>
 								</div>
 								<div style="clear: both;"></div>
 							</div>
@@ -376,8 +375,14 @@ $system = $_REQUEST['system'] ?? '';
 	</div>
 	</div>
 
-	<div id="dialog-deleteComment" title="Delete Comment" class="hidden">
-		<i data-icon="alert"></i> This comment will be removed. Are you sure?
+	<div id="dialog-deleteComment" title="Delete note" class="hidden">
+		<div class="confirmMessage">
+			<i class="confirmMessageIcon" data-icon="trash" aria-hidden="true"></i>
+			<div>
+				<strong>Delete this note?</strong>
+				<p>This removes it for everyone. This action cannot be undone.</p>
+			</div>
+		</div>
 	</div>
 
 	<div id="dialog-deleteSig" title="Delete Signature(s)" class="hidden">

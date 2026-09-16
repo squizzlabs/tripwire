@@ -108,8 +108,8 @@ body { font-size: var(--fs-base); }
 
    "Posted by Cormorant Fell at 2026-09-01 03:16:48" was the first line of
    every note and the note itself came second. The reader wants the note.
-   Author and time become one muted line beneath it; edit controls appear on
-   hover or focus rather than sitting on every note permanently.
+   The latest editor owns the note. Owner and edit time remain visible beneath
+   it, alongside persistent, clearly button-shaped edit controls.
    ========================================================================= */
 
 /* :not(.hidden) matters. A bare .comment rule outranked .hidden's display:none
@@ -125,14 +125,44 @@ body { font-size: var(--fs-base); }
 .comment > .commentFooter { order: 3; }
 
 .commentTitle { flex-direction: row; flex-wrap: wrap; gap: 0 var(--space-2); align-items: baseline; }
-.commentTitle .commentCreated,
-.commentTitle .commentModified { font-size: var(--fs-xs); }
-.commentTitle .commentModified.is-same { display: none; }
+.commentTitle .commentOwner {
+	display: block;
+	font-size: var(--fs-xs);
+	line-height: 1.35;
+	color: var(--muted-foreground);
+}
 
-.comment .commentControls { opacity: 0; transition: opacity .12s ease; }
-.comment:hover .commentControls,
-.comment:focus-within .commentControls { opacity: 1; }
-@media (pointer: coarse) { .comment .commentControls { opacity: 1; } }
+.commentToolbar > .commentControls {
+	display: flex;
+	align-items: center;
+	gap: var(--space-1);
+	height: auto;
+	opacity: 1;
+}
+.commentAction {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	min-height: 26px;
+	padding: 3px 8px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius-sm);
+	background: var(--muted);
+	color: var(--foreground);
+	font: inherit;
+	font-size: var(--fs-xs);
+	line-height: 1;
+	cursor: pointer;
+}
+.commentAction:hover { background: var(--accent-surface); border-color: var(--primary); }
+.commentAction:active { transform: translateY(1px); }
+.commentAction:disabled { opacity: .45; cursor: default; transform: none; }
+.commentAction [data-icon]::before { font-size: var(--icon); }
+.commentSave { background: var(--primary); border-color: var(--primary); color: var(--primary-foreground); }
+.commentSave:hover { background: color-mix(in oklab, var(--primary) 88%, white); border-color: var(--primary); }
+.commentDelete { color: var(--destructive); }
+.commentDelete:hover { background: color-mix(in oklab, var(--destructive) 14%, transparent); border-color: var(--destructive); }
+.commentStatus.noteValidation { color: var(--destructive); font-size: var(--fs-xs); line-height: 26px; }
 
 /* ============================================================================
    PHONE, LEFTOVERS FROM _override-d

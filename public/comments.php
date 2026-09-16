@@ -44,6 +44,11 @@ if ($mode == 'save') {
 		exit();
 	}
 	$comment = sanitizeNoteHtml($comment);
+	if (!noteHtmlHasContent($comment)) {
+		http_response_code(422);
+		echo json_encode(array('result' => false, 'error' => 'A note must contain content.'));
+		exit();
+	}
 	$query = 'INSERT INTO comments (id, systemID, comment, created, createdByID, createdByName, modifiedByID, modifiedByName, maskID)
 				VALUES (:commentID, :systemID, :comment, NOW(), :createdByID, :createdByName, :modifiedByID, :modifiedByName, :maskID)
 				ON DUPLICATE KEY UPDATE

@@ -114,7 +114,7 @@ $("#notesWidget .tutorial").click(function(e) {
             },
             {
                 element: document.querySelector("#notesWidget"),
-                intro: "<p>Use the <b>Edit</b> to modify a comment and <b>Delete</b> to remove a comment.</p><br/><p>You can also quickly edit any comment by simply doubling clicking anywhere on it.</p>"
+                intro: "<p>Use the <b>Edit</b> button to modify a comment and the <b>Delete</b> button to remove it.</p><br/><p>You can also quickly edit any comment by double-clicking anywhere on it.</p>"
             },
             {
                 element: document.querySelector("#notesWidget"),

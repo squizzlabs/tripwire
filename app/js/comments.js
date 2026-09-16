@@ -15,7 +15,15 @@ $("body").on("click", ".commentEdit", function(e) {
 	$comment.find(".commentToolbar").hide();
 
 	tripwire.editor.replace($comment.find(".commentBody").attr("id"), function(inst) {
-		$comment.find(".commentStatus").text("");
+		var $status = $comment.find(".commentStatus");
+		var $save = $comment.find(".commentSave");
+		var updateSaveState = function() {
+			var empty = !noteHtmlHasContent(inst.getData());
+			$save.prop("disabled", empty);
+			$status.toggleClass("noteValidation", empty).text(empty ? "Add content before saving." : "");
+		};
+		inst.area.on("input.noteValidation", updateSaveState);
+		updateSaveState();
 		$comment.find(".commentFooter").show();
 		$comment.find(".commentFooter .commentControls").show();
 		// The editor opened without focus, so a paste went to the page.
@@ -32,10 +40,17 @@ $("body").on("click", ".commentSave, .commentCancel", function(e) {
 	if ($this.attr("disabled")) return false;
 
 	var $comment = $this.closest(".comment");
-	$this.attr("disabled", "true");
 
 	if ($this.hasClass("commentSave")) {
-		var data = {"mode": "save", "commentID": $comment.data("id"), "systemID": $comment.find(".commentSticky").hasClass("active") ? 0 : viewingSystemID, "comment": tripwire.editor.get($comment.find(".commentBody").attr("id")).getData()};
+		var editor = tripwire.editor.get($comment.find(".commentBody").attr("id"));
+		var commentHtml = editor.getData();
+		if (!noteHtmlHasContent(commentHtml)) {
+			$comment.find(".commentStatus").addClass("noteValidation").text("Add content before saving.");
+			editor.focus();
+			return false;
+		}
+		$this.attr("disabled", "true");
+		var data = {"mode": "save", "commentID": $comment.data("id"), "systemID": $comment.find(".commentSticky").hasClass("active") ? 0 : viewingSystemID, "comment": commentHtml};
 
 		$.ajax({
 			url: "comments.php",
@@ -44,12 +59,8 @@ $("body").on("click", ".commentSave, .commentCancel", function(e) {
 			dataType: "JSON"
 		}).done(function(data) {
 			if (data && data.result == true) {
-				// "Edited by X at T" and "Posted by X at T" were both shown even when
-				// they were the same event. The edit line only earns its place when
-				// it says something the post line does not.
-				var same = data.comment.modifiedDate === data.comment.createdDate && data.comment.modifiedByName === data.comment.createdByName;
-				$comment.find(".commentModified").text("Edited by " + data.comment.modifiedByName + " at " + data.comment.modifiedDate).toggleClass("is-same", same);
-				$comment.find(".commentCreated").text("Posted by " + data.comment.createdByName + " at " + data.comment.createdDate);
+				// The latest editor owns the note, including when it has just been created.
+				$comment.find(".commentOwner").text(data.comment.modifiedByName + " · Updated " + data.comment.modifiedDate);
 				Tooltips.attach($comment.find("[data-tooltip]"));
 
 				tripwire.editor.destroy($comment.find(".commentBody").attr("id"), false);
@@ -60,6 +71,7 @@ $("body").on("click", ".commentSave, .commentCancel", function(e) {
 			}
 		});
 	} else {
+		$this.attr("disabled", "true");
 		tripwire.editor.destroy($comment.find(".commentBody").attr("id"), true);
 
 		if (!$comment.attr("data-id")) {
@@ -86,10 +98,20 @@ $("body").on("click", ".commentDelete", function(e) {
 		$("#dialog-deleteComment").data("comment", $comment).dialog({
 			resizable: false,
 			minHeight: 0,
+			modal: true,
+			width: 380,
 			position: {my: "center", at: "center", of: $("#notesWidget")},
-			dialogClass: "dialog-noeffect ui-dialog-shadow",
-			buttons: {
-				Delete: function() {
+			dialogClass: "dialog-noeffect ui-dialog-shadow commentDeleteDialog",
+			buttons: [
+				{
+					text: "Cancel",
+					click: function() {
+						$(this).dialog("close");
+					}
+				},
+				{
+					text: "Delete",
+					click: function() {
 					// Prevent duplicate submitting
 					$("#dialog-deleteComment").parent().find(":button:contains('Delete')").button("disable");
 
@@ -109,10 +131,16 @@ $("body").on("click", ".commentDelete", function(e) {
 					}).always(function() {
 						$("#dialog-deleteComment").parent().find(":button:contains('Delete')").button("enable");
 					});
-				},
-				Cancel: function() {
-					$(this).dialog("close");
+					}
 				}
+			],
+			open: function() {
+				var $buttons = $(this).parent().find(".ui-dialog-buttonpane button");
+				var $cancel = $buttons.filter(function() { return $.trim($(this).text()) === "Cancel"; });
+				var $delete = $buttons.filter(function() { return $.trim($(this).text()) === "Delete"; });
+				if (!$cancel.find("[data-icon]").length) { $cancel.prepend('<i data-icon="times" aria-hidden="true"></i>'); }
+				if (!$delete.find("[data-icon]").length) { $delete.prepend('<i data-icon="trash" aria-hidden="true"></i>'); }
+				$cancel.focus();
 			}
 		});
 	} else if (!$("#dialog-deleteComment").dialog("isOpen")) {

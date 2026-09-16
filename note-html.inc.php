@@ -11,6 +11,17 @@ function noteHtmlSanitizerAvailable() {
     return class_exists('DOMDocument');
 }
 
+/**
+ * Whether a note contains visible text or an actual image after sanitising.
+ * Editor-only wrappers, line breaks, whitespace, and invisible spacing do not
+ * make an otherwise blank note saveable.
+ */
+function noteHtmlHasContent($html) {
+    $text = html_entity_decode(strip_tags((string)$html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $text = preg_replace('/[\s\x{00A0}\x{200B}\x{FEFF}]+/u', '', $text);
+    return $text !== '' || preg_match('/<img\b[^>]*\bsrc\s*=/i', (string)$html) === 1;
+}
+
 function sanitizeNoteHtml($html) {
     if ($html === null || $html === '') {
         return '';

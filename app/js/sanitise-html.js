@@ -148,3 +148,12 @@ var sanitiseHtml = (function() {
 		return doc.body.innerHTML;
 	};
 })();
+
+// Rich-text editors represent an empty document with markup such as <div><br></div>.
+// Treat that, whitespace, non-breaking spaces, and zero-width characters as empty;
+// an actual image still counts as note content.
+function noteHtmlHasContent(html) {
+	var doc = new DOMParser().parseFromString('<body>' + (html || '') + '</body>', 'text/html');
+	var text = (doc.body.textContent || '').replace(/[\s\u00a0\u200b\ufeff]+/g, '');
+	return text.length > 0 || !!doc.body.querySelector('img[src]');
+}
