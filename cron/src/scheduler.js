@@ -1,5 +1,6 @@
 export function createScheduler({ cron, jobs, context, timezone, logger = console }) {
   const running = new Set();
+  const runningJobs = new Set();
 
   async function run(job, options = {}) {
     const started = Date.now();
@@ -25,12 +26,22 @@ export function createScheduler({ cron, jobs, context, timezone, logger = consol
     const task = cron.schedule(
       job.schedule,
       () => {
+        // node-cron's built-in noOverlap guard writes one warning for every
+        // blocked tick. Character tracking deliberately ticks once a second,
+        // so a normal multi-second sweep otherwise floods production logs.
+        // Keep the same single-flight behavior without logging skipped ticks.
+        if (runningJobs.has(job.name)) return undefined;
+
+        runningJobs.add(job.name);
         const execution = run(job).catch(() => undefined);
         running.add(execution);
-        execution.finally(() => running.delete(execution));
+        execution.finally(() => {
+          running.delete(execution);
+          runningJobs.delete(job.name);
+        });
         return execution;
       },
-      { name: job.name, timezone, noOverlap: true },
+      { name: job.name, timezone },
     );
     logger.info(`[${job.name}] scheduled: ${job.schedule} (${timezone})`);
     return task;
