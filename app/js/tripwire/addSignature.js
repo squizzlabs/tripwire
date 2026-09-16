@@ -26,7 +26,7 @@ tripwire.makeSigInfo = function(sig, wormhole) {
 		leadsTo: leadsTo,
 		wormhole: wormhole,
 		formattedType: (wormhole[wormhole.parent+"ID"] == sig.id ? wormholeTypeText : (wormhole.parent ? "[" + wormholeTypeText + "]" : "")),
-		lifeText: {stable: 'Stable', critical4: '4H', critical1: '1H'}[tripwire.signaturePayload.lifePreset(wormhole, sig)] || wormhole.life,
+		lifeText: {stable: 'Stable', critical4: '&lt;4h', critical1: '&lt;1h'}[tripwire.signaturePayload.lifePreset(wormhole, sig)] || wormhole.life,
 		massText: {stable: 'Stable', destab: '&lt;50%', critical: '&lt;10%'}[wormhole.mass] || _.escape(wormhole.mass),
 	}
 }

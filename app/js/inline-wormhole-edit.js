@@ -16,8 +16,8 @@
 	var FIELDS = {
 		5: {key: "life", options: [
 			{value: "stable",    label: "Stable", life: "stable"},
-			{value: "critical4", label: "4H",     life: "critical", lifeHours: 4, className: "critical"},
-			{value: "critical1", label: "1H",     life: "critical", lifeHours: 1, className: "critical"}
+			{value: "critical4", label: "<4h",    life: "critical", lifeHours: 4, className: "critical"},
+			{value: "critical1", label: "<1h",    life: "critical", lifeHours: 1, className: "critical"}
 		]},
 		6: {key: "mass", options: [
 			{value: "stable",   label: "Stable"},

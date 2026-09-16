@@ -455,9 +455,9 @@ $system = $_REQUEST['system'] ?? '';
 						<input type="radio" class="mini-selector" name="wormholeLife" id="wormholeLifeStable"  value="stable"/>
 						<label for="wormholeLifeStable" class="stable">Stable</label>
 						<input type="radio" class="mini-selector" name="wormholeLife" id="wormholeLife4H" value="critical4"/>
-						<label for="wormholeLife4H" class="critical">4H</label>
+						<label for="wormholeLife4H" class="critical">&lt;4h</label>
 						<input type="radio" class="mini-selector" name="wormholeLife" id="wormholeLife1H" value="critical1"/>
-						<label for="wormholeLife1H" class="critical">1H</label>
+						<label for="wormholeLife1H" class="critical">&lt;1h</label>
 					</div>
 					<div class="row">
 						<span class="label">Mass:</span>
