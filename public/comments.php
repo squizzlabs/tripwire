@@ -35,6 +35,14 @@ $mode = 		isset($_REQUEST['mode']) ? $_REQUEST['mode'] : null;
 $output = 		null;
 
 if ($mode == 'save') {
+	// Do not permanently replace rich notes with escaped markup when a host is
+	// missing the DOM extension. Reads fail closed in that situation; writes
+	// must wait until the required sanitizer is available.
+	if (!noteHtmlSanitizerAvailable()) {
+		http_response_code(503);
+		echo json_encode(array('result' => false, 'error' => 'PHP DOM extension is required to save notes.'));
+		exit();
+	}
 	$comment = sanitizeNoteHtml($comment);
 	$query = 'INSERT INTO comments (id, systemID, comment, created, createdByID, createdByName, modifiedByID, modifiedByName, maskID)
 				VALUES (:commentID, :systemID, :comment, NOW(), :createdByID, :createdByName, :modifiedByID, :modifiedByName, :maskID)

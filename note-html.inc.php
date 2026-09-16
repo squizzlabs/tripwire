@@ -7,13 +7,22 @@
  * Notes are shared stored content, and an older client must never be handed
  * executable markup merely because it predates the client-side sanitizer.
  */
+function noteHtmlSanitizerAvailable() {
+    return class_exists('DOMDocument');
+}
+
 function sanitizeNoteHtml($html) {
     if ($html === null || $html === '') {
         return '';
     }
 
     // Fail closed on installations missing the PHP DOM extension.
-    if (!class_exists('DOMDocument')) {
+    if (!noteHtmlSanitizerAvailable()) {
+        static $reportedMissingDom = false;
+        if (!$reportedMissingDom) {
+            error_log('Tripwire note sanitizer requires the PHP DOM extension; rendering notes as plain text.');
+            $reportedMissingDom = true;
+        }
         return htmlspecialchars((string)$html, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
