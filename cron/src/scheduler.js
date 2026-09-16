@@ -4,13 +4,15 @@ export function createScheduler({ cron, jobs, context, timezone, logger = consol
 
   async function run(job, options = {}) {
     const started = Date.now();
-    logger.info(`[${job.name}] started`);
+    if (job.logStart !== false) logger.info(`[${job.name}] started`);
 
     try {
       const result = await job.run({ ...context, ...options });
-      logger.info(
-        `[${job.name}] completed in ${Date.now() - started}ms ${JSON.stringify(result)}`,
-      );
+      if (!job.shouldLogResult || job.shouldLogResult(result)) {
+        logger.info(
+          `[${job.name}] completed in ${Date.now() - started}ms ${JSON.stringify(result)}`,
+        );
+      }
       return result;
     } catch (error) {
       logger.error(`[${job.name}] failed in ${Date.now() - started}ms`, error);

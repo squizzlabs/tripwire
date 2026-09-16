@@ -87,3 +87,39 @@ test('createScheduler silently skips a tick while the same job is running', asyn
   await first;
   await scheduler.stop();
 });
+
+test('createScheduler can suppress start and idle-result messages', async () => {
+  const callbacks = [];
+  const cron = {
+    validate: () => true,
+    schedule: (expression, callback) => {
+      callbacks.push(callback);
+      return { stop() {}, async destroy() {} };
+    },
+  };
+  const messages = [];
+  let active = false;
+  const scheduler = createScheduler({
+    cron,
+    jobs: [{
+      name: 'quiet-job',
+      schedule: '* * * * * *',
+      logStart: false,
+      shouldLogResult: (result) => result.actions > 0,
+      run: async () => ({ actions: active ? 1 : 0 }),
+    }],
+    context: {},
+    timezone: 'UTC',
+    logger: { info: (...values) => messages.push(values), error() {} },
+  });
+
+  await callbacks[0]();
+  assert.equal(messages.length, 1, 'only the scheduled message is logged while idle');
+
+  active = true;
+  await callbacks[0]();
+  assert.equal(messages.length, 2);
+  assert.match(messages[1][0], /completed.*\{"actions":1\}$/);
+
+  await scheduler.stop();
+});
