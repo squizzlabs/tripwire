@@ -1,6 +1,6 @@
-// Tripwire's service worker exists so the app is installable. It caches
-// nothing: signatures, chains and tracking are live data and must never be
-// served stale. Every request goes to the network as it always did.
+// Tripwire's service worker exists so the app is installable. It deliberately
+// has no fetch handler: signatures, chains and tracking are live data and must
+// always use the browser's normal network path rather than a service-worker
+// cache or pass-through fetch.
 self.addEventListener("install", function() { self.skipWaiting(); });
 self.addEventListener("activate", function(e) { e.waitUntil(self.clients.claim()); });
-self.addEventListener("fetch", function(e) { e.respondWith(fetch(e.request)); });

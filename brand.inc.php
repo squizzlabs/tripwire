@@ -147,6 +147,7 @@ function brand_head($landing = false) {
 	}
 	echo "\t<link rel=\"manifest\" href=\"/manifest.php\" crossorigin=\"use-credentials\">\n";
 	echo "\t<meta name=\"theme-color\" content=\"" . brand_h($theme) . "\">\n";
+	echo "\t<meta name=\"mobile-web-app-capable\" content=\"yes\">\n";
 	echo "\t<meta name=\"apple-mobile-web-app-capable\" content=\"yes\">\n";
 	echo "\t<meta name=\"apple-mobile-web-app-status-bar-style\" content=\"black-translucent\">\n";
 	echo "\t<meta name=\"apple-mobile-web-app-title\" content=\"" . brand_h($b['product']) . "\">\n";
