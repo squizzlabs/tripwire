@@ -222,7 +222,7 @@ $system = $_REQUEST['system'] ?? '';
 							<div class="commentToolbar">
 								<div class="commentTitle">
 									<span class="commentOwner"></span>
-									<i class="commentSticky" data-icon="pin" data-tooltip="Sticky"></i>
+									<i class="commentSticky" data-icon="pin" data-tooltip="Show this note on every system" aria-label="Show this note on every system" aria-pressed="false" role="button" tabindex="0"></i>
 								</div>
 								<div class="commentControls">
 									<button class="commentAction commentEdit" type="button"><i data-icon="edit" aria-hidden="true"></i><span>Edit</span></button>
@@ -434,8 +434,8 @@ $system = $_REQUEST['system'] ?? '';
 							</select>
 						</span>
 						<!-- needs to not be whitespace between the buttons for alignment, even though it's ugly markup -->
-						<div id="leadsToQuickBar" class="quickSelectBar"><button type="button" class="quick-select" value="Class-1" tabindex="-1"><span class="class-1">C1<span></button><button type="button" class="quick-select" value="Class-2" tabindex="-1"><span class="class-2">C2<span></button><button type="button" class="quick-select" value="Class-3" tabindex="-1"><span class="class-3">C3<span></button><button type="button" class="quick-select" value="Class-4" tabindex="-1"><span class="class-4">C4<span></button><button type="button" class="quick-select" value="Class-5" tabindex="-1"><span class="class-5">C5<span></button><button type="button" class="quick-select" value="Class-6" tabindex="-1"><span class="class-6">C6<span></button> |
-						<button type="button" class="quick-select" value="High-Sec" tabindex="-1"><span class="hisec">HS<span></button><button type="button" class="quick-select" value="Low-Sec" tabindex="-1"><span class="lowsec">LS<span></button><button type="button" class="quick-select" value="Null-Sec" tabindex="-1"><span class="nullsec">NS<span></button>
+						<div id="leadsToQuickBar" class="quickSelectBar"><button type="button" class="quick-select" value="Class-1" tabindex="-1"><span class="type-label class-1">C1</span></button><button type="button" class="quick-select" value="Class-2" tabindex="-1"><span class="type-label class-2">C2</span></button><button type="button" class="quick-select" value="Class-3" tabindex="-1"><span class="type-label class-3">C3</span></button><button type="button" class="quick-select" value="Class-4" tabindex="-1"><span class="type-label class-4">C4</span></button><button type="button" class="quick-select" value="Class-5" tabindex="-1"><span class="type-label class-5">C5</span></button><button type="button" class="quick-select" value="Class-6" tabindex="-1"><span class="type-label class-6">C6</span></button> |
+						<button type="button" class="quick-select" value="High-Sec" tabindex="-1"><span class="type-label hisec">HS</span></button><button type="button" class="quick-select" value="Low-Sec" tabindex="-1"><span class="type-label lowsec">LS</span></button><button type="button" class="quick-select" value="Null-Sec" tabindex="-1"><span class="type-label nullsec">NS</span></button>
 						</div>
 					</div>
 					<div class="row">

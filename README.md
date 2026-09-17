@@ -455,6 +455,7 @@ from the pack.
 | `fonts.ui`, `fonts.mono`, `fonts.display`, `fonts.brand` | CSS `font-family` stacks: running text; labels, ids and counts; headings; the lockup's name (defaults to `display`). |
 | `accent.dark`, `accent.light` | The one accent colour per room: primary buttons, the current range, focus rings, the letterhead name. |
 | `accent.on-dark`, `accent.on-light` | Text colour on the accent in each room. |
+| `components.type-label` | Optional compact security/class-label treatment. Shared keys set its geometry and type; `dark.foreground` and `light.foreground` set readable ink for each room. Missing keys inherit the neutral pack and CSS fallbacks. |
 | `palette.dark`, `palette.light` | The surface tokens per room, below. |
 
 ### Palette tokens
@@ -480,7 +481,9 @@ CSS colour works; the neutral pack shows the expected relationships.
 
 Not brandable, on purpose: the `--data-*` colours for wormhole class,
 security band, mass and life. They encode meaning on the map and stay the
-same for every corp.
+same for every corp. A brand may change the compact labels' shape, typography,
+border, shadow and foreground through `components.type-label`; it cannot
+change what their semantic colours mean.
 
 ### Keeping your pack private
 

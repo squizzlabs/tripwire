@@ -165,8 +165,9 @@ $("body").on("click", "#add-comment", function(e) {
 $("body").on("click", ".commentSticky", function(e) {
 	e.preventDefault();
 	var $comment = $(this).closest(".comment");
+	var makeGlobal = !$(this).hasClass("active");
 
-	var data = {"mode": "sticky", "commentID": $comment.data("id"), "systemID": $comment.find(".commentSticky").hasClass("active") ? viewingSystemID : 0};
+	var data = {"mode": "sticky", "commentID": $comment.data("id"), "systemID": makeGlobal ? 0 : viewingSystemID};
 
 	$.ajax({
 		url: "comments.php",
@@ -175,9 +176,16 @@ $("body").on("click", ".commentSticky", function(e) {
 		dataType: "JSON"
 	}).done(function(data) {
 		if (data && data.result == true) {
-			$comment.find(".commentSticky").hasClass("active") ? $comment.find(".commentSticky").removeClass("active") : $comment.find(".commentSticky").addClass("active");
+			tripwire.comments.setStickyState($comment, makeGlobal);
 		}
 	});
+});
+
+$("body").on("keydown", ".commentSticky", function(e) {
+	if (e.key === "Enter" || e.key === " ") {
+		e.preventDefault();
+		$(this).click();
+	}
 });
 
 function commentSortHandler(sortOrder) {

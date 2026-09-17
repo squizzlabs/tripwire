@@ -121,7 +121,7 @@ tripwire.systemChange = function(systemID, mode) {
 				}
 				return '<a class="gate-chip" href=".?system=' + encodeURIComponent(system.name) + '">' +
 					'<span class="gate-name">' + system.name + '</span>' +
-					'<span class="gate-sec ' + system.systemTypeClass + '">' + system.systemTypeName + '</span>' +
+					'<span class="type-label gate-sec ' + system.systemTypeClass + '">' + system.systemTypeName + '</span>' +
 					'</a>';
 			}).join('') + '</p>');
 		}

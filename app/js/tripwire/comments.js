@@ -1,6 +1,17 @@
 tripwire.comments = function() {
     this.comments.data = {};
 
+	this.comments.setStickyState = function($comment, sticky) {
+		const label = sticky
+			? "Shown on every system — click to keep only this system"
+			: "Show this note on every system";
+		$comment.find(".commentSticky")
+			.toggleClass("active", !!sticky)
+			.attr("data-tooltip", label)
+			.attr("aria-label", label)
+			.attr("aria-pressed", sticky ? "true" : "false");
+	};
+
     this.comments.parse = function(data) {
 		// Parse-based; see app/js/sanitise-html.js for why the previous
 		// regex version was bypassable.
@@ -28,7 +39,7 @@ tripwire.comments = function() {
 
                 $comment.find(".commentOwner").text(data[x].modifiedByName + " · Updated " + data[x].modified);
                 $comment.find(".commentBody").attr("id", "comment" + commentID);
-                $comment.find(".commentSticky").addClass(data[x].sticky ? "active" : "");
+				tripwire.comments.setStickyState($comment, data[x].sticky);
                 $comment.removeClass("hidden");
                 Tooltips.attach($comment.find("[data-tooltip]"));
 
@@ -45,7 +56,7 @@ tripwire.comments = function() {
                 }
 
                 $comment.find(".commentOwner").text(data[x].modifiedByName + " · Updated " + data[x].modified);
-                $comment.find(".commentSticky").addClass(data[x].sticky ? "active" : "");
+				tripwire.comments.setStickyState($comment, data[x].sticky);
 
                 //tripwire.comments.data[id] = data[id];
             }

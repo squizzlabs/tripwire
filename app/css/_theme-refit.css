@@ -1356,3 +1356,54 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 	font-size: 0;
 	line-height: 0;
 }
+
+/* ── Shared security / wormhole type labels ─────────────────────────────
+   One primitive is used by the map corner, statics, gate links and the
+   signature quick-select. A brand pack owns its geometry, typography, ink,
+   edge and shadow through --type-label-*; semantic fills remain EVE data
+   colours and therefore do not change from brand to brand. Every var() has
+   a fallback so older and deliberately minimal packs remain valid. */
+.type-label,
+#chainMap div.node > h4.nodeClass > span.type-label,
+#chainMap div.node > .statics > span.type-label,
+.gate-chip > span.gate-sec.type-label,
+#dialog-signature .quickSelectBar button > span.type-label {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: auto;
+	min-width: var(--type-label-min-width, 18px);
+	height: var(--type-label-height, 14px);
+	margin: 0;
+	padding: 0 var(--type-label-padding-inline, 5px);
+	border: var(--type-label-border-width, 0) solid var(--type-label-border-color, transparent);
+	border-radius: var(--type-label-radius, 999px);
+	background: var(--type-label-fill, var(--node-edge));
+	box-shadow: var(--type-label-shadow, none);
+	color: var(--type-label-foreground, #101010);
+	-webkit-text-fill-color: var(--type-label-foreground, #101010);
+	font-family: var(--type-label-font-family, var(--font-ui));
+	font-size: var(--type-label-font-size, 9px);
+	font-weight: var(--type-label-font-weight, 700);
+	letter-spacing: var(--type-label-letter-spacing, .04em);
+	line-height: 1;
+	text-transform: none;
+}
+
+.type-label.hisec                         { --type-label-fill: var(--data-good); }
+.type-label.lowsec                        { --type-label-fill: var(--data-loot-orange); }
+.type-label.nullsec                       { --type-label-fill: var(--data-critical); }
+.type-label.triglavian                    { --type-label-fill: var(--data-triglavian); }
+.type-label.wh,
+.type-label.class-1,
+.type-label.class-2,
+.type-label.class-3                       { --type-label-fill: var(--data-info); }
+.type-label.class-4,
+.type-label.class-5                       { --type-label-fill: var(--data-loot-purple); }
+.type-label.class-6                       { --type-label-fill: var(--data-loot-pink); }
+.type-label.class-12                      { --type-label-fill: var(--data-loot-gold); }
+.type-label.class-15,
+.type-label.class-16,
+.type-label.class-17                      { --type-label-fill: var(--data-loot-red); }
+.type-label.multi-static                  { --type-label-fill: var(--muted-foreground); }

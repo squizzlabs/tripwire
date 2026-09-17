@@ -90,6 +90,28 @@ function brand_css_vars($vars, $indent = "\t") {
 }
 
 /**
+ * Flatten brandable component tokens into CSS custom properties. Shared
+ * values live directly under a component; room-specific values live under
+ * its dark/light key. CSS still supplies fallbacks when a pack omits them.
+ */
+function brand_component_vars($components, $room) {
+	$vars = array();
+	foreach ($components as $component => $settings) {
+		if (!is_array($settings)) { continue; }
+		foreach ($settings as $name => $value) {
+			if ($name === 'dark' || $name === 'light' || is_array($value)) { continue; }
+			$vars[$component . '-' . $name] = $value;
+		}
+		$roomSettings = $settings[$room] ?? array();
+		if (!is_array($roomSettings)) { continue; }
+		foreach ($roomSettings as $name => $value) {
+			if (!is_array($value)) { $vars[$component . '-' . $name] = $value; }
+		}
+	}
+	return $vars;
+}
+
+/**
  * The palette as tokens, in the three-state shape the stylesheets use: bare
  * :root is dark, the light values apply under the OS preference unless the
  * page is pinned dark, and again when it is pinned light.
@@ -98,8 +120,11 @@ function brand_tokens_css() {
 	$b = brand();
 	$dark  = $b['palette']['dark']  ?? array();
 	$light = $b['palette']['light'] ?? array();
+	$components = $b['components'] ?? array();
 	$dark  = array_merge($dark,  array('primary' => $b['accent']['dark']  ?? null, 'ring' => $b['accent']['dark']  ?? null, 'primary-foreground' => $b['accent']['on-dark']  ?? null));
 	$light = array_merge($light, array('primary' => $b['accent']['light'] ?? null, 'ring' => $b['accent']['light'] ?? null, 'primary-foreground' => $b['accent']['on-light'] ?? null));
+	$dark  = array_merge($dark, brand_component_vars($components, 'dark'));
+	$light = array_merge($light, brand_component_vars($components, 'light'));
 	$fonts = array(
 		'font-ui'      => $b['fonts']['ui']      ?? null,
 		'font-mono'    => $b['fonts']['mono']    ?? null,

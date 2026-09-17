@@ -110,7 +110,7 @@ $("#notesWidget .tutorial").click(function(e) {
             },
             {
                 element: document.querySelector("#notesWidget"),
-                intro: "<p>You can click the 'pin' or 'sticky' button to toggle showing this comment for every system, not just this system.</p>"
+				intro: "<p>Use the pin to show this note on <b>every system</b> in the current mask. Click it again to keep the note only on the system you are viewing.</p>"
             },
             {
                 element: document.querySelector("#notesWidget"),

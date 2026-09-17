@@ -32,6 +32,14 @@
     "light": "#1f8f78",
     "on-light": "#ffffff"
   },
+  "components": {
+    "type-label": {
+      "radius": "3px",
+      "font-family": "var(--font-mono)",
+      "dark": { "foreground": "#101714" },
+      "light": { "foreground": "#ffffff" }
+    }
+  },
   "palette": {
     "dark": {
       "background": "#141a19",

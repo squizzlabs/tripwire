@@ -19,6 +19,22 @@
     "display": "'Geist', system-ui, sans-serif"
   },
   "accent": { "dark": "#4f8fe0", "on-dark": "#0e1420", "light": "#2f6fc4", "on-light": "#ffffff" },
+  "components": {
+    "type-label": {
+      "height": "14px",
+      "padding-inline": "5px",
+      "radius": "999px",
+      "font-family": "var(--font-ui)",
+      "font-size": "9px",
+      "font-weight": "700",
+      "letter-spacing": ".04em",
+      "border-width": "0px",
+      "border-color": "transparent",
+      "shadow": "none",
+      "dark": { "foreground": "#101010" },
+      "light": { "foreground": "#ffffff" }
+    }
+  },
   "palette": {
     "dark": {
       "background": "#000000", "foreground": "#f2f2f2",

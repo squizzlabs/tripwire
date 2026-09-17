@@ -159,17 +159,19 @@ var chain = new function() {
 
 		function formatStatics(statics) {
 			if(!statics) { return ''; }
-			else if(statics.length > 4) { return '<span class="multi-static">+</span>'; }
+			else if(statics.length > 4) { return '<span class="type-label multi-static">+</span>'; }
 			
-			const shortCodeMap = { 'High-Sec': 'H', 'Low-Sec': 'L', 'Null-Sec': 'N', 'Triglavian':'▼',
-				'Class-1': '1', 'Class-2': '2', 'Class-3': '3', 'Class-4': '4', 'Class-5' : 5, 'Class-6': 6
+			const shortCodeMap = { 'High-Sec': 'HS', 'Low-Sec': 'LS', 'Null-Sec': 'NS', 'Triglavian':'Trig',
+				'Class-1': 'C1', 'Class-2': 'C2', 'Class-3': 'C3', 'Class-4': 'C4', 'Class-5': 'C5', 'Class-6': 'C6'
 			};
-			const classMap = { H: 'hisec', L: 'lowsec', N: 'nullsec', '▼': 'triglavian' };
+			const classMap = { HS: 'hisec', LS: 'lowsec', NS: 'nullsec', Trig: 'triglavian',
+				C1: 'class-1', C2: 'class-2', C3: 'class-3', C4: 'class-4', C5: 'class-5', C6: 'class-6'
+			};
 			return statics.map(function(s) {
 				const text = shortCodeMap[appData.wormholes[s].leadsTo];
-				const className = classMap[text] || 'class-' +  text;
+				const className = classMap[text] || 'unknown';
 				const tip = appData.wormholes[s].leadsTo + ' via ' + s;
-				return '<span class="' + className + '" data-tooltip="' + tip + '">' + text + '</span>';
+				return '<span class="type-label ' + className + '" data-tooltip="' + tip + '">' + text + '</span>';
 			}).join('');
 		}
 
@@ -184,7 +186,7 @@ var chain = new function() {
 		function makeSystemNode(systemID, id, whId, inSigId, systemName, nodeTypeMarkup, additionalClasses) {
 			// System type switch
 			const system = systemAnalysis.analyse(systemID);
-			var systemType = "<span class='" + system.systemTypeClass + "'>" + system.systemTypeName + system.systemTypeModifiers.join('') + "</span>";
+			var systemType = "<span class='type-label " + system.systemTypeClass + "'>" + system.systemTypeName + system.systemTypeModifiers.join('') + "</span>";
 			
 			systemName = _.escape(systemName);
 			const systemNameText = 
