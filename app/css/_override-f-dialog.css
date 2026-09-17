@@ -51,11 +51,23 @@
 /* Settings keeps its title and actions fixed while only its body scrolls.
    JavaScript refines max-height for the app's body zoom setting. */
 .ui-dialog.dialog-options-frame { overflow: hidden; }
+.ui-dialog.dialog-options-frame .ui-dialog-titlebar-close {
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+}
 .ui-dialog.dialog-options-frame > .ui-dialog-content {
 	min-height: 0;
 	max-height: none;
 	overflow-y: auto;
 }
+.ui-dialog.dialog-options-frame .ui-dialog-buttonpane button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-2);
+}
+.ui-dialog.dialog-options-frame .ui-dialog-buttonpane button [data-icon]::before { font-size: var(--icon); }
 .ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset {
 	display: flex;
 	align-items: center;

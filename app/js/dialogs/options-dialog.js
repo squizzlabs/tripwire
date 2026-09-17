@@ -15,6 +15,31 @@ function fitOptionsDialogToViewport() {
 	}
 }
 
+var optionsDialogSaved = false;
+
+function decorateOptionsDialogActions() {
+	var $frame = $("#dialog-options").closest(".ui-dialog");
+	var actions = {
+		Cancel: {icon: "times", role: "is-quiet"},
+		Save: {icon: "check", role: "is-primary"}
+	};
+
+	$frame.find(".ui-dialog-buttonpane button").each(function() {
+		var $button = $(this);
+		var label = $.trim($button.text());
+		var action = actions[label];
+		if (!action) return;
+		$button.addClass(action.role);
+		if (!$button.find("[data-icon]").length) {
+			$button.prepend('<i data-icon="' + action.icon + '" aria-hidden="true"></i>');
+		}
+	});
+
+	$frame.find(".ui-dialog-titlebar-close")
+		.attr({"aria-label": "Close settings", title: "Close settings"})
+		.show();
+}
+
 $(".options").click(function(e) {
 	e.preventDefault();
 
@@ -26,12 +51,10 @@ $(".options").click(function(e) {
 		width: 450,
 		minHeight: 0,
 		modal: true,
+		closeOnEscape: true,
 		dialogClass: "dialog-options-frame",
 		buttons: {
 			Save: function() {
-				// Options
-				var data = {mode: "set", options: JSON.stringify(options)};
-
 				$("#dialog-options").parent().find(".ui-dialog-buttonpane button:contains('Save')").attr("disabled", true).addClass("ui-state-disabled");
 				
 				options.chain.sigNameLocation = $("#dialog-options #chainSigNameLocation").val();
@@ -68,33 +91,19 @@ $(".options").click(function(e) {
 				options.apply();
 				options.save(); // Performs AJAX
 
+				optionsDialogSaved = true;
 				$("#dialog-options").dialog("close");
 				$("#dialog-options").parent().find(".ui-dialog-buttonpane button:contains('Save')").attr("disabled", false).removeClass("ui-state-disabled");
 
 			},
-			Reset: function() {
-				$("#dialog-confirm #msg").html("Settings will be reset to defaults temporarily.<br/><br/><p><em>Save settings to make changes permanent.</em></p>");
-				$("#dialog-confirm").dialog("option", {
-					buttons: {
-						Reset: function() {
-							options.reset();
-							options.apply();
-
-							$("#dialog-options").dialog("close");
-							$(this).dialog("close");
-						},
-						Cancel: function() {
-							$(this).dialog("close");
-						}
-					}
-				}).dialog("open");
-			},
-			Close: function() {
+			Cancel: function() {
 				$(this).dialog("close");
 			}
 		},
 		open: function() {
+			optionsDialogSaved = false;
 			fitOptionsDialogToViewport();
+			decorateOptionsDialogActions();
 
 			// Get user stats data
 			$.ajax({
@@ -139,6 +148,8 @@ $(".options").click(function(e) {
 			if (tripwire.settingsPanels) { tripwire.settingsPanels.render(); }
 		},
 		create: function() {
+			decorateOptionsDialogActions();
+
 			$(window).off("resize.tripwireOptions").on("resize.tripwireOptions", function() {
 				if ($("#dialog-options").dialog("isOpen")) fitOptionsDialogToViewport();
 			});
@@ -289,6 +300,10 @@ $(".options").click(function(e) {
 			});
 
 
+		},
+		close: function() {
+			if (!optionsDialogSaved) options.apply();
+			optionsDialogSaved = false;
 		}
 	});
 
