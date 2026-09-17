@@ -3,16 +3,27 @@ function fitOptionsDialogToViewport() {
 	if (!$content.hasClass("ui-dialog-content")) return;
 
 	var scale = parseFloat($("body").css("zoom")) || 1;
-	var maxHeight = Math.max(120, Math.floor(window.innerHeight / scale) - 32);
-	var maxWidth = Math.max(240, Math.floor(window.innerWidth / scale) - 32);
-	$content.closest(".ui-dialog").css({
+	var gutter = 16;
+	var maxHeight = Math.max(120, Math.floor((window.innerHeight - gutter * 2) / scale));
+	var maxWidth = Math.max(240, Math.floor((window.innerWidth - gutter * 2) / scale));
+	var $frame = $content.closest(".ui-dialog");
+	$frame.css({
 		"max-height": maxHeight + "px",
-		"max-width": maxWidth + "px"
+		"max-width": maxWidth + "px",
+		"top": (gutter / scale) + "px"
 	});
 
 	if ($content.dialog("isOpen")) {
-		$content.dialog("option", "position", {my: "center", at: "center", of: window});
+		$content.dialog("option", "position", {my: "center top", at: "center top", of: window});
+		// jQuery UI calculates offsets before body zoom is painted. Pin them again
+		// afterwards in unscaled CSS pixels so the physical placement is exact.
+		var left = Math.max(gutter / scale, (window.innerWidth / scale - $frame.outerWidth()) / 2);
+		$frame.css({"top": (gutter / scale) + "px", "left": left + "px"});
 	}
+
+	var chromeHeight = $frame.children(".ui-dialog-titlebar").outerHeight(true)
+		+ $frame.children(".ui-dialog-buttonpane").outerHeight(true);
+	$content.css("--options-dialog-content-max-height", Math.max(0, maxHeight - chromeHeight) + "px");
 }
 
 var optionsDialogSaved = false;
@@ -162,10 +173,11 @@ $(".options").click(function(e) {
 				var tab = $(this).attr("data-tab");
 				$("#optionsAccordion [role=tab]").attr("aria-selected", "false");
 				$(this).attr("aria-selected", "true");
-				$("#optionsAccordion .settings-pane").each(function() {
-					this.hidden = $(this).attr("data-pane") !== tab;
-				});
+			$("#optionsAccordion .settings-pane").each(function() {
+				this.hidden = $(this).attr("data-pane") !== tab;
 			});
+			fitOptionsDialogToViewport();
+		});
 			function setUpSlider(id, value, change, range) {
 				range = Object.assign({min: 0.7, max:1.4, step:0.05}, range);
 				$("#" + id).slider({

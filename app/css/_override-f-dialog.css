@@ -58,7 +58,7 @@
 }
 .ui-dialog.dialog-options-frame > .ui-dialog-content {
 	min-height: 0;
-	max-height: none;
+	max-height: var(--options-dialog-content-max-height, none) !important;
 	overflow-y: auto;
 }
 .ui-dialog.dialog-options-frame .ui-dialog-buttonpane button {
