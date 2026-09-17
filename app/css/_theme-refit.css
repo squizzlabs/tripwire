@@ -230,6 +230,27 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 #chainWidget > .controls > .bar-btn.bar-icon:hover { color: var(--foreground); }
 .gridWidget > .controls > .bar-right .bar-btn.bar-toggle.active { color: var(--primary); }
 
+/* Chain toggles live outside .bar-right, so the generic muted-icon rule above
+   otherwise wins over their active state. Keep pressed toggles unmistakable,
+   and give every icon action immediate down-state feedback. */
+#chainWidget > .controls > .bar-btn.bar-toggle.active,
+#chainWidget > .controls > .bar-btn.bar-toggle[aria-pressed="true"] {
+	color: var(--primary);
+	background: color-mix(in oklab, var(--primary) 20%, transparent);
+	border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
+	box-shadow: inset 0 -2px 0 var(--primary);
+}
+#chainWidget > .controls > .bar-btn:active {
+	color: var(--primary-foreground);
+	background: var(--primary);
+	border-color: var(--primary);
+	transform: translateY(1px);
+}
+#chainWidget > .controls > .bar-btn:focus-visible {
+	outline: 2px solid var(--ring);
+	outline-offset: 2px;
+}
+
 /* Range chips had become tiny bordered boxes next to the borderless legend:
    two idioms in one row. They are quiet mono text like the links beneath. */
 #activityGraphControls > a {
@@ -1295,3 +1316,18 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 /* The pilot count is centred in its capsule (it is a flex box, which does
    not centre on its own), with a round minimum so "1" and "12" both sit true. */
 #chainMap div.node > .nodeIcons .badge { justify-content: center; min-width: 14px; padding: 0 4px; box-sizing: border-box; text-align: center; }
+
+/* Activity pips straddle the node edge, so the current-system highlight can
+   otherwise swallow them. Draw real circles instead of tiny text bullets and
+   cut a canvas-coloured halo through the border around each one. */
+#chainMap div.node > .nodeActivity { bottom: -5px; gap: 5px; }
+#chainMap div.node > .nodeActivity > span {
+	display: block;
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	background: currentColor;
+	box-shadow: 0 0 0 2px var(--background);
+	font-size: 0;
+	line-height: 0;
+}

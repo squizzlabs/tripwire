@@ -177,10 +177,8 @@ $("#follow").click(function(e) {
 })
 
 $("#show-viewing").click(function() {
-	if ($(this).hasClass("active"))
-		$(this).removeClass("active");
-	else
-		$(this).addClass("active");
+	$(this).toggleClass("active");
+	$(this).attr("aria-pressed", $(this).hasClass("active") ? "true" : "false");
 
 	chain.redraw();
 
@@ -189,15 +187,20 @@ $("#show-viewing").click(function() {
 });
 
 $("#show-favorite").click(function() {
-	if ($(this).hasClass("active"))
-		$(this).removeClass("active");
-	else
-		$(this).addClass("active");
+	$(this).toggleClass("active");
+	$(this).attr("aria-pressed", $(this).hasClass("active") ? "true" : "false");
 
 	chain.redraw();
 
 	options.buttons.chainWidget.favorites = $(this).hasClass("active");
 	options.save();
+});
+
+$("#chainWidget > .controls .bar-toggle[role='button']").on("keydown", function(e) {
+	if (e.key === "Enter" || e.key === " ") {
+		e.preventDefault();
+		$(this).trigger("click");
+	}
 });
 
 $("#system-favorite").click(function() {

@@ -113,8 +113,8 @@ var options = new function() {
 		if (this.buttons.follow) $("#follow").addClass("active");
 		if (this.buttons.chainWidget.home) $("#home").addClass("active");
 		if (this.buttons.chainWidget.kspace) $("#k-space").addClass("active");
-		if (this.buttons.chainWidget.viewing) $("#show-viewing").addClass("active");
-		if (this.buttons.chainWidget.favorites) $("#show-favorite").addClass("active");
+		if (this.buttons.chainWidget.viewing) $("#show-viewing").addClass("active").attr("aria-pressed", "true");
+		if (this.buttons.chainWidget.favorites) $("#show-favorite").addClass("active").attr("aria-pressed", "true");
 		if (this.buttons.chainWidget.evescout) $("#eve-scout").addClass("active");
 		if ($.inArray(parseInt(viewingSystemID), this.favorites) !== -1) $("#system-favorite").attr("data-icon", "star").addClass("active");
 		if (this.buttons.signaturesWidget.autoMapper) $("#toggle-automapper").addClass("active");

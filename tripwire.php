@@ -258,8 +258,8 @@ $system = $_REQUEST['system'] ?? '';
 					<span id="chainTabs"></span>
 					<i id="newTab" data-icon="plus" class="bar-btn bar-icon" data-tooltip="New tab"></i>
 					<span class="bar-sep"></span>
-					<i id="show-viewing" data-icon="eye" class="bar-btn bar-icon" data-tooltip="Add the system you are viewing to the chain"></i>
-					<i id="show-favorite" data-icon="star" class="bar-btn bar-icon" data-tooltip="Add favourite systems to the chain"></i>
+					<i id="show-viewing" data-icon="eye" class="bar-btn bar-icon bar-toggle" role="button" tabindex="0" aria-pressed="false" data-tooltip="Add the system you are viewing to the chain"></i>
+					<i id="show-favorite" data-icon="star" class="bar-btn bar-icon bar-toggle" role="button" tabindex="0" aria-pressed="false" data-tooltip="Add favourite systems to the chain"></i>
 					<i id="show-chainLegend" class="bar-btn bar-icon" data-tooltip="<table id='guide'>
 						<tr><td><div class='guide stable'></td><td>Stable</td><th>Auras</th></tr>
 						<tr><td><div class='guide eol'></div></td><td>End of Life</td><td><div class='guide aura jm-5kt frig'></div></td><td>Small</td></tr>
@@ -268,8 +268,8 @@ $system = $_REQUEST['system'] ?? '';
 						<tr><td><div class='guide frig'></div></td><td>Frigate</td><td><div class='guide aura jm-2000kt'></div></td><td>X-Large</td></tr>
 					</table>">&equiv;</i>
 					<span class="bar-sep"></span>
-					<i id="hot-jump" data-icon="prop-mod" class="bar-btn bar-icon bar-toggle" data-tooltip="Jumping hot (prop mod on)"></i>
-					<i id="higgs-jump" data-icon="anchor" class="bar-btn bar-icon bar-toggle" data-tooltip="Higgs anchor fitted"></i>
+					<i id="hot-jump" data-icon="prop-mod" class="bar-btn bar-icon bar-toggle" role="button" tabindex="0" aria-pressed="false" data-tooltip="Jumping hot (prop mod on)"></i>
+					<i id="higgs-jump" data-icon="anchor" class="bar-btn bar-icon bar-toggle" role="button" tabindex="0" aria-pressed="false" data-tooltip="Higgs anchor fitted"></i>
 					<div class="bar-right">
 						<button id="chain-zoom-reset" class="hidden bar-btn">Reset zoom</button>
 						<!-- <i class="tutorial" data-tooltip="Show tutorial for this section">?</i> -->
