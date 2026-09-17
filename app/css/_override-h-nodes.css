@@ -27,9 +27,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
-	cursor: grab;
+	cursor: default;
 }
-#chainMap div.node:active { cursor: grabbing; }
 
 /* Class chip, top-left. The h4 was a heading; it is a label. */
 #chainMap div.node > h4.nodeClass {
