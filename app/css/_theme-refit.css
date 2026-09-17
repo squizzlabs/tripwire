@@ -663,8 +663,43 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 /* Legend and links on one row: short chip labels, tighter tracking. */
 #activityLegend { gap: 2px 4px; }
 #activityLegend .legend-chip { padding: 0 5px 0 4px; letter-spacing: .06em; gap: 5px; }
-#activityGraphControls #infoLinks.in-legend-row { gap: 8px; }
-#activityGraphControls #infoLinks.in-legend-row a { letter-spacing: .12em; padding: 0; }
+#activityGraphControls #infoLinks.in-legend-row { gap: 12px; }
+#activityGraphControls #infoLinks.in-legend-row a { letter-spacing: 0; padding: 2px 0; }
+
+/* External system resources are destinations, not panel controls. Keep the
+   links compact beside the legend, but give them normal link typography,
+   underlines and each service's own mark. */
+#infoLinks .infoLink {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 2px 0;
+	border: 0;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	font-family: inherit;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0;
+	text-transform: none;
+	color: var(--data-link);
+	text-decoration-line: underline;
+	text-decoration-color: color-mix(in oklab, currentColor 55%, transparent);
+	text-underline-offset: 2px;
+}
+#infoLinks .infoLink img {
+	display: block;
+	width: 16px;
+	height: 16px;
+	flex: 0 0 16px;
+	object-fit: contain;
+}
+#infoLinks .infoLink:hover {
+	color: var(--primary);
+	text-decoration-color: currentColor;
+}
+#infoLinks .infoLink:focus-visible { outline-offset: 3px; }
 
 /* ── Brand packs ─────────────────────────────────────────────────────────
    A pack without a logo image shows the product name in the display face. */

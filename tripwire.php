@@ -168,9 +168,9 @@ $system = $_REQUEST['system'] ?? '';
 					<div id="activityGraph"></div>
 					<div id="activityGraphControls" class="sys-range"><a href="javascript: activity.time(168);">Week</a><a href="javascript: activity.time(48);">48h</a><a href="javascript: activity.time(24);">24h</a></div>
 					<div id="infoLinks" class="sys-links">
-						<a class="infoLink" data-href="http://anoik.is/systems/$systemName" href="" target="_blank">Anoik</a>
-						<a class="infoLink" data-href="https://evemaps.dotlan.net/search?q=$systemName" href="" target="_blank">Dotlan</a>
-						<a class="infoLink" data-href='https://zkillboard.com/system/$systemID/' href="" target="_blank">zKill</a>
+						<a class="infoLink infoLink-anoikis" data-href="https://anoik.is/systems/$systemName" href="" target="_blank" rel="noopener noreferrer"><img src="https://anoik.is/static/favicon.png" alt="" width="16" height="16"><span>Anoikis</span></a>
+						<a class="infoLink infoLink-dotlan" data-href="https://evemaps.dotlan.net/search?q=$systemName" href="" target="_blank" rel="noopener noreferrer"><img src="https://evemaps.dotlan.net/favicon.ico" alt="" width="16" height="16"><span>DOTLAN</span></a>
+						<a class="infoLink infoLink-zkill" data-href='https://zkillboard.com/system/$systemID/' href="" target="_blank" rel="noopener noreferrer"><img src="https://zkillboard.com/favicon.ico" alt="" width="16" height="16"><span>zKillboard</span></a>
 					</div>
 				</div>
 			</li>
