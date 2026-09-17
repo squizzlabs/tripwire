@@ -339,7 +339,7 @@ $system = $_REQUEST['system'] ?? '';
 								</ul>
 							</li>
 							<li data-command="mass"><a>Mass</a></li>
-							<li data-command="collapse"><a>Collapse</a></li>
+							<li data-command="collapse"><a id="collapseMenuItem">Collapse</a></li>
 							<li data-command="ping"><a>Ping ...</a></li>
 							<li data-command="copySystemName"><a id="copySystemNameMenuItem">[Copy system name]</a></li>
 							<li data-command="makeTab"><a id="makeTabMenuItem">[makeTab]</a></li>

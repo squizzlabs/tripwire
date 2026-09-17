@@ -1,6 +1,7 @@
 var chain = new function() {
 	var chain = this;
 	this.map, this.view, this.drawing, this.data = {};
+	this.collapsedSystems = [];
 	
 	// Third party suppliers should have:
 	//  findLinks(systemId, ids) - Find links from the given system coming from the third party. ids contain a parent and a child ID; the child ID should be incremented for every new connection
@@ -511,8 +512,29 @@ var chain = new function() {
 	}
 
 	this.nodeIsCollapsed = function(systemID) {
-		const tab = options.chain.tabs[options.chain.active];
-		return !!tab && (tab.collapsed || []).some(function(id) { return id == systemID; });
+		if (this.renderer && this.renderer.isCollapsed) {
+			const collapsed = this.renderer.isCollapsed(systemID);
+			if (collapsed !== null) return collapsed;
+		}
+		return this.collapsedSystems.some(function(id) { return id == systemID; });
+	}
+
+	this.renderCollapsedIndicators = function(collapsedSystems) {
+		$("#chainMap .collapsed-branch").remove();
+		(collapsedSystems || []).forEach(function(systemID) {
+			const $node = $("#chainMap [data-nodeid='"+systemID+"']").first();
+			if (!$node.length || !chain.nodeHasChildren(systemID)) return;
+
+			const system = tripwire.systems[systemID];
+			const label = system && system.name ? "Expand branch from " + system.name : "Expand collapsed branch";
+			const $indicator = $('<button type="button" class="collapsed-branch" aria-label="'+_.escape(label)+'"><i data-icon="plus-circle" aria-hidden="true"></i><span>Collapsed</span></button>');
+			$indicator.on("click", function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+				chain.renderer.collapse(systemID, false);
+			});
+			$node.append($indicator);
+		});
 	}
 	
 	var drawRetryTimer = null;
@@ -548,9 +570,12 @@ var chain = new function() {
 			$.extend(data, this.nodes(data.map)); // 250ms -> <100ms
 			$.extend(this.data, data);
 			
-			const collapsedSystems = options.chain.tabs[options.chain.active] ? (options.chain.tabs[options.chain.active].collapsed || []) : [];
+			const tab = options.chain.tabs[options.chain.active];
+			const collapsedSystems = tab ? (tab.collapsed || []) : (options.chain.collapsed || this.collapsedSystems);
+			this.collapsedSystems = collapsedSystems.slice();
 
 			this.renderer.draw(data.map, data.lines, collapsedSystems); // 150ms
+			this.renderCollapsedIndicators(collapsedSystems);
 			//this.map.draw(this.newView(data.map), this.options); // 150ms
 
 //			this.renderer.lines(data); // 300ms
@@ -621,9 +646,14 @@ var chain = new function() {
 	}
 
 	this.updateCollapsed = function(collapsedSystems) {
+		this.collapsedSystems = (collapsedSystems || []).slice();
 		if (options.chain.tabs[options.chain.active]) {
-			options.chain.tabs[options.chain.active].collapsed = collapsedSystems;
+			options.chain.tabs[options.chain.active].collapsed = this.collapsedSystems;
+		} else {
+			options.chain.collapsed = this.collapsedSystems;
 		}
+
+		this.renderCollapsedIndicators(this.collapsedSystems);
 		
 		// Apply current system style
 		$("#chainMap [data-nodeid='"+viewingSystemID+"']").parent().addClass("currentNode");

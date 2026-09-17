@@ -52,6 +52,13 @@ const ChainMapRendererOrgchart = function(owner) {
 		this.map.collapse(parseInt(nodeId.replace("node", ""), 10) - 1, collapse);
 		this.collapseHandler();
 	};
+
+	this.isCollapsed = function(systemID) {
+		const nodeId = $("#chainMap [data-nodeid='"+systemID+"']").attr("id");
+		if (!nodeId || !this.map) return null;
+		const row = parseInt(nodeId.replace("node", ""), 10) - 1;
+		return this.map.getCollapsedNodes().indexOf(row) >= 0;
+	};
 	
 	const newView = function(json) {
 		const view = new google.visualization.DataView(new google.visualization.DataTable(json));

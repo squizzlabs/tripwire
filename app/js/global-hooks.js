@@ -812,7 +812,7 @@ $("#chainParent").contextmenu({
 		$('#copySystemNameMenuItem').text('Copy "' + systemName + '"');
 
 		const hasChildren = chain.nodeHasChildren(systemID);
-		$(this).contextmenu("setTitle", "collapse", chain.nodeIsCollapsed(systemID) ? "Expand" : "Collapse");
+		$('#collapseMenuItem').text(chain.nodeIsCollapsed(systemID) ? "Expand" : "Collapse");
 		$(this).contextmenu("enableEntry", "collapse", hasChildren);
 	},
 	create: function(e, ui) {

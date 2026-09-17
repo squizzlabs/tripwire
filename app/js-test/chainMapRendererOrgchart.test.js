@@ -21,6 +21,7 @@ describe('Org-chart collapsing', function() {
 
 		renderers.forEach(function(renderer) {
 			assert.strictEqual(typeof renderer.collapse, 'function');
+			assert.strictEqual(typeof renderer.isCollapsed, 'function');
 		});
 	});
 
@@ -56,10 +57,12 @@ describe('Org-chart collapsing', function() {
 
 		assert.deepStrictEqual(collapseCall, {row: 6, collapsed: true});
 		assert.deepStrictEqual(savedSystems, [systemID]);
+		assert.strictEqual(renderer.isCollapsed(systemID), true);
 
 		renderer.collapse(systemID, false);
 
 		assert.deepStrictEqual(collapseCall, {row: 6, collapsed: false});
 		assert.deepStrictEqual(savedSystems, []);
+		assert.strictEqual(renderer.isCollapsed(systemID), false);
 	});
 });

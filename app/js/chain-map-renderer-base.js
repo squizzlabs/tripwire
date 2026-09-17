@@ -24,8 +24,13 @@ const ChainMapRendererBase = function(owner) {
 	this.collapse = function(systemID, collapse) {
 		if(collapse) { this.mapData.collapsed.push(systemID); }
 		else {  this.mapData.collapsed = this.mapData.collapsed.filter(x => x != systemID); }
-		owner.updateCollapsed(this.mapData.collapsed);
 		drawInner(this.mapData.map, this.mapData.lines, this.mapData.collapsed);
+		owner.updateCollapsed(this.mapData.collapsed);
+	}
+
+	this.isCollapsed = function(systemID) {
+		if (!this.mapData) return null;
+		return this.mapData.collapsed.some(function(id) { return id == systemID; });
 	}
 	
 	/** Redraw the map, based on the given node set, line overrides and list of collapsed systems */
