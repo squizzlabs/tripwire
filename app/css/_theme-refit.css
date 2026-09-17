@@ -512,6 +512,7 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
 #login #content #track .tracking-clone {
 	display: grid;
+	flex: 0 0 auto;
 	grid-template-columns: 44px minmax(0, 1fr);
 	grid-template-rows: repeat(5, auto);
 	column-gap: 10px; row-gap: 1px;
