@@ -246,6 +246,8 @@ $system = $_REQUEST['system'] ?? '';
 			<li id="chainWidget" class="gridWidget" data-row="7" data-col="1" data-sizex="21" data-sizey="8" data-min-sizex="5" data-min-sizey="4" style="width: 1250px; height: 470px;">
 				<div class="controls">
 					<span id="chainTabs"></span>
+					<i id="chain-sort-lock" data-icon="lock-open" class="bar-btn bar-toggle" role="button" tabindex="0" aria-pressed="false" data-tooltip="Sort each system's children like the signatures table"><span class="bar-label">Sort</span></i>
+					<span class="chain-toolbar-spacer"></span>
 					<i id="newTab" data-icon="plus" class="bar-btn bar-icon" data-tooltip="New tab"></i>
 					<span class="bar-sep"></span>
 					<i id="show-viewing" data-icon="eye" class="bar-btn bar-icon bar-toggle" role="button" tabindex="0" aria-pressed="false" data-tooltip="Add the system you are viewing to the chain"></i>

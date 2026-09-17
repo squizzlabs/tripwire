@@ -969,6 +969,25 @@ $("#sigTable").tablesorter({
 	}
 });
 
+// Keep sibling systems aligned with the active signature-table sort while
+// the chain sort lock is enabled. Tablesorter fires this after restored sorts
+// as well as after a header click.
+$("#sigTable").on("sortEnd", function() {
+	if (options.buttons.chainWidget.sortChildren && window.chain) chain.redraw();
+});
+
+$("body").on("click", "#chain-sort-lock", function(e) {
+	e.preventDefault();
+
+	var enabled = !options.buttons.chainWidget.sortChildren;
+	options.buttons.chainWidget.sortChildren = enabled;
+	$(this)
+		.toggleClass("active", enabled)
+		.attr({"data-icon": enabled ? "lock" : "lock-open", "aria-pressed": enabled ? "true" : "false"});
+	options.save();
+	if (window.chain) chain.redraw();
+});
+
 // Highlight signaturesWidget tr on click
 $("#sigTable tbody").on("click", "tr", function(e) {
 	if (e.metaKey || e.ctrlKey) {

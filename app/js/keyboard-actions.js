@@ -34,8 +34,9 @@ tripwire.keyboard = (function() {
 
         {id: "toggle-automapper", label: "Toggle auto-mapper",        group: "Chain",      keys: null,  target: "#toggle-automapper"},
         {id: "show-viewing",      label: "Add current system to chain", group: "Chain",    keys: null,  target: "#show-viewing"},
-        {id: "show-favorite",     label: "Add favourites to chain",   group: "Chain",      keys: null,  target: "#show-favorite"},
-        {id: "new-tab",           label: "New chain tab",             group: "Chain",      keys: null,  target: "#newTab"},
+        {id: "show-favorite",     label: "Add favourites to chain",     group: "Chain",    keys: null,  target: "#show-favorite"},
+        {id: "sort-chain",        label: "Sort chain children like table", group: "Chain", keys: null,  target: "#chain-sort-lock"},
+        {id: "new-tab",           label: "New chain tab",               group: "Chain",    keys: null,  target: "#newTab"},
 
         {id: "search",            label: "Toggle system search",      group: "Navigate",   keys: null,  target: "#search"},
         {id: "follow",            label: "Follow my in-game system",  group: "Navigate",   keys: null,  target: "#follow"},

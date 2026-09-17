@@ -23,6 +23,12 @@
 	white-space: nowrap;
 	text-align: center;
 	vertical-align: middle;
+	/* Google OrgChart otherwise packs leaf siblings edge-to-edge. Node chips
+	   and occupant badges intentionally hang outside the card, so reserve a
+	   real gutter in the layout cell rather than letting those decorations
+	   collide with the next child. */
+	padding-left: 10px;
+	padding-right: 10px;
 	font-family: verdana;
 	font-size: 1em;
 	cursor: default;

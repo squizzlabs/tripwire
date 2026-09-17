@@ -152,6 +152,19 @@ const ChainMapRendererBase = function(owner) {
 			
 			// Fill the space available, if we didn't already
 			const centringOptions = _this.centringOptions;
+			// Tree layouts keep the root on the exact centre line. Without
+			// symmetric bounds, swapping a wide and a narrow sibling subtree
+			// moves the root even though the tree itself has not changed size.
+			if(centringOptions.rootNode && centringOptions.x) {
+				const extentX = Math.max(Math.abs(map.bounds.x[0]), Math.abs(map.bounds.x[1]));
+				finalPositions.w = 200 + 2 * extentX;
+				finalPositions.cx = finalPositions.w / 2;
+			}
+			if(centringOptions.rootNode && centringOptions.y) {
+				const extentY = Math.max(Math.abs(map.bounds.y[0]), Math.abs(map.bounds.y[1]));
+				finalPositions.h = 100 + 2 * extentY;
+				finalPositions.cy = finalPositions.h / 2;
+			}
 			if(centringOptions.x && maps.length == 1) {	// only centre in X if it's the only map, otherwise let them flow	
 				const parentWidth = -38 + _this.container.offsetWidth;	// 20px for map margins, 18 for scrollbar
 				if(finalPositions.w < parentWidth) {

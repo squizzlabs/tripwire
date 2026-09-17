@@ -249,6 +249,72 @@ var chain = new function() {
 			return { childID, calcNode };
 		}
 
+		function activeSignatureSort() {
+			if (!options.buttons.chainWidget.sortChildren) return [];
+			var table = $("#sigTable")[0];
+			return table && table.config && Array.isArray(table.config.sortList) ? table.config.sortList : [];
+		}
+
+		function signatureAtSystem(wormhole, systemID) {
+			var initial = tripwire.client.signatures[wormhole.initialID];
+			var secondary = tripwire.client.signatures[wormhole.secondaryID];
+			if (initial && initial.systemID == systemID) return {signature: initial, other: secondary};
+			if (secondary && secondary.systemID == systemID) return {signature: secondary, other: initial};
+			return null;
+		}
+
+		function signatureSortValue(pair, wormhole, column) {
+			if (!pair) return null;
+			var signature = pair.signature;
+			var other = pair.other || {};
+			switch (column) {
+				case 0: return (signature.signatureID || "").toUpperCase();
+				case 1:
+					var isNamedEnd = wormhole.parent && wormhole[wormhole.parent + "ID"] == signature.id;
+					return (isNamedEnd ? (wormhole.type || "") : "[" + (wormhole.type || "") + "]").toLowerCase();
+				case 2: return Date.parse(signature.lifeTime || 0) || 0;
+				case 3:
+					var destination = tripwire.systems[other.systemID];
+					return (signature.name || (destination && destination.name) || "").toLowerCase();
+				case 4:
+					var lifePreset = tripwire.signaturePayload && tripwire.signaturePayload.lifePreset
+						? tripwire.signaturePayload.lifePreset(wormhole, signature) : wormhole.life;
+					return ({stable: "Stable", critical4: "<4h", critical1: "<1h"}[lifePreset] || lifePreset || "").toLowerCase();
+				case 5:
+					return ({stable: "Stable", destab: "<50%", critical: "<10%"}[wormhole.mass] || wormhole.mass || "").toLowerCase();
+				default: return "";
+			}
+		}
+
+		function compareValues(a, b) {
+			if (a === b) return 0;
+			if (a === null) return 1;
+			if (b === null) return -1;
+			if (typeof a === "number" && typeof b === "number") return a - b;
+			return String(a).localeCompare(String(b), undefined, {numeric: true, sensitivity: "base"});
+		}
+
+		function sortedLinkKeys(chainData, systemID) {
+			var keys = Object.keys(chainData);
+			var sortList = activeSignatureSort();
+			if (!sortList.length) return keys;
+
+			return keys.sort(function(a, b) {
+				var leftWormhole = chainData[a], rightWormhole = chainData[b];
+				var left = signatureAtSystem(leftWormhole, systemID);
+				var right = signatureAtSystem(rightWormhole, systemID);
+				for (var i = 0; i < sortList.length; i++) {
+					var column = sortList[i][0], direction = sortList[i][1] === 1 ? -1 : 1;
+					var result = compareValues(
+						signatureSortValue(left, leftWormhole, column),
+						signatureSortValue(right, rightWormhole, column)
+					);
+					if (result) return result * direction;
+				}
+				return Number(leftWormhole.id) - Number(rightWormhole.id);
+			});
+		}
+
 		function findLinks(system) {
 			if (system[0] <= 0) return false;
 
@@ -283,8 +349,10 @@ var chain = new function() {
 				}				
 			};
 
-			for (var x in chainData) {
-				var wormhole = chainData[x];				
+			var sortedKeys = sortedLinkKeys(chainData, system[0]);
+			for (var keyIndex = 0; keyIndex < sortedKeys.length; keyIndex++) {
+				var x = sortedKeys[keyIndex];
+				var wormhole = chainData[x];
 				if ($.inArray(wormhole.id, usedLinks) == -1) {
 					var sig1, sig2, sig1Type, sig2Type,
 						parent, child, parentType, childType;

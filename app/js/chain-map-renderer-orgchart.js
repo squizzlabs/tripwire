@@ -40,6 +40,7 @@ const ChainMapRendererOrgchart = function(owner) {
 			}
 		}
 		
+		centerRoot(map);
 		updateLines(map, lines);
 		this.drawing = false;
 	};
@@ -63,6 +64,27 @@ const ChainMapRendererOrgchart = function(owner) {
 	const newView = function(json) {
 		const view = new google.visualization.DataView(new google.visualization.DataTable(json));
 		return view;
+	};
+
+	/** Balance the chart's outside space so the root sits on its exact
+	 * horizontal centre line, independent of sibling subtree order. */
+	const centerRoot = function(map) {
+		const root = map.rows.find(function(row) { return !row.c[1] || row.c[1].v === null; });
+		if(!root) return;
+
+		const table = document.querySelector("#chainMap .google-visualization-orgchart-table");
+		const rootNode = document.getElementById("node" + root.c[0].v);
+		if(!table || !rootNode) return;
+
+		table.style.paddingLeft = "0px";
+		table.style.paddingRight = "0px";
+		const tableRect = table.getBoundingClientRect();
+		const rootRect = rootNode.getBoundingClientRect();
+		const rootCenter = rootRect.left + rootRect.width / 2;
+		const leftExtent = rootCenter - tableRect.left;
+		const rightExtent = tableRect.right - rootCenter;
+		if(leftExtent < rightExtent) table.style.paddingLeft = (rightExtent - leftExtent) + "px";
+		else if(rightExtent < leftExtent) table.style.paddingRight = (leftExtent - rightExtent) + "px";
 	};
 	
 	const updateLines = function(map, lines) {
@@ -217,7 +239,10 @@ const ChainMapRendererOrgchart = function(owner) {
 		}
 		owner.updateCollapsed(collapsedSystems);
 		
-		if(_this.lastLineData) { updateLines(_this.lastLineData.map, _this.lastLineData.lines); }
+		if(_this.lastLineData) {
+			centerRoot(_this.lastLineData.map);
+			updateLines(_this.lastLineData.map, _this.lastLineData.lines);
+		}
 	}
 
 

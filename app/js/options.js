@@ -13,7 +13,7 @@ var options = new function() {
 	this.masks = {active: init.corporationID + ".2"};
 	this.chain = {gridlines: true, aura: true, lineWeight: 1.0, scrollWithoutCtrl: false, active: 0, tabs: [], collapsed: [], "node-reference": "type", zoom: 1.0, sigNameLocation: 'name', routingLimit: 15, routeSecurity: 'shortest', routeIgnore: { enabled: false, systems: [ 'Tama', 'Rancer' ] }, renderer: 'radial', nodeSpacing: { x: 1.0, y: 1.0 } };
 	this.signatures = {editType: "unknown", copySeparator: ",", pasteLife: 72, rowPadding: 6, alignment: {sigID: "leftAlign", sigType: "leftAlign", sigAge: "leftAlign", leadsTo: "leftAlign", sigLife: "rightAlign", sigMass: "rightAlign"}};
-	this.buttons = {follow: false, chainWidget: {viewing: false, favorites: false}, signaturesWidget: {autoMapper: false}};
+	this.buttons = {follow: false, chainWidget: {viewing: false, favorites: false, sortChildren: false}, signaturesWidget: {autoMapper: false}};
 
 	this.saveDelay = function(delay) {
 		if (saveTimer) clearTimeout(saveTimer);
@@ -115,6 +115,7 @@ var options = new function() {
 		if (this.buttons.chainWidget.kspace) $("#k-space").addClass("active");
 		if (this.buttons.chainWidget.viewing) $("#show-viewing").addClass("active").attr("aria-pressed", "true");
 		if (this.buttons.chainWidget.favorites) $("#show-favorite").addClass("active").attr("aria-pressed", "true");
+		if (this.buttons.chainWidget.sortChildren) $("#chain-sort-lock").attr({"data-icon": "lock", "aria-pressed": "true"}).addClass("active");
 		if (this.buttons.chainWidget.evescout) $("#eve-scout").addClass("active");
 		if ($.inArray(parseInt(viewingSystemID), this.favorites) !== -1) $("#system-favorite").attr("data-icon", "star").addClass("active");
 		if (this.buttons.signaturesWidget.autoMapper) $("#toggle-automapper").addClass("active");

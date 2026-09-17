@@ -21,10 +21,10 @@
 }
 
 /* Everything that is not the strip keeps its size. */
-#chainWidget > .controls > *:not(#chainTabs) { flex: 0 0 auto; }
+#chainWidget > .controls > *:not(#chainTabs):not(.chain-toolbar-spacer) { flex: 0 0 auto; }
 
 #chainTabs {
-	flex: 1 1 auto;
+	flex: 0 1 auto;
 	min-width: 0;              /* without this a flex child refuses to shrink */
 	display: flex;
 	align-items: stretch;
@@ -33,6 +33,13 @@
 	overflow-y: hidden;
 	scrollbar-width: thin;
 	scroll-snap-type: x proximity;
+}
+
+/* Keep the sort lock beside the last tab while the remaining map controls
+   stay pinned to the right edge of the panel. */
+#chainWidget > .controls > .chain-toolbar-spacer {
+	flex: 1 1 auto;
+	min-width: 0;
 }
 
 #chainTabs::-webkit-scrollbar { height: 4px; }

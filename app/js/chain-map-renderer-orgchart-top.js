@@ -4,7 +4,7 @@ const ChainMapRendererOrgchartTop = function(owner) {
 	const GRID_SIZE = { x: 55, y: 45 };
 	
 	this.initialRads = function(minArc) { return minArc * 0.5; }
-	this.centringOptions = { x: true };
+	this.centringOptions = { x: true, rootNode: true };
 	
 	function project(rad, ci) { return {
 		x: rad * GRID_SIZE.x * options.chain.nodeSpacing.x,

@@ -25,6 +25,12 @@ describe('Org-chart collapsing', function() {
 		});
 	});
 
+	it('centres the root axis in both directional tree layouts', function() {
+		const owner = {updateCollapsed: function() {}};
+		assert.deepStrictEqual(new ChainMapRendererOrgchartTop(owner).centringOptions, {x: true, rootNode: true});
+		assert.deepStrictEqual(new ChainMapRendererOrgchartSide(owner).centringOptions, {y: true, rootNode: true});
+	});
+
 	it('collapses a Classic Tree system from the context-menu renderer API', function() {
 		const systemID = 30000142;
 		let collapsedRows = [];
