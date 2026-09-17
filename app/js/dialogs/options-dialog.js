@@ -1,3 +1,20 @@
+function fitOptionsDialogToViewport() {
+	var $content = $("#dialog-options");
+	if (!$content.hasClass("ui-dialog-content")) return;
+
+	var scale = parseFloat($("body").css("zoom")) || 1;
+	var maxHeight = Math.max(120, Math.floor(window.innerHeight / scale) - 32);
+	var maxWidth = Math.max(240, Math.floor(window.innerWidth / scale) - 32);
+	$content.closest(".ui-dialog").css({
+		"max-height": maxHeight + "px",
+		"max-width": maxWidth + "px"
+	});
+
+	if ($content.dialog("isOpen")) {
+		$content.dialog("option", "position", {my: "center", at: "center", of: window});
+	}
+}
+
 $(".options").click(function(e) {
 	e.preventDefault();
 
@@ -7,8 +24,9 @@ $(".options").click(function(e) {
 	$("#dialog-options").dialog({
 		autoOpen: false,
 		width: 450,
-		minHeight: 400,
+		minHeight: 0,
 		modal: true,
+		dialogClass: "dialog-options-frame",
 		buttons: {
 			Save: function() {
 				// Options
@@ -76,6 +94,8 @@ $(".options").click(function(e) {
 			}
 		},
 		open: function() {
+			fitOptionsDialogToViewport();
+
 			// Get user stats data
 			$.ajax({
 				url: "user_stats.php",
@@ -119,6 +139,10 @@ $(".options").click(function(e) {
 			if (tripwire.settingsPanels) { tripwire.settingsPanels.render(); }
 		},
 		create: function() {
+			$(window).off("resize.tripwireOptions").on("resize.tripwireOptions", function() {
+				if ($("#dialog-options").dialog("isOpen")) fitOptionsDialogToViewport();
+			});
+
 			// Tabs. Twenty-four controls in one 1,056px scroll was the previous
 			// arrangement; five short panes means the pane you want is one click
 			// and no scrolling. Plain buttons rather than jQuery UI tabs so the
@@ -151,6 +175,7 @@ $(".options").click(function(e) {
 			}
 			setUpSlider('uiscale-slider', options.uiscale, function(e, ui) {
 						$("body").css("zoom", ui.value);
+						fitOptionsDialogToViewport();
 					});
 			setUpSlider('node-spacing-x-slider', options.chain.nodeSpacing.x);
 			setUpSlider('node-spacing-y-slider', options.chain.nodeSpacing.y);

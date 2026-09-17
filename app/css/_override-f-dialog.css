@@ -47,6 +47,15 @@
 	padding: var(--space-3) var(--space-4);
 	border-top: 1px solid var(--border);
 }
+
+/* Settings keeps its title and actions fixed while only its body scrolls.
+   JavaScript refines max-height for the app's body zoom setting. */
+.ui-dialog.dialog-options-frame { overflow: hidden; }
+.ui-dialog.dialog-options-frame > .ui-dialog-content {
+	min-height: 0;
+	max-height: none;
+	overflow-y: auto;
+}
 .ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset {
 	display: flex;
 	align-items: center;
