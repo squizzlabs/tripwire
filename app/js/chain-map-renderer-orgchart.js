@@ -43,6 +43,15 @@ const ChainMapRendererOrgchart = function(owner) {
 		updateLines(map, lines);
 		this.drawing = false;
 	};
+
+	/** Collapse or expand a system from controls outside the Google chart. */
+	this.collapse = function(systemID, collapse) {
+		const nodeId = $("#chainMap [data-nodeid='"+systemID+"']").attr("id");
+		if (!nodeId) return;
+
+		this.map.collapse(parseInt(nodeId.replace("node", ""), 10) - 1, collapse);
+		this.collapseHandler();
+	};
 	
 	const newView = function(json) {
 		const view = new google.visualization.DataView(new google.visualization.DataTable(json));

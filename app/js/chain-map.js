@@ -499,6 +499,21 @@ var chain = new function() {
 
 		this.draw(data);
 	}
+
+	this.nodeHasChildren = function(systemID) {
+		const rows = (this.data.map && this.data.map.rows) || [];
+		const node = rows.find(function(row) {
+			return row.c[0].systemID == systemID;
+		});
+		return !!node && rows.some(function(row) {
+			return row.c[1] && row.c[1].v == node.c[0].v;
+		});
+	}
+
+	this.nodeIsCollapsed = function(systemID) {
+		const tab = options.chain.tabs[options.chain.active];
+		return !!tab && (tab.collapsed || []).some(function(id) { return id == systemID; });
+	}
 	
 	var drawRetryTimer = null;
 

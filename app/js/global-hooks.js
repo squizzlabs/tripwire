@@ -758,8 +758,7 @@ $("#chainParent").contextmenu({
 				$("#dialog-ping").data("id", nodeElem.data("sigid") || null).data("systemID", id).dialog("open");
 				break;
 			case "collapse":
-				var toggle = options.chain.tabs[options.chain.active] ? ($.inArray(id, options.chain.tabs[options.chain.active].collapsed) == -1 ? true : false) : true;
-				chain.renderer.collapse(id, toggle);
+				chain.renderer.collapse(id, !chain.nodeIsCollapsed(id));
 				break;
 			case "copySystemName": 
 				const systemName = tripwire.systems[id].name;
@@ -811,6 +810,10 @@ $("#chainParent").contextmenu({
 		const existingTab = Object.find(options.chain.tabs, 'systemID', '' + systemID, false);
 		$('#makeTabMenuItem').text((existingTab ? 'View Tab' : 'Make Tab') + ' for ' + systemName );
 		$('#copySystemNameMenuItem').text('Copy "' + systemName + '"');
+
+		const hasChildren = chain.nodeHasChildren(systemID);
+		$(this).contextmenu("setTitle", "collapse", chain.nodeIsCollapsed(systemID) ? "Expand" : "Collapse");
+		$(this).contextmenu("enableEntry", "collapse", hasChildren);
 	},
 	create: function(e, ui) {
 		// Fix some bad CSS from jQuery Position
