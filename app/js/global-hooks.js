@@ -703,7 +703,7 @@ $("#signaturesWidget #sigTable thead").contextmenu({
 
 // Chain Map Context Menu
 $("#chainParent").contextmenu({
-	delegate: ".nodeSystem a",
+	delegate: "div.node[data-nodeid]",
 	position: function(event, ui) {
         return {my: "left top-1", at: "right top", of: ui.target};
     },
