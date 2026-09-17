@@ -74,31 +74,21 @@ $system = $_REQUEST['system'] ?? '';
 										<tr><th colspan="2">Tracking</th></tr>
 										<tr>
 											<td id="tracking">
-												<table id="tracking-clone" class="hidden">
-													<tr>
-														<td rowspan="5" class="avatar"><img src="" />
+												<div id="tracking-clone" class="hidden">
+													<div class="avatar tracking-avatar"><img src="" />
 															<hr class="bar online critical" style="margin-bottom: 2px" data-tooltip="Online status" />
 															<span class="control-group">
 																<i data-icon="eye" class="show interactable" data-property="show" data-tooltip="Visible on chain"></i>
 																<i data-icon="prop-mod" class="show-ship interactable" data-property="showShip" data-tooltip="Ship shown on chain"></i>
 															</span>
-														</td>
-														<td class="name text">&nbsp;</td>
-														<i data-icon="alert" class="alert hidden" data-tooltip="Re-add character to fix missing permissions"></i>
-													</tr>
-													<tr>
-														<td class="system text">&nbsp;</td>
-													</tr>
-													<tr>
-														<td class="station text" data-tooltip="">&nbsp;</td>
-													</tr>
-													<tr>
-														<td class="ship text">&nbsp;</td>
-													</tr>
-													<tr>
-														<td class="shipname text">&nbsp;</td>
-													</tr>
-												</table>
+													</div>
+													<div class="name text">&nbsp;</div>
+													<i data-icon="alert" class="alert hidden" data-tooltip="Re-add character to fix missing permissions"></i>
+													<div class="system text">&nbsp;</div>
+													<div class="station text" data-tooltip="">&nbsp;</div>
+													<div class="ship text">&nbsp;</div>
+													<div class="shipname text">&nbsp;</div>
+												</div>
 											</td>
 										</tr>
 									</table>
