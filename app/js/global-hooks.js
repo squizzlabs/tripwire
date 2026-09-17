@@ -7,6 +7,15 @@ $("body").on("click", "a[href^='.?system=']", function(e) {
 	tripwire.systemChange(systemID);
 });
 
+// Treat the whole map card as the system link. Let clicks on the existing
+// name link use the handler above so a single click never navigates twice.
+$("body").on("click", "#chainMap div.node[data-nodeid]", function(e) {
+	if (e.isDefaultPrevented() || $(e.target).closest("a").length) return;
+
+	var systemID = $(this).data("nodeid");
+	if (tripwire.systems[systemID]) tripwire.systemChange(systemID);
+});
+
 $("body").on("submit", "#systemSearch", function(e) {
 	e.preventDefault();
 
