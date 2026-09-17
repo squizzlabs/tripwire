@@ -261,11 +261,11 @@ tripwire.esi = function() {
 		set_tracking_text();
 
 		// Location, ship and online state are polled by the background npm
-		// scheduler. Render the selected character and let EVE() handle follow
-		// mode, but do not start browser timers that can be paused or duplicated.
+		// scheduler. Keep rendering the selected character's last known location
+		// when offline; online remains a separate status indicator.
 		if (tripwire.esi.characters[options.tracking.active]) {
 			var activeCharacter = tripwire.esi.characters[options.tracking.active];
-			tripwire.EVE(activeCharacter.online == true ? activeCharacter : false);
+			tripwire.EVE(activeCharacter);
 		}
     }
 }

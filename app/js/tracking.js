@@ -49,7 +49,7 @@ $("#track").on("click", ".tracking-clone", function() {
 		if (tripwire.esi.characters[options.tracking.active]) {
 			$("#tracking .tracking-clone[data-characterid='"+ options.tracking.active +"']").addClass("active");
 			var activeCharacter = tripwire.esi.characters[options.tracking.active];
-			tripwire.EVE(activeCharacter.online == true ? activeCharacter : false, true);
+			tripwire.EVE(activeCharacter, true);
 		}
 
 		$("#removeESI").removeAttr("disabled");

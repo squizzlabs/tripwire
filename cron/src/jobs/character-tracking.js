@@ -149,8 +149,7 @@ export async function trackCharacters({
     `DELETE t FROM tracking t
       INNER JOIN esi e ON e.userID = t.userID AND e.characterID = t.characterID
       WHERE e.lastActive IS NULL
-         OR e.lastActive < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 4 HOUR)
-         OR e.online = 0`,
+         OR e.lastActive < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 4 HOUR)`,
   );
   const [rows] = await database.query(
     `SELECT e.userID, e.characterID, e.characterName, e.accessToken,
@@ -201,18 +200,15 @@ export async function trackCharacters({
               ...characterDetails(row),
             });
           }
-          if (!online) {
-            await database.execute(
-              'DELETE FROM tracking WHERE userID = ? AND characterID = ?',
-              [row.userID, row.characterID],
-            );
-          }
           result.onlineChecks += 1;
         }
       }
 
       checkNow = nowProvider();
-      if (!online || !due(row.locationCheckedAt, LOCATION_INTERVAL_MS, checkNow)) continue;
+      // Browser activity owns the tracking lease. ESI's online value remains
+      // useful display state, but it must not prevent linked characters from
+      // updating while their Tripwire user is active.
+      if (!due(row.locationCheckedAt, LOCATION_INTERVAL_MS, checkNow)) continue;
       const cutoff = new Date(checkNow.getTime() - LOCATION_INTERVAL_MS);
       if (!(await claim(database, 'locationCheckedAt', row, cutoff, checkNow))) continue;
 

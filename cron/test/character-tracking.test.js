@@ -167,7 +167,7 @@ test('a transition is not connected when its two observations are over ten secon
   assert.equal(automapped, false);
 });
 
-test('an offline result suppresses location and ship polling', async () => {
+test('browser-active characters are location-polled even when reported offline', async () => {
   const database = databaseFor([
     row({ onlineCheckedAt: '2026-09-16T11:58:00.000Z', online: 1 }),
   ]);
@@ -178,17 +178,31 @@ test('an offline result suppresses location and ship polling', async () => {
     staticData,
     esi: {
       getOnline: async () => ({ online: false }),
-      getLocation: async () => { locationCalls += 1; },
-      getShip: async () => { locationCalls += 1; },
+      getLocation: async () => {
+        locationCalls += 1;
+        return { solar_system_id: 30000142 };
+      },
+      getShip: async () => {
+        locationCalls += 1;
+        return {};
+      },
     },
     now: () => new Date('2026-09-16T12:00:00.000Z'),
     logger: { error: assert.fail },
   });
 
   assert.equal(result.onlineChecks, 1);
-  assert.equal(result.locationChecks, 0);
-  assert.equal(locationCalls, 0);
+  assert.equal(result.locationChecks, 1);
+  assert.equal(locationCalls, 2);
   assert.equal(result.errors, 0);
+  assert.equal(
+    database.calls.some(({ sql }) => sql.includes('OR e.online = 0')),
+    false,
+  );
+  assert.equal(
+    database.calls.some(({ sql }) => sql.includes('INSERT INTO tracking')),
+    true,
+  );
 });
 
 test('per-character failures are visible in the job summary', async () => {
