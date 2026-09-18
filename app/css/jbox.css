@@ -87,14 +87,14 @@
 	height: 3px;
 	margin: -6px -10px 0;
 	overflow: hidden;
-	background: rgba(7, 26, 43, .18);
+	background: #071a2b;
 }
 
 .paste-notice-progress::after {
 	display: block;
 	width: 100%;
 	height: 100%;
-	background: #071a2b;
+	background: var(--ui-blue-lit);
 	content: "";
 	transform-origin: left;
 	animation: paste-notice-countdown var(--paste-notice-duration, 10000ms) linear forwards;
