@@ -25,11 +25,21 @@ function openDeleteDialog(vm, successFunction) {
 		$("#dialog-deleteSig").dialog({
 			resizable: false,
 			minHeight: 0,
-			dialogClass: "dialog-noeffect ui-dialog-shadow",
-			buttons: {
-				Delete: function() {
+			modal: true,
+			width: 400,
+			dialogClass: "dialog-noeffect ui-dialog-shadow signatureDeleteDialog",
+			buttons: [
+				{
+					text: "Cancel",
+					click: function() {
+						$(this).dialog("close");
+					}
+				},
+				{
+					text: "Delete",
+					click: function() {
 					// Prevent duplicate submitting
-					$("#dialog-deleteSig").parent().find(":button:contains('Delete')").button("enable");
+					$("#dialog-deleteSig").parent().find(":button:contains('Delete')").button("disable");
 					var payload = {"signatures": {"remove": []}, "systemID": viewingSystemID};
 					var undo = [];
 
@@ -66,19 +76,27 @@ function openDeleteDialog(vm, successFunction) {
 					}
 
 					tripwire.refresh('refresh', payload, success, always);
-				},
-				Cancel: function() {
-					$(this).dialog("close");
 				}
-			},
+				}
+			],
 			open: function() {
 				const sigs = openDeleteDialog.deleteDialogVM.signatures;
-				$("#dialog-deleteSig").dialog("option", "title", sigs.length == 1 ? 'Delete Signature ' + formatSignatureID(sigs[0].signatureID) : 'Delete Multiple Signatures');
-				document.getElementById('deleteSigText').innerText = sigs.length == 1 ? 'The ' + sigs[0].type + ' signature ' + formatSignatureID(sigs[0].signatureID) 
-					: 'The signatures ' + sigs.map(s => formatSignatureID(s.signatureID)).join(', ');
+				const signatureID = sigs.length == 1 ? formatSignatureID(sigs[0].signatureID) : null;
+				$("#dialog-deleteSig").dialog("option", "title", sigs.length == 1 ? 'Delete signature' : 'Delete signatures');
+				document.getElementById('deleteSigHeading').innerText = sigs.length == 1
+					? (signatureID == '???-###' ? 'Delete this signature?' : 'Delete ' + signatureID + '?')
+					: 'Delete ' + sigs.length + ' signatures?';
+				document.getElementById('deleteSigText').innerText = sigs.length == 1
+					? 'This ' + sigs[0].type + ' signature'
+					: 'These signatures (' + sigs.map(s => formatSignatureID(s.signatureID)).join(', ') + ')';
 				document.getElementById('deleteSigSystem').innerHTML = systemRendering.renderSystem(systemAnalysis.analyse(sigs[0].systemID));
-				
-				$("#dialog-deleteSig").parent().find(".ui-dialog-buttonset button:eq(0)").focus();
+
+				var $buttons = $(this).parent().find(".ui-dialog-buttonpane button");
+				var $cancel = $buttons.filter(function() { return $.trim($(this).text()) === "Cancel"; });
+				var $delete = $buttons.filter(function() { return $.trim($(this).text()) === "Delete"; });
+				if (!$cancel.find("[data-icon]").length) { $cancel.prepend('<i data-icon="times" aria-hidden="true"></i>'); }
+				if (!$delete.find("[data-icon]").length) { $delete.prepend('<i data-icon="trash" aria-hidden="true"></i>'); }
+				$cancel.focus();
 			},
 			close: function() {
 				$("#sigTable tr.selected").removeClass("selected");

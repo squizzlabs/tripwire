@@ -227,6 +227,30 @@ test.describe("the traps", () => {
 		expect(bounds.y + bounds.height).toBeLessThanOrEqual(viewport.height + 1);
 	});
 
+	test("editing a wormhole with an unknown signature focuses its signature field", async ({ page }) => {
+		await page.evaluate(() => {
+			tripwire.client.signatures = tripwire.client.signatures || {};
+			tripwire.client.wormholes = tripwire.client.wormholes || {};
+			tripwire.client.signatures["focus-local"] = {
+				id: "focus-local", signatureID: "???", systemID: viewingSystemID,
+				type: "wormhole", name: "", lifeLength: 259200
+			};
+			tripwire.client.signatures["focus-other"] = {
+				id: "focus-other", signatureID: "ZZQ999", systemID: viewingSystemID,
+				type: "wormhole", name: "", lifeLength: 259200
+			};
+			tripwire.client.wormholes["focus-wh"] = {
+				id: "focus-wh", initialID: "focus-local", secondaryID: "focus-other",
+				type: "B274", parent: "initial", life: "stable", mass: "stable"
+			};
+			sigDialog.openSignatureDialog({data: {mode: "update", source: "test", signature: "focus-local"}});
+		});
+
+		const signature = page.locator("#dialog-signature input[name=signatureID_Alpha]");
+		await expect(signature).toHaveValue("???");
+		await expect(signature).toBeFocused();
+	});
+
 	test("typing the id then Tab does not skip the numeric half", async ({ page }) => {
 		await page.click("#add-signature");
 		await page.locator("#dialog-signature input[name=signatureID_Alpha]").click();

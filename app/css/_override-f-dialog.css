@@ -126,13 +126,13 @@
 /* Note deletion is a compact, explicit confirmation rather than a sentence
    with an alert glyph. Both choices look actionable; the irreversible one is
    the only filled control and sits after Cancel in the reading order. */
-.commentDeleteDialog .confirmMessage {
+:is(.commentDeleteDialog, .signatureDeleteDialog) .confirmMessage {
 	display: grid;
 	grid-template-columns: 40px minmax(0, 1fr);
 	align-items: start;
 	gap: var(--space-3);
 }
-.commentDeleteDialog .confirmMessageIcon {
+:is(.commentDeleteDialog, .signatureDeleteDialog) .confirmMessageIcon {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -142,30 +142,30 @@
 	background: color-mix(in oklab, var(--destructive) 14%, transparent);
 	color: var(--destructive);
 }
-.commentDeleteDialog .confirmMessageIcon::before { font-size: var(--icon); }
-.commentDeleteDialog .confirmMessage strong { display: block; color: var(--foreground); font-size: var(--fs-base); }
-.commentDeleteDialog .confirmMessage p { margin: var(--space-1) 0 0; color: var(--muted-foreground); font-size: var(--fs-sm); }
-.commentDeleteDialog .ui-dialog-buttonpane button {
+:is(.commentDeleteDialog, .signatureDeleteDialog) .confirmMessageIcon::before { font-size: var(--icon); }
+:is(.commentDeleteDialog, .signatureDeleteDialog) .confirmMessage strong { display: block; color: var(--foreground); font-size: var(--fs-base); }
+:is(.commentDeleteDialog, .signatureDeleteDialog) .confirmMessage p { margin: var(--space-1) 0 0; color: var(--muted-foreground); font-size: var(--fs-sm); }
+:is(.commentDeleteDialog, .signatureDeleteDialog) .ui-dialog-buttonpane button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	gap: 7px;
 }
-.commentDeleteDialog .ui-dialog-buttonpane button [data-icon]::before { font-size: var(--icon); }
-.commentDeleteDialog .ui-dialog-buttonpane button.is-quiet {
+:is(.commentDeleteDialog, .signatureDeleteDialog) .ui-dialog-buttonpane button [data-icon]::before { font-size: var(--icon); }
+:is(.commentDeleteDialog, .signatureDeleteDialog) .ui-dialog-buttonpane button.is-quiet {
 	order: 1;
 	margin-left: auto;
 	border-color: var(--border);
 	color: var(--foreground);
 }
-.commentDeleteDialog .ui-dialog-buttonpane button.is-destructive {
+:is(.commentDeleteDialog, .signatureDeleteDialog) .ui-dialog-buttonpane button.is-destructive {
 	order: 2;
 	margin-right: 0;
 	border-color: color-mix(in oklab, var(--destructive) 78%, black);
 	background: color-mix(in oklab, var(--destructive) 78%, black);
 	color: #fff;
 }
-.commentDeleteDialog .ui-dialog-buttonpane button.is-destructive:hover {
+:is(.commentDeleteDialog, .signatureDeleteDialog) .ui-dialog-buttonpane button.is-destructive:hover {
 	border-color: var(--destructive);
 	background: var(--destructive);
 	color: #fff;

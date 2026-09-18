@@ -383,7 +383,13 @@ $system = $_REQUEST['system'] ?? '';
 	</div>
 
 	<div id="dialog-deleteSig" title="Delete Signature(s)" class="hidden">
-		<i data-icon="alert"></i> <span id="deleteSigText">This signature</span> will be removed from <span id="deleteSigSystem">this system</span>. Are you sure?
+		<div class="confirmMessage">
+			<i class="confirmMessageIcon" data-icon="trash" aria-hidden="true"></i>
+			<div>
+				<strong id="deleteSigHeading">Delete this signature?</strong>
+				<p><span id="deleteSigText">This signature</span> will be removed from <span id="deleteSigSystem">this system</span>. This action cannot be undone.</p>
+			</div>
+		</div>
 	</div>
 
 	<div id="dialog-signature" title="Add Signature" class="hidden">
