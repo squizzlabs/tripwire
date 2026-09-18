@@ -466,9 +466,11 @@ tripwire.pasteSignatures = function() {
 
 	this.pasteSignatures.notifyPaste = function(paste) {
 		if (pasteNotice && !pasteNotice.isDestroyed) pasteNotice.destroy();
+		var noticeDuration = 10000;
 
 		var content = [
 			"<div class='paste-notice'>",
+				"<span class='paste-notice-progress' aria-hidden='true'></span>",
 				"<p class='paste-notice-message' role='status' aria-live='polite'>Paste detected.</p>",
 				"<button id='fullPaste' class='paste-notice-action' type='button'>Delete signatures missing from this scan</button>",
 				"<button class='paste-notice-dismiss' type='button'>Dismiss</button>",
@@ -477,10 +479,13 @@ tripwire.pasteSignatures = function() {
 
 		// Keep the cleanup shortcut available briefly without leaving a large
 		// notice parked over the map indefinitely.
-		pasteNotice = Notify.trigger(content, "blue", 10000, null, {
+		pasteNotice = Notify.trigger(content, "blue", noticeDuration, null, {
+			animation: false,
 			closeOnClick: false,
-			closeOnEsc: true
+			closeOnEsc: true,
+			fade: 0
 		});
+		pasteNotice.wrapper.find(".paste-notice-progress").css("--paste-notice-duration", noticeDuration + "ms");
 		pasteNotice.wrapper.find("#fullPaste").data("paste", paste);
 	}
 

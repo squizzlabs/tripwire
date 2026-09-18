@@ -83,6 +83,7 @@ test.describe("signatures", () => {
 
 		const notice = page.locator(".paste-notice");
 		await expect(notice.getByRole("status")).toHaveText("Paste detected.");
+		await expect(notice.locator(".paste-notice-progress")).toBeVisible();
 		await expect(notice.getByRole("button", { name: "Delete signatures missing from this scan" })).toBeVisible();
 		const dismiss = notice.getByRole("button", { name: "Dismiss" });
 		await dismiss.focus();
