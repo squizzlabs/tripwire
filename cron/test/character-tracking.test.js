@@ -94,6 +94,35 @@ test('online characters are location-polled and a fresh transition is automapped
   assert.match(messages[1], /^\[character-tracking\] connection mapped /);
 });
 
+test('an unselected linked character is automapped when automapping is enabled', async () => {
+  const database = databaseFor([row({
+    options: JSON.stringify({
+      masks: { active: '42.2' },
+      tracking: { active: 'another-character', characterOptions: {} },
+      buttons: { signaturesWidget: { autoMapper: true } },
+    }),
+  })]);
+  let automapped = false;
+
+  const result = await trackCharacters({
+    database,
+    esi: {
+      getLocation: async () => ({ solar_system_id: 31000005 }),
+      getShip: async () => ({ ship_item_id: 1, ship_name: 'Probe', ship_type_id: 11188 }),
+    },
+    staticData,
+    now: () => new Date('2026-09-16T12:00:00.000Z'),
+    automap: async () => {
+      automapped = true;
+      return true;
+    },
+    logger: { info: () => {}, error: assert.fail },
+  });
+
+  assert.equal(automapped, true);
+  assert.equal(result.automapped, 1);
+});
+
 test('ship changes are logged with the previous and current ship', async () => {
   const database = databaseFor([row({
     lastLocationSystemID: 31000005,

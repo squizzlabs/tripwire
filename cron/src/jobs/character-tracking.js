@@ -33,11 +33,8 @@ function trackingName(name, options, characterId) {
   return `${name}|P`;
 }
 
-function automapEnabled(options, characterId) {
-  return (
-    options?.buttons?.signaturesWidget?.autoMapper === true &&
-    String(options?.tracking?.active) === String(characterId)
-  );
+function automapEnabled(options) {
+  return options?.buttons?.signaturesWidget?.autoMapper === true;
 }
 
 function logChange(logger, event, details) {
@@ -265,7 +262,7 @@ export async function trackCharacters({
         result.transitions += 1;
         if (
           gap <= AUTOMAP_MAX_GAP_MS &&
-          automapEnabled(options, row.characterID) &&
+          automapEnabled(options) &&
           typeof automap === 'function'
         ) {
           const mapped = await automap({
