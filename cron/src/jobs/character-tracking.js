@@ -1,7 +1,7 @@
 export const ACTIVE_WINDOW_MS = 4 * 60 * 60 * 1000;
 export const ONLINE_INTERVAL_MS = 60 * 1000;
 export const LOCATION_INTERVAL_MS = 6 * 1000;
-export const AUTOMAP_MAX_GAP_MS = 10 * 1000;
+export const AUTOMAP_MAX_GAP_MS = 20 * 1000;
 const TOKEN_REFRESH_WINDOW_MS = 5 * 60 * 1000;
 
 function mysqlDate(date) {

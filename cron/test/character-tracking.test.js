@@ -58,7 +58,7 @@ const staticData = {
 test('tracking intervals and transition gap constants match the ESI policy', () => {
   assert.equal(ONLINE_INTERVAL_MS, 60_000);
   assert.equal(LOCATION_INTERVAL_MS, 6_000);
-  assert.equal(AUTOMAP_MAX_GAP_MS, 10_000);
+  assert.equal(AUTOMAP_MAX_GAP_MS, 20_000);
 });
 
 test('online characters are location-polled and a fresh transition is automapped', async () => {
@@ -174,9 +174,9 @@ test('online state changes are logged, but routine job summaries are suppressed'
   assert.equal(trackingJob.shouldLogResult({ errors: 1, transitions: 1 }), false);
 });
 
-test('a transition is not connected when its two observations are over ten seconds apart', async () => {
+test('a transition is not connected when its two observations are over twenty seconds apart', async () => {
   const database = databaseFor([
-    row({ locationObservedAt: '2026-09-16T11:59:49.999Z' }),
+    row({ locationObservedAt: '2026-09-16T11:59:39.999Z' }),
   ]);
   let automapped = false;
   const messages = [];
