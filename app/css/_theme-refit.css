@@ -316,6 +316,15 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 #topbar #currentSpan { display: inline-flex; align-items: center; gap: 6px; }
 #topbar #currentSpan .bar-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted-foreground); }
 #topbar #EVEsystem { font-family: var(--font-mono); font-size: 11px; color: var(--text-body); }
+#topbar #EVEsystem .whEffect {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1em;
+	height: 1em;
+	vertical-align: -.08em;
+}
+#topbar #EVEsystem .whEffect::before { font-size: 1em; line-height: 1; }
 #topbar #follow { color: var(--muted-foreground); }
 /* On is orange. The line above outranked the legacy .active colour, so the
    toggle worked and looked like it had not. */

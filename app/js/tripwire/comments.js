@@ -12,6 +12,13 @@ tripwire.comments = function() {
 			.attr("aria-pressed", sticky ? "true" : "false");
 	};
 
+	this.comments.setOwner = function($comment, name, modified) {
+		$comment.find(".commentOwner")
+			.empty()
+			.append($("<span>", {class: "commentAuthor", text: name}))
+			.append($("<time>", {class: "commentDate", text: modified}));
+	};
+
     this.comments.parse = function(data) {
 		// Parse-based; see app/js/sanitise-html.js for why the previous
 		// regex version was bypassable.
@@ -37,7 +44,7 @@ tripwire.comments = function() {
                     $comment.find(".commentFooter .commentControls").hide();
                 }
 
-                $comment.find(".commentOwner").text(data[x].modifiedByName + " · Updated " + data[x].modified);
+				tripwire.comments.setOwner($comment, data[x].modifiedByName, data[x].modified);
                 $comment.find(".commentBody").attr("id", "comment" + commentID);
 				tripwire.comments.setStickyState($comment, data[x].sticky);
                 $comment.removeClass("hidden");
@@ -55,7 +62,7 @@ tripwire.comments = function() {
                     $comment.find(".commentFooter .commentControls").hide();
                 }
 
-                $comment.find(".commentOwner").text(data[x].modifiedByName + " · Updated " + data[x].modified);
+				tripwire.comments.setOwner($comment, data[x].modifiedByName, data[x].modified);
 				tripwire.comments.setStickyState($comment, data[x].sticky);
 
                 //tripwire.comments.data[id] = data[id];

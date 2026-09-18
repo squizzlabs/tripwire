@@ -60,7 +60,7 @@ $("body").on("click", ".commentSave, .commentCancel", function(e) {
 		}).done(function(data) {
 			if (data && data.result == true) {
 				// The latest editor owns the note, including when it has just been created.
-				$comment.find(".commentOwner").text(data.comment.modifiedByName + " · Updated " + data.comment.modifiedDate);
+				tripwire.comments.setOwner($comment, data.comment.modifiedByName, data.comment.modifiedDate);
 				Tooltips.attach($comment.find("[data-tooltip]"));
 
 				tripwire.editor.destroy($comment.find(".commentBody").attr("id"), false);

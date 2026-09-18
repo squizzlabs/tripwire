@@ -131,6 +131,8 @@ body { font-size: var(--fs-base); }
 	line-height: 1.35;
 	color: var(--muted-foreground);
 }
+.commentOwner .commentAuthor,
+.commentOwner .commentDate { display: block; }
 
 .commentToolbar > .commentControls {
 	display: flex;
