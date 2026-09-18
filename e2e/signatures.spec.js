@@ -102,6 +102,59 @@ test.describe("signatures", () => {
 		expect(matches).toHaveLength(1);
 	});
 
+	test("pasted wormholes can be mapped to an existing connection", async ({ page }) => {
+		await page.evaluate(() => {
+			tripwire.client.signatures = tripwire.client.signatures || {};
+			tripwire.client.wormholes = tripwire.client.wormholes || {};
+			tripwire.client.signatures["paste-map-local"] = {
+				id: "paste-map-local", signatureID: "???", systemID: viewingSystemID,
+				type: "wormhole", name: "", lifeLength: 259200
+			};
+			tripwire.client.signatures["paste-map-other"] = {
+				id: "paste-map-other", signatureID: "???", systemID: 1,
+				type: "wormhole", name: "", lifeLength: 259200
+			};
+			tripwire.client.wormholes["paste-map-wh"] = {
+				id: "paste-map-wh", initialID: "paste-map-local", secondaryID: "paste-map-other",
+				type: "B274", parent: "initial", life: "stable", mass: "stable"
+			};
+
+			window.__mappingOriginalRefresh = tripwire.refresh;
+			tripwire.refresh = function(mode, payload, success, always) {
+				var updates = payload && payload.signatures && payload.signatures.update;
+				var mapped = updates && updates.some(function(update) {
+					return update.wormhole && update.wormhole.id === "paste-map-wh";
+				});
+				if (!mapped) return window.__mappingOriginalRefresh.apply(this, arguments);
+				window.__mappingPayload = JSON.parse(JSON.stringify(payload));
+				if (success) success({resultSet: [{result: true}]});
+				if (always) always();
+			};
+
+			tripwire.pasteSignatures.parsePaste("ZZQ-851\tCosmic Signature\tWormhole\t\t100.0%\t1.00 AU");
+		});
+
+		const dialog = page.locator(".ui-dialog:visible", { has: page.locator("#dialog-map-pasted-signatures") });
+		await expect(dialog.getByText("ZZQ-851")).toBeVisible();
+		await dialog.locator("select").selectOption("paste-map-wh");
+		await dialog.getByRole("button", { name: "Import", exact: true }).click();
+		await page.waitForFunction(() => !!window.__mappingPayload);
+
+		const payload = await page.evaluate(() => window.__mappingPayload);
+		expect(payload.signatures.add).toHaveLength(0);
+		expect(payload.signatures.update).toHaveLength(1);
+		expect(payload.signatures.update[0].signatures.find(sig => sig.id === "paste-map-local").signatureID).toBe("ZZQ851");
+
+		await page.evaluate(() => {
+			tripwire.refresh = window.__mappingOriginalRefresh;
+			delete window.__mappingOriginalRefresh;
+			delete window.__mappingPayload;
+			delete tripwire.client.wormholes["paste-map-wh"];
+			delete tripwire.client.signatures["paste-map-local"];
+			delete tripwire.client.signatures["paste-map-other"];
+		});
+	});
+
 	test("undo removes what was just added", async ({ page }) => {
 		await page.click("#add-signature");
 		await page.fill("#dialog-signature input[name=signatureID_Alpha]", "ZZQ");

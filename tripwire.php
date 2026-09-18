@@ -1088,6 +1088,16 @@ $system = $_REQUEST['system'] ?? '';
 			</table>
 	</div>
 
+	<div id="dialog-map-pasted-signatures" title="Map pasted wormholes" class="hidden">
+		<p class="paste-map-intro"></p>
+		<div class="paste-map-columns" aria-hidden="true">
+			<span>Pasted signature</span>
+			<span>Existing connection</span>
+		</div>
+		<div class="paste-map-rows"></div>
+		<p class="paste-map-hint">Leave a signature set to “Create a new connection” if it is not one of the connections already on the map.</p>
+	</div>
+
 	<div id="dialog-error" title="Error" class="hidden">
 		<span data-icon="alert" class="critical"></span>
 		<span id="msg"></span>

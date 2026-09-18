@@ -5,7 +5,7 @@
 // Hooks dialogopen from outside, so no dialog source is touched.
 
 (function() {
-	var PRIMARY = ["save", "add", "ok", "apply", "create", "confirm", "send", "search", "login"];
+	var PRIMARY = ["save", "add", "ok", "apply", "create", "confirm", "send", "search", "login", "import"];
 	var DESTRUCTIVE = ["delete", "remove", "reset"];
 	var QUIET = ["cancel", "close"];
 
