@@ -148,8 +148,58 @@ export async function automapTransition({
       candidateMatches(candidate, toSystem, staticData.wormholeTypes));
 
     if (candidates.length > 1) {
-      await connection.rollback();
-      return notMapped('multiple_candidates', { candidates: candidates.length });
+      // Never leave an observed jump unmapped and never guess which scanned
+      // signature it used. Create a safe connection now, then let the browser
+      // either keep it or replace it with one of the matching signatures.
+      const initialId = await insertSignature(connection, {
+        systemId: fromSystemId, row, maskId, observedAt,
+      });
+      const secondaryId = await insertSignature(connection, {
+        systemId: toSystemId, row, maskId, observedAt,
+      });
+      const [wormholeResult] = await connection.execute(
+        `INSERT INTO wormholes
+           (initialID, secondaryID, type, parent, life, mass, maskID)
+         VALUES (?, ?, NULL, 'initial', 'stable', 'stable', ?)`,
+        [initialId, secondaryId, maskId],
+      );
+      await connection.execute(
+        `INSERT INTO statistics (userID, characterID, maskID, wormholes_added)
+         VALUES (?, ?, ?, 1)
+         ON DUPLICATE KEY UPDATE wormholes_added = wormholes_added + 1`,
+        [row.userID, row.characterID, maskId],
+      );
+      await connection.execute(
+        `INSERT INTO automap_pending
+           (userID, characterID, characterName, maskID, fromSystemID,
+            toSystemID, observedAt, createdWormholeID, candidates)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          row.userID,
+          row.characterID,
+          row.characterName,
+          maskId,
+          fromSystemId,
+          toSystemId,
+          observedAt,
+          wormholeResult.insertId,
+          JSON.stringify(candidates.map((candidate) => ({
+            wormholeID: Number(candidate.wormholeID),
+            targetSignatureID: Number(candidate.targetSignatureID),
+          }))),
+        ],
+      );
+      await connection.commit();
+      logger.info?.(`[character-tracking] multiple connection candidates ${JSON.stringify({
+        characterID: Number(row.characterID),
+        characterName: row.characterName,
+        maskID: maskId,
+        fromSystemID: fromSystemId,
+        toSystemID: toSystemId,
+        candidates: candidates.length,
+        action: 'awaiting_user_selection',
+      })}`);
+      return true;
     }
 
     if (candidates.length === 1) {

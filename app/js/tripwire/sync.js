@@ -115,6 +115,10 @@ tripwire.sync = function(mode, data, successCallback, alwaysCallback) {
                 tripwire.chainMap.parse({"occupied": []});
             }
 
+			if (data.automapDecision && tripwire.showAutomapDecision) {
+				tripwire.showAutomapDecision(data.automapDecision);
+			}
+
 			tripwire.updateReturnStatus();
 
             tripwire.active(data.activity);

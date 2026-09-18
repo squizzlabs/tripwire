@@ -159,6 +159,150 @@ if (isset($_POST['signatures']) || isset($_POST['wormholes'])) {
 
 /**
 // *********************
+// Pending backend automap decisions
+// *********************
+*/
+if (isset($_POST['automapDecision']) && is_array($_POST['automapDecision'])) {
+	$decisionID = isset($_POST['automapDecision']['id']) ? (int)$_POST['automapDecision']['id'] : 0;
+	$action = isset($_POST['automapDecision']['action']) ? $_POST['automapDecision']['action'] : '';
+	$selectedWormholeID = isset($_POST['automapDecision']['wormholeID'])
+		? (int)$_POST['automapDecision']['wormholeID'] : 0;
+	$result = false;
+	$message = 'Pending automap decision was not found';
+
+	if ($decisionID > 0 && in_array($action, array('resolve', 'dismiss'), true)) {
+		try {
+			$mysql->beginTransaction();
+			$stmt = $mysql->prepare(
+				'SELECT * FROM automap_pending
+				  WHERE id = :id AND userID = :userID AND maskID = :maskID
+				  FOR UPDATE'
+			);
+			$stmt->bindValue(':id', $decisionID, PDO::PARAM_INT);
+			$stmt->bindValue(':userID', $userID, PDO::PARAM_INT);
+			$stmt->bindValue(':maskID', $maskID);
+			$stmt->execute();
+			$pending = $stmt->fetch(PDO::FETCH_ASSOC);
+
+			if ($pending && $action === 'dismiss') {
+				$result = true;
+				$message = null;
+			} else if ($pending && $action === 'resolve') {
+				$candidates = json_decode($pending['candidates'], true);
+				$selected = null;
+				foreach (is_array($candidates) ? $candidates : array() as $candidate) {
+					if ((int)$candidate['wormholeID'] === $selectedWormholeID) {
+						$selected = $candidate;
+						break;
+					}
+				}
+
+				if ($selected) {
+					$stmt = $mysql->prepare(
+						'UPDATE signatures b
+						 INNER JOIN wormholes w ON w.secondaryID = b.id
+						 INNER JOIN signatures a ON a.id = w.initialID
+						    SET b.systemID = :toSystemID,
+						        b.modifiedByID = :characterID,
+						        b.modifiedByName = :characterName,
+						        b.modifiedTime = UTC_TIMESTAMP()
+						  WHERE w.id = :wormholeID
+						    AND b.id = :targetSignatureID
+						    AND w.maskID = :maskID
+						    AND a.systemID = :fromSystemID
+						    AND (b.systemID IS NULL OR b.systemID < 30000000)'
+					);
+					$stmt->bindValue(':toSystemID', (int)$pending['toSystemID'], PDO::PARAM_INT);
+					$stmt->bindValue(':characterID', (int)$pending['characterID'], PDO::PARAM_INT);
+					$stmt->bindValue(':characterName', $pending['characterName']);
+					$stmt->bindValue(':wormholeID', $selectedWormholeID, PDO::PARAM_INT);
+					$stmt->bindValue(':targetSignatureID', (int)$selected['targetSignatureID'], PDO::PARAM_INT);
+					$stmt->bindValue(':maskID', $maskID);
+					$stmt->bindValue(':fromSystemID', (int)$pending['fromSystemID'], PDO::PARAM_INT);
+					$stmt->execute();
+					$result = $stmt->rowCount() === 1;
+					$message = $result ? null : 'The selected connection is no longer unresolved';
+					if ($result) {
+						// The backend already mapped the jump with a new connection. Once
+						// the user identifies the real scanned signature, move any jump
+						// record to it and remove only that temporary connection.
+						$stmt = $mysql->prepare(
+							'SELECT initialID, secondaryID FROM wormholes
+							  WHERE id = :id AND maskID = :maskID FOR UPDATE'
+						);
+						$stmt->bindValue(':id', (int)$pending['createdWormholeID'], PDO::PARAM_INT);
+						$stmt->bindValue(':maskID', $maskID);
+						$stmt->execute();
+						$createdConnection = $stmt->fetch(PDO::FETCH_ASSOC);
+						if ($createdConnection) {
+							$stmt = $mysql->prepare(
+								'UPDATE jumps SET wormholeID = :selectedWormholeID
+								  WHERE wormholeID = :createdWormholeID AND maskID = :maskID'
+							);
+							$stmt->bindValue(':selectedWormholeID', $selectedWormholeID, PDO::PARAM_INT);
+							$stmt->bindValue(':createdWormholeID', (int)$pending['createdWormholeID'], PDO::PARAM_INT);
+							$stmt->bindValue(':maskID', $maskID);
+							$stmt->execute();
+							$stmt = $mysql->prepare('DELETE FROM wormholes WHERE id = :id AND maskID = :maskID');
+							$stmt->bindValue(':id', (int)$pending['createdWormholeID'], PDO::PARAM_INT);
+							$stmt->bindValue(':maskID', $maskID);
+							$stmt->execute();
+							$stmt = $mysql->prepare(
+								'DELETE FROM signatures WHERE maskID = :maskID AND id IN (:initialID, :secondaryID)'
+							);
+							$stmt->bindValue(':maskID', $maskID);
+							$stmt->bindValue(':initialID', (int)$createdConnection['initialID'], PDO::PARAM_INT);
+							$stmt->bindValue(':secondaryID', (int)$createdConnection['secondaryID'], PDO::PARAM_INT);
+							$stmt->execute();
+						}
+						$refresh['sigUpdate'] = true;
+						$refresh['chainUpdate'] = true;
+					}
+				} else {
+					$message = 'The selected connection was not a candidate';
+				}
+			}
+
+			if ($pending && ($result || $action === 'dismiss')) {
+				$stmt = $mysql->prepare('DELETE FROM automap_pending WHERE id = :id');
+				$stmt->bindValue(':id', $decisionID, PDO::PARAM_INT);
+				$stmt->execute();
+			}
+
+			$mysql->commit();
+		} catch (Throwable $error) {
+			if ($mysql->inTransaction()) $mysql->rollBack();
+			$message = 'Unable to save the automap decision';
+		}
+	}
+
+	$output['resultSet'][] = array('result' => $result, 'value' => $message);
+}
+
+$stmt = $mysql->prepare(
+	'SELECT id, characterID, characterName, fromSystemID, toSystemID,
+	        createdWormholeID, candidates
+	   FROM automap_pending
+	  WHERE userID = :userID AND maskID = :maskID
+	  ORDER BY createdAt ASC, id ASC
+	  LIMIT 1'
+);
+$stmt->bindValue(':userID', $userID, PDO::PARAM_INT);
+$stmt->bindValue(':maskID', $maskID);
+$stmt->execute();
+$pendingAutomap = $stmt->fetch(PDO::FETCH_ASSOC);
+if ($pendingAutomap) {
+	$pendingAutomap['id'] = (int)$pendingAutomap['id'];
+	$pendingAutomap['characterID'] = (int)$pendingAutomap['characterID'];
+	$pendingAutomap['fromSystemID'] = (int)$pendingAutomap['fromSystemID'];
+	$pendingAutomap['toSystemID'] = (int)$pendingAutomap['toSystemID'];
+	$pendingAutomap['createdWormholeID'] = (int)$pendingAutomap['createdWormholeID'];
+	$pendingAutomap['candidates'] = json_decode($pendingAutomap['candidates'], true);
+	$output['automapDecision'] = $pendingAutomap;
+}
+
+/**
+// *********************
 // Active Users
 // *********************
 */

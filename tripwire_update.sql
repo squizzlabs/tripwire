@@ -21,6 +21,25 @@ END;;
 CALL `tripwire_require_database`();;
 DROP PROCEDURE `tripwire_require_database`;;
 
+CREATE TABLE IF NOT EXISTS `automap_pending` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `userID` INT NOT NULL,
+    `characterID` INT NOT NULL,
+    `characterName` VARCHAR(100) NOT NULL,
+    `maskID` DECIMAL(12,1) NOT NULL,
+    `fromSystemID` INT NOT NULL,
+    `toSystemID` INT NOT NULL,
+    `observedAt` DATETIME(3) NOT NULL,
+    `createdWormholeID` INT NOT NULL,
+    `candidates` JSON NOT NULL,
+    `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `user_mask_created` (`userID`, `maskID`, `createdAt`),
+    CONSTRAINT `automap_pending_ibfk_1`
+        FOREIGN KEY (`userID`) REFERENCES `accounts` (`id`)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;;
+
 -- Add an index only when no index with the same ordered columns already exists.
 DROP PROCEDURE IF EXISTS `tripwire_add_index`;;
 CREATE PROCEDURE `tripwire_add_index`(

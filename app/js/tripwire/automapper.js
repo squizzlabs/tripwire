@@ -257,3 +257,83 @@ function wormholesForJump(from, to, wormholes, signatures) {
         }
     });
 }
+
+tripwire.showAutomapDecision = function(decision) {
+	if (!decision || automapState.pendingDecision === decision.id) return;
+	if (automapState.pendingDecision) return;
+	if ($(".ui-dialog:visible").length) return;
+
+	var choices = (decision.candidates || []).map(function(candidate) {
+		var wormhole = tripwire.client.wormholes[candidate.wormholeID];
+		if (!wormhole) return null;
+		var signature = tripwire.client.signatures[wormhole.initialID];
+		var signature2 = tripwire.client.signatures[wormhole.secondaryID];
+		return signature && signature2 ? {
+			candidate: candidate,
+			wormhole: wormhole,
+			signature: signature
+		} : null;
+	}).filter(Boolean);
+
+	function submit(action, wormholeID) {
+		var payload = {
+			automapDecision: {
+				id: decision.id,
+				action: action
+			}
+		};
+		if (wormholeID) payload.automapDecision.wormholeID = wormholeID;
+		tripwire.refresh('refresh', payload, function(data) {
+			if (data.resultSet && data.resultSet[0] && data.resultSet[0].result == true) {
+				$("#dialog-select-signature").dialog("close");
+			} else {
+				Notify.trigger("Unable to update the selected automap signature", "red");
+			}
+		});
+	}
+
+	function formatSystem(systemID) {
+		return systemRendering.renderSystem(systemAnalysis.analyse(systemID));
+	}
+
+	$("#dialog-select-signature").dialog({
+		autoOpen: true,
+		title: "Which Signature?",
+		width: 390,
+		buttons: {
+			"Keep New Connection": function() {
+				submit('dismiss');
+			},
+			"Update Selected": function() {
+				var index = $("#dialog-select-signature [name=sig]:checked").val();
+				if (index === undefined) return;
+				submit('resolve', choices[index].wormhole.id);
+			}
+		},
+		open: function() {
+			automapState.pendingDecision = decision.id;
+			$("#dialog-select-signature .optionsTable tbody").empty();
+			document.getElementById('select-sig-from').innerHTML = formatSystem(decision.fromSystemID);
+			document.getElementById('select-sig-to').innerHTML = formatSystem(decision.toSystemID);
+
+			$.each(choices, function(i, choice) {
+				var sigInfo = tripwire.makeSigInfo(choice.signature, choice.wormhole);
+				var checked = i === 0 ? " checked" : "";
+				var row = "<tr>"
+					+ "<td><input type='radio' name='sig' value='"+i+"' id='pending-sig"+i+"'"+checked+" /></td>"
+					+ "<td class='centerAlign'>" + formatSignatureID(choice.signature.signatureID) + "</td>"
+					+ "<td class='centerAlign'>" + sigInfo.formattedType + "</td>"
+					+ "<td class='centerAlign'>" + sigInfo.leadsTo + "</td>"
+					+ "<td class='centerAlign " + choice.wormhole.life + "'>" + sigInfo.lifeText + "</td>"
+					+ "<td class='centerAlign " + choice.wormhole.mass + "'>" + sigInfo.massText + "</td>"
+					+ "</tr>";
+				var rowElement = $(row);
+				rowElement.find('td').wrapInner("<label for='pending-sig"+i+"' />");
+				$("#dialog-select-signature .optionsTable tbody").append(rowElement);
+			});
+		},
+		close: function() {
+			automapState.pendingDecision = false;
+		}
+	});
+};

@@ -468,6 +468,31 @@ CREATE TABLE `tracking` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `automap_pending`
+--
+
+DROP TABLE IF EXISTS `automap_pending`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `automap_pending` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `userID` int NOT NULL,
+  `characterID` int NOT NULL,
+  `characterName` varchar(100) NOT NULL,
+  `maskID` decimal(12,1) NOT NULL,
+  `fromSystemID` int NOT NULL,
+  `toSystemID` int NOT NULL,
+  `observedAt` datetime(3) NOT NULL,
+  `createdWormholeID` int NOT NULL,
+  `candidates` json NOT NULL,
+  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_mask_created` (`userID`,`maskID`,`createdAt`),
+  CONSTRAINT `automap_pending_ibfk_1` FOREIGN KEY (`userID`) REFERENCES `accounts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Trigger: systemVisits (Remove DEFINER, plain CREATE TRIGGER)
 --
 
