@@ -180,6 +180,10 @@ $system = $_REQUEST['system'] ?? '';
 					<i id="add-signature" data-icon="plus" class="bar-btn bar-primary" data-tooltip="Add a signature by hand"><span class="bar-label">Add</span></i>
 					<i id="paste-signatures" class="bar-btn" data-tooltip="Paste probe scanner results. Ctrl-V anywhere on the page does the same."><span class="bar-label">Paste scan</span><kbd>&#8984;V</kbd></i>
 					<span class="bar-sep"></span>
+					<i id="map-pasted-wormholes" class="bar-btn" role="button" tabindex="0" data-tooltip="Map pasted wormholes" aria-label="Map pasted wormholes">
+						<svg class="bar-map-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 5-2 8 3 5-2v13l-5 2-8-3-5 2Z"/><path d="M8 4v13M16 7v13"/></svg>
+						<span class="bar-label">Map</span>
+					</i>
 					<i id="edit-signature" data-icon="edit" class="bar-btn disabled" data-tooltip="Edit the selected signature"><span class="bar-label">Edit</span></i>
 					<i id="delete-signature" data-icon="trash" class="bar-btn disabled" data-tooltip="Delete the selected signatures"><span class="bar-label">Delete</span></i>
 					<div class="bar-right">

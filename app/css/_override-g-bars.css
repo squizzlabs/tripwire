@@ -35,6 +35,17 @@
 .controls .bar-btn:hover { background: var(--muted); border-color: var(--border); color: var(--foreground); }
 .controls .bar-btn.bar-icon { padding: 0 6px; }
 .controls .bar-btn.bar-icon:not([data-icon]) { font-weight: 600; }
+.controls .bar-map-icon {
+	width: var(--icon);
+	height: var(--icon);
+	fill: none;
+	stroke: currentColor;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	stroke-width: 2;
+}
+#map-pasted-wormholes.is-pending { color: var(--primary); }
+#map-pasted-wormholes .bar-label { display: inline !important; }
 
 .controls .bar-btn.bar-primary { background: var(--primary); color: var(--primary-foreground); }
 .controls .bar-btn.bar-primary:hover {

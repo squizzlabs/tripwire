@@ -206,11 +206,34 @@ tripwire.pasteSignatures = function() {
 		});
 	}
 
-	function openMappingDialog(pending, candidates, payload, undo) {
+	function setMappingPending(pending, candidates, payload, undo) {
 		pendingMapping = {pending: pending, candidates: candidates, payload: payload, undo: undo, applied: false};
+		$("#map-pasted-wormholes")
+			.addClass("is-pending")
+			.attr("data-tooltip", "Map pasted wormholes from the latest scan");
+	}
+
+	function clearMappingPending() {
+		pendingMapping = null;
+		$("#map-pasted-wormholes")
+			.removeClass("is-pending")
+			.attr("data-tooltip", "Map pasted wormholes");
+	}
+
+	function openMappingDialog() {
+		if (!pendingMapping) {
+			Notify.trigger("Paste a scan containing new wormholes first.", "blue", 4000, null, {
+				animation: false,
+				fade: 0
+			});
+			return;
+		}
+		var pending = pendingMapping.pending;
+		var candidates = pendingMapping.candidates;
 		var dialog = $("#dialog-map-pasted-signatures");
 		var rows = dialog.find(".paste-map-rows").empty();
-		var systemName = tripwire.systems[viewingSystemID] ? tripwire.systems[viewingSystemID].name : "this system";
+		var systemID = pendingMapping.payload.systemID;
+		var systemName = tripwire.systems[systemID] ? tripwire.systems[systemID].name : "this system";
 		dialog.find(".paste-map-intro").text(
 			"The scan contains new wormhole signatures and " + systemName + " already has connections. Map any signatures that belong to those connections."
 		);
@@ -260,7 +283,7 @@ tripwire.pasteSignatures = function() {
 						processing = false;
 						if (pasteNotice && !pasteNotice.isDestroyed) pasteNotice.destroy();
 					}
-					pendingMapping = null;
+					clearMappingPending();
 				}
 			});
 		}
@@ -370,8 +393,8 @@ tripwire.pasteSignatures = function() {
         }
 
 		var candidates = pendingWormholes.length ? mappingCandidates(pastedIDs) : [];
-		if (pendingWormholes.length && candidates.length) {
-			openMappingDialog(pendingWormholes, candidates, payload, undo);
+		if (pendingWormholes.length) {
+			setMappingPending(pendingWormholes, candidates, payload, undo);
 		} else {
 			submitPaste(payload, undo);
 		}
@@ -462,6 +485,12 @@ tripwire.pasteSignatures = function() {
 		});
 
 		$("body").on("change", "#dialog-map-pasted-signatures select", refreshMappingChoices);
+		$("body").on("click", "#map-pasted-wormholes", openMappingDialog);
+		$("body").on("keydown", "#map-pasted-wormholes", function(e) {
+			if (e.key !== "Enter" && e.key !== " ") return;
+			e.preventDefault();
+			openMappingDialog();
+		});
     }
 
 	this.pasteSignatures.notifyPaste = function(paste) {

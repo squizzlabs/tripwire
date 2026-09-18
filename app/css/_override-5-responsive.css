@@ -72,6 +72,7 @@
 
 	/* Editing chrome is out of scope on a phone: this band is for reading. */
 	#signaturesWidget #add-signature,
+	#signaturesWidget #map-pasted-wormholes,
 	#signaturesWidget #edit-signature,
 	#signaturesWidget #delete-signature,
 	#signaturesWidget #undo,

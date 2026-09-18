@@ -135,11 +135,17 @@ test.describe("signatures", () => {
 			tripwire.pasteSignatures.parsePaste("ZZQ-851\tCosmic Signature\tWormhole\t\t100.0%\t1.00 AU");
 		});
 
+		const mapButton = page.locator("#map-pasted-wormholes");
+		await expect(mapButton).toBeVisible();
+		await expect(mapButton).toHaveClass(/is-pending/);
+		await expect(page.locator("#dialog-map-pasted-signatures")).toBeHidden();
+		await mapButton.click();
 		const dialog = page.locator(".ui-dialog:visible", { has: page.locator("#dialog-map-pasted-signatures") });
 		await expect(dialog.getByText("ZZQ-851")).toBeVisible();
 		await dialog.locator("select").selectOption("paste-map-wh");
 		await dialog.getByRole("button", { name: "Import", exact: true }).click();
 		await page.waitForFunction(() => !!window.__mappingPayload);
+		await expect(mapButton).not.toHaveClass(/is-pending/);
 
 		const payload = await page.evaluate(() => window.__mappingPayload);
 		expect(payload.signatures.add).toHaveLength(0);
