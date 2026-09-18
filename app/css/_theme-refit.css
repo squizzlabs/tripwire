@@ -1358,6 +1358,73 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 	line-height: 0;
 }
 
+/* Flare names sit directly over the colored top edge. Keep the label narrow
+   enough to coexist with the class and pilot markers on compact nodes. */
+#chainMap div.flareNode.node::before {
+	content: attr(data-flare-label);
+	position: absolute;
+	inset: auto;
+	top: -13px;
+	left: 0;
+	right: 0;
+	z-index: 4;
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	height: 11px;
+	max-width: none;
+	padding: 0;
+	transform: none;
+	overflow: hidden;
+	color: #fff;
+	-webkit-text-fill-color: #fff;
+	background: transparent;
+	border-radius: 0;
+	box-shadow: none;
+	filter: none;
+	font-family: var(--font-mono);
+	font-size: 8px;
+	font-weight: 800;
+	letter-spacing: .03em;
+	line-height: 11px;
+	text-align: center;
+	text-overflow: ellipsis;
+	text-transform: uppercase;
+	white-space: nowrap;
+	pointer-events: none;
+}
+#chainMap div.flareNode.node {
+	margin-top: 15px;
+}
+
+/* Keep the selected flare visible when its context submenu opens. */
+#chainMenu .flare-option[data-command="red"] { --menu-flare: var(--data-critical); }
+#chainMenu .flare-option[data-command="yellow"] { --menu-flare: var(--data-loot-orange); }
+#chainMenu .flare-option[data-command="green"] { --menu-flare: var(--data-good); }
+#chainMenu .flare-option[data-command="bubbled"] { --menu-flare: var(--data-loot-purple); }
+#chainMenu .flare-option[data-command="camped"] { --menu-flare: var(--data-loot-orange); }
+#chainMenu .flare-option[data-command="dangerous"] { --menu-flare: var(--data-danger); }
+#chainMenu .flare-option[data-command="do-not-jump"] { --menu-flare: var(--data-triglavian); }
+#chainMenu .flare-option[data-command="do-not-pvp"] { --menu-flare: var(--data-info); }
+#chainMenu .flare-option.flare-active > a,
+#chainMenu .flare-option.flare-active > .ui-menu-item-wrapper {
+	background: color-mix(in oklab, var(--menu-flare) 24%, var(--popover));
+	box-shadow: inset 3px 0 0 var(--menu-flare);
+	color: #fff;
+	-webkit-text-fill-color: #fff;
+}
+
+/* Context submenus may extend beyond the chain panel. Lift only the open menu
+   above neighboring dashboard panels, while keeping normal panel clipping. */
+#chainWidget.context-menu-open {
+	overflow: visible;
+	z-index: 5000;
+}
+#chainWidget.context-menu-open #menuContainer,
+#chainWidget.context-menu-open #chainMenu {
+	z-index: 5001;
+}
+
 /* ── Shared security / wormhole type labels ─────────────────────────────
    One primitive is used by the map corner, statics, gate links and the
    signature quick-select. A brand pack owns its geometry, typography, ink,

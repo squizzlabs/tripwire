@@ -238,7 +238,7 @@ DROP TABLE IF EXISTS `flares`;
 CREATE TABLE `flares` (
   `maskID` decimal(12,1) NOT NULL,
   `systemID` int NOT NULL,
-  `flare` enum('red','yellow','green','bubbled','camped','dangerous','do-not-jump','do-not-pvp') NOT NULL,
+  `flare` varchar(32) NOT NULL,
   `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`maskID`,`systemID`),
   KEY `time` (`time`) USING BTREE,

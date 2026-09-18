@@ -335,14 +335,14 @@ $system = $_REQUEST['system'] ?? '';
 						<li>
 							<li><a>Flares</a>
 								<ul style="width: 10em;">
-									<li data-command="red"><a>Battle (red)</a></li>
-									<li data-command="yellow"><a>Hold (yellow)</a></li>
-									<li data-command="green"><a>Fleet Op (green)</a></li>
-									<li data-command="bubbled"><a>Bubbled</a></li>
-									<li data-command="camped"><a>Camped</a></li>
-									<li data-command="dangerous"><a>Dangerous</a></li>
-									<li data-command="do-not-jump"><a>Do Not Jump</a></li>
-									<li data-command="do-not-pvp"><a>Do Not PvP</a></li>
+									<li class="flare-option" data-command="red"><a>Battle (red)</a></li>
+									<li class="flare-option" data-command="yellow"><a>Hold (yellow)</a></li>
+									<li class="flare-option" data-command="green"><a>Fleet Op (green)</a></li>
+									<li class="flare-option" data-command="bubbled"><a>Bubbled</a></li>
+									<li class="flare-option" data-command="camped"><a>Camped</a></li>
+									<li class="flare-option" data-command="dangerous"><a>Dangerous</a></li>
+									<li class="flare-option" data-command="do-not-jump"><a>Do Not Jump</a></li>
+									<li class="flare-option" data-command="do-not-pvp"><a>Do Not PvP</a></li>
 								</ul>
 							</li>
 							<li data-command="mass"><a>Mass</a></li>

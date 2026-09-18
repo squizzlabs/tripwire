@@ -112,10 +112,20 @@ var chain = new function() {
 		/*	function for coloring chain map nodes via flares  */
 		//var data = typeof(data) !== "undefined" ? data : this.data.flares;
 		var flareNames = ["red", "yellow", "green", "bubbled", "camped", "dangerous", "do-not-jump", "do-not-pvp"];
+		var flareLabels = {
+			red: "Battle",
+			yellow: "Hold",
+			green: "Fleet Op",
+			bubbled: "Bubbled",
+			camped: "Camped",
+			dangerous: "Dangerous",
+			"do-not-jump": "Do Not Jump",
+			"do-not-pvp": "Do Not PvP"
+		};
 		var flareNodeClasses = flareNames.map(function(flare) { return flare + "Node"; }).join(" ");
 
 		// Remove all current node coloring instead of checking each one
-		$("#chainMap div.node").removeClass("flareNode " + flareNodeClasses);
+		$("#chainMap div.node").removeClass("flareNode " + flareNodeClasses).removeAttr("data-flare data-flare-label");
 
 		// Remove all coloring from chain grid
 		$("#chainGrid tr").removeClass(flareNames.join(" "));
@@ -126,7 +136,11 @@ var chain = new function() {
 				var systemID = data.flares[x].systemID;
 				var flare = data.flares[x].flare;
 
-				var row = ($("#chainMap [data-nodeid="+systemID+"]").addClass("flareNode " + flare + "Node").parent().index() - 1) / 3 * 2;
+				var row = ($("#chainMap [data-nodeid="+systemID+"]")
+					.addClass("flareNode " + flare + "Node")
+					.attr("data-flare", flare)
+					.attr("data-flare-label", flareLabels[flare] || flare)
+					.parent().index() - 1) / 3 * 2;
 
 				if (row > 0) {
 					$("#chainGrid tr:eq("+row+")").addClass(flare).next().addClass(flare);

@@ -59,6 +59,13 @@ else
   echo "[SEED] ERROR: tripwire.sql not found! Skipping."
 fi
 
+if [ -f ./tripwire_update.sql ]; then
+  echo "[SEED] Applying Tripwire database migrations..."
+  mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_ROOT_USER" -p"$DB_ROOT_PASS" \
+        "$TRIPWIRE_DB" < ./tripwire_update.sql
+  echo "[SEED] Tripwire database migrations applied!"
+fi
+
 ###############################################################################
 # 3) Optionally fetch fuzzworks SDE & import it
 ###############################################################################
@@ -124,4 +131,3 @@ fi
 
 echo "[SEED] All done!"
 exit 0
-

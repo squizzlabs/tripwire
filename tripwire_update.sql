@@ -115,10 +115,7 @@ ALTER TABLE `signatures`
     MODIFY COLUMN `name` VARCHAR(100) CHARACTER SET utf8mb4 DEFAULT NULL;
 
 ALTER TABLE `flares`
-    MODIFY COLUMN `flare` ENUM(
-        'red', 'yellow', 'green',
-        'bubbled', 'camped', 'dangerous', 'do-not-jump', 'do-not-pvp'
-    ) NOT NULL;
+    MODIFY COLUMN `flare` VARCHAR(32) NOT NULL;
 
 CALL `tripwire_add_column`('esi', 'lastActive',
     'TIMESTAMP NULL DEFAULT NULL');

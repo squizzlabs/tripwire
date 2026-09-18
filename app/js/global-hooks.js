@@ -718,6 +718,9 @@ $("#chainParent").contextmenu({
     },
 	menu: "#chainMenu",
 	show: {effect: "slideDown", duration: 150},
+	close: function() {
+		$("#chainWidget").removeClass("context-menu-open");
+	},
 	select: function(e, ui) {
 		const nodeElem = $(ui.target[0]).closest("[data-nodeid]");
 		var id = nodeElem.data("nodeid");
@@ -781,9 +784,19 @@ $("#chainParent").contextmenu({
 		}
 	},
 	beforeOpen: function(e, ui) {
+		$("#chainWidget").addClass("context-menu-open");
 		var wormholeID = $(ui.target[0]).closest("[data-nodeid]").data("sigid") || null;
 		var systemID = $(ui.target[0]).closest("[data-nodeid]").data("nodeid");
 		const systemName = tripwire.systems[systemID].name;
+		var activeFlare = $(ui.target[0]).closest("[data-nodeid]").attr("data-flare") || null;
+
+		$("#chainMenu .flare-option").each(function() {
+			var isActive = $(this).attr("data-command") === activeFlare;
+			$(this)
+				.toggleClass("flare-active", isActive)
+				.children("a, [role='menuitem']")
+				.attr("aria-current", isActive ? "true" : null);
+		});
 
 		// Add check for k-space
 		if (tripwire.systems[systemID].class || !tripwire.esi.characters[options.tracking.active]) {

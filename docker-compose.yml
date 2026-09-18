@@ -161,6 +161,8 @@ services:
       - DB_ROOT_PASS=$MYSQL_ROOT_PASSWORD
       - TRIPWIRE_DB=$MYSQL_DATABASE
       - SDE_DB=eve_dump
+    volumes:
+      - "./tripwire_update.sql:/seed/tripwire_update.sql:ro"
     # No need for volumes or ports
     # The seed script will run once, then exit
 
