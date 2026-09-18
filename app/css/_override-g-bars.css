@@ -35,7 +35,8 @@
 .controls .bar-btn:hover { background: var(--muted); border-color: var(--border); color: var(--foreground); }
 .controls .bar-btn.bar-icon { padding: 0 6px; }
 .controls .bar-btn.bar-icon:not([data-icon]) { font-weight: 600; }
-.controls .bar-map-icon {
+.controls .bar-map-icon,
+.controls .bar-clipboard-icon {
 	width: var(--icon);
 	height: var(--icon);
 	fill: none;
@@ -100,11 +101,37 @@
 	cursor: default;
 }
 
-/* Labels give way before icons do. */
+/* Labels give way before icons do. The viewport rule also avoids a flash of
+   expanded controls before the panel-width observer runs. */
 @media (max-width: 1439px) {
 	#signaturesWidget .bar-btn:not(.bar-primary) .bar-label,
 	#infoWidget .bar-btn .bar-label { display: none; }
 	#signaturesWidget .bar-btn:not(.bar-primary):not(.bar-icon) { padding: 0 6px; }
+}
+
+.signature-toolbar-compact .bar-btn:not(.bar-primary) .bar-label {
+	display: none;
+}
+.signature-toolbar-compact .bar-btn:not(.bar-primary):not(.bar-icon) {
+	padding: 0 6px;
+}
+
+/* A panel can be narrow inside a wide desktop viewport, so JavaScript adds
+   these states from the panel's measured width rather than the window's.
+   Once even the compact controls no longer fit, a second line gives the
+   table a little less room instead of covering it or clipping actions. */
+.signature-toolbar-wrap > .controls {
+	flex-wrap: wrap;
+	row-gap: var(--space-1);
+}
+
+/* The map action normally keeps its label; compact signature bars give the
+   icon the same priority as the other secondary actions. */
+.signature-toolbar-compact #map-pasted-wormholes .bar-label {
+	display: none !important;
+}
+.signature-toolbar-compact #paste-signatures kbd {
+	display: none;
 }
 
 /* The bar inherits the panel title's uppercase and letter-spacing; a button

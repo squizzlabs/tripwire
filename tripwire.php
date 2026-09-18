@@ -178,7 +178,10 @@ $system = $_REQUEST['system'] ?? '';
 				<div class="controls">
 					<i id="signature-count" class="bar-count" data-tooltip="Signatures in this system">0</i>
 					<i id="add-signature" data-icon="plus" class="bar-btn bar-primary" data-tooltip="Add a signature by hand"><span class="bar-label">Add</span></i>
-					<i id="paste-signatures" class="bar-btn" data-tooltip="Paste probe scanner results. Ctrl-V anywhere on the page does the same."><span class="bar-label">Paste scan</span><kbd>&#8984;V</kbd></i>
+					<i id="paste-signatures" class="bar-btn" data-tooltip="Paste probe scanner results. Ctrl-V anywhere on the page does the same.">
+						<svg class="bar-clipboard-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5M9 9h6M9 13h6M9 17h4"/></svg>
+						<span class="bar-label">Paste scan</span><kbd>&#8984;V</kbd>
+					</i>
 					<span class="bar-sep"></span>
 					<i id="map-pasted-wormholes" class="bar-btn" role="button" tabindex="0" data-tooltip="Map pasted wormholes" aria-label="Map pasted wormholes">
 						<svg class="bar-map-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 5-2 8 3 5-2v13l-5 2-8-3-5 2Z"/><path d="M8 4v13M16 7v13"/></svg>
