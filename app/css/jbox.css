@@ -68,8 +68,56 @@
 }
 
 .jBox-Notice-blue .jBox-container {
+	/* Dark ink clears WCAG AA against both ends of the blue gradient. */
+	color: #071a2b;
+	text-shadow: none;
 	background: var(--ui-blue);
 	background-image: linear-gradient(to bottom, var(--ui-blue-lit), var(--ui-blue));
+}
+
+.paste-notice {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 6px 12px;
+	max-width: 28rem;
+}
+
+.paste-notice-message {
+	grid-column: 1 / -1;
+	margin: 0;
+	font-weight: 700;
+}
+
+.paste-notice button {
+	min-height: 24px;
+	padding: 2px 4px;
+	border: 0;
+	border-radius: 2px;
+	color: #071a2b;
+	font: inherit;
+	cursor: pointer;
+}
+
+.paste-notice-action {
+	background: transparent;
+	font-weight: 700;
+	text-align: left;
+	text-decoration: underline;
+	text-decoration-thickness: 2px;
+	text-underline-offset: 2px;
+}
+
+.paste-notice-dismiss {
+	background: rgba(7, 26, 43, .12);
+}
+
+.paste-notice button:hover {
+	background: rgba(7, 26, 43, .2);
+}
+
+.paste-notice button:focus-visible {
+	outline: 3px solid #071a2b;
+	outline-offset: 2px;
 }
 
 .jBox-Notice-yellow .jBox-container {

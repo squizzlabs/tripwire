@@ -80,6 +80,14 @@ test.describe("signatures", () => {
 		await page.click("#paste-signatures");
 		await page.waitForFunction(() => Object.values((tripwire.client && tripwire.client.signatures) || {}).some(s => /zzq301/i.test(s.signatureID)), null, { timeout: 15000 });
 		expect(await clientSigIds(page)).toContain("zzq301");
+
+		const notice = page.locator(".paste-notice");
+		await expect(notice.getByRole("status")).toHaveText("Paste detected.");
+		await expect(notice.getByRole("button", { name: "Delete signatures missing from this scan" })).toBeVisible();
+		const dismiss = notice.getByRole("button", { name: "Dismiss" });
+		await dismiss.focus();
+		await page.keyboard.press("Enter");
+		await expect(notice).toBeHidden();
 	});
 
 	test("a pasted signature updates rather than duplicates", async ({ page, context }) => {

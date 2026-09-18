@@ -18,8 +18,7 @@ var __tripwirePasteIngest;
 			Notify.trigger("Nothing on the clipboard looked like scanner results.");
 			return;
 		}
-		Notify.trigger("Paste detected<br/>(<a id='fullPaste' href=''>Click to delete missing sigs</a>)");
-		$("#fullPaste").data("paste", text);
+		tripwire.pasteSignatures.notifyPaste(text);
 		tripwire.pasteSignatures.parsePaste(text);
 	}
 

@@ -1,6 +1,7 @@
 // Handles pasting sigs from EVE
 tripwire.pasteSignatures = function() {
     var processing = false;
+	var pasteNotice = null;
 
     var rowParse = function(row) {
         var scanner = {};
@@ -262,6 +263,7 @@ tripwire.pasteSignatures = function() {
         $("body").on("click", "#fullPaste", function(e) {
             e.preventDefault();
 
+			var notice = $(this).closest(".jBox-Notice").data("jBox");
             var paste = $(this).data("paste").split("\n");
             var pasteIDs = [];
             var removes = [];
@@ -309,18 +311,44 @@ tripwire.pasteSignatures = function() {
 
                 tripwire.refresh('refresh', payload, success);
             }
+
+			if (notice) notice.close({ignoreDelay: true});
         });
+
+		$("body").on("click", ".paste-notice-dismiss", function() {
+			var notice = $(this).closest(".jBox-Notice").data("jBox");
+			if (notice) notice.close({ignoreDelay: true});
+		});
 
         $("#clipboard").on("paste", function(e) {
             e.preventDefault();
             var paste = window.clipboardData ? window.clipboardData.getData("Text") : (e.originalEvent || e).clipboardData.getData('text/plain');
 
             $("#clipboard").blur();
-            Notify.trigger("Paste detected<br/>(<a id='fullPaste' href=''>Click to delete missing sigs</a>)");
-            $("#fullPaste").data("paste", paste);
-            tripwire.pasteSignatures.parsePaste(paste);
-        });
+			tripwire.pasteSignatures.notifyPaste(paste);
+			tripwire.pasteSignatures.parsePaste(paste);
+		});
     }
+
+	this.pasteSignatures.notifyPaste = function(paste) {
+		if (pasteNotice && !pasteNotice.isDestroyed) pasteNotice.destroy();
+
+		var content = [
+			"<div class='paste-notice'>",
+				"<p class='paste-notice-message' role='status' aria-live='polite'>Paste detected.</p>",
+				"<button id='fullPaste' class='paste-notice-action' type='button'>Delete signatures missing from this scan</button>",
+				"<button class='paste-notice-dismiss' type='button'>Dismiss</button>",
+			"</div>"
+		].join("");
+
+		// This notice offers an action, so it must remain available until the
+		// user acts or dismisses it rather than expiring on a timer.
+		pasteNotice = Notify.trigger(content, "blue", false, null, {
+			closeOnClick: false,
+			closeOnEsc: true
+		});
+		pasteNotice.wrapper.find("#fullPaste").data("paste", paste);
+	}
 
     this.pasteSignatures.init();
 }

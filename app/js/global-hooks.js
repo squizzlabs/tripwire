@@ -302,19 +302,19 @@ $("#logout").click(function() {
 });
 
 var Notify = new function() {
-	this.trigger = function(content, color, stick, id) {
+	this.trigger = function(content, color, stick, id, noticeOptions) {
 		var color = typeof(color) !== "undefined" ? color : "blue";
 		var stick = typeof(stick) !== "undefined" ? stick : 10000;
 		var id = typeof(id) !== "undefined" ? id : null;
 
-		new jBox("Notice", {
+		return new jBox("Notice", $.extend({
 			id: id,
 			content: content,
 			offset: {y: 35},
 			animation: "flip",
 			color: color,
 			autoClose: stick
-		});
+		}, noticeOptions || {}));
 	}
 }
 
