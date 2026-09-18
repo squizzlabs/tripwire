@@ -169,26 +169,34 @@ export async function automapTransition({
          ON DUPLICATE KEY UPDATE wormholes_added = wormholes_added + 1`,
         [row.userID, row.characterID, maskId],
       );
-      await connection.execute(
-        `INSERT INTO automap_pending
-           (userID, characterID, characterName, maskID, fromSystemID,
-            toSystemID, observedAt, createdWormholeID, candidates)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          row.userID,
-          row.characterID,
-          row.characterName,
-          maskId,
-          fromSystemId,
-          toSystemId,
-          observedAt,
-          wormholeResult.insertId,
-          JSON.stringify(candidates.map((candidate) => ({
-            wormholeID: Number(candidate.wormholeID),
-            targetSignatureID: Number(candidate.targetSignatureID),
-          }))),
-        ],
-      );
+      try {
+        await connection.execute(
+          `INSERT INTO automap_pending
+             (userID, characterID, characterName, maskID, fromSystemID,
+              toSystemID, observedAt, createdWormholeID, candidates)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            row.userID,
+            row.characterID,
+            row.characterName,
+            maskId,
+            fromSystemId,
+            toSystemId,
+            observedAt,
+            wormholeResult.insertId,
+            JSON.stringify(candidates.map((candidate) => ({
+              wormholeID: Number(candidate.wormholeID),
+              targetSignatureID: Number(candidate.targetSignatureID),
+            }))),
+          ],
+        );
+      } catch (error) {
+        logger.error?.(
+          '[character-tracking] unable to queue automap signature choice; '
+          + 'keeping newly created connection',
+          error,
+        );
+      }
       await connection.commit();
       logger.info?.(`[character-tracking] multiple connection candidates ${JSON.stringify({
         characterID: Number(row.characterID),

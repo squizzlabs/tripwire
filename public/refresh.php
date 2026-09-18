@@ -162,7 +162,19 @@ if (isset($_POST['signatures']) || isset($_POST['wormholes'])) {
 // Pending backend automap decisions
 // *********************
 */
-if (isset($_POST['automapDecision']) && is_array($_POST['automapDecision'])) {
+$automapPendingAvailable = false;
+try {
+	$stmt = $mysql->query("SHOW TABLES LIKE 'automap_pending'");
+	if ($stmt->fetchColumn()) {
+		$stmt = $mysql->query("SHOW COLUMNS FROM automap_pending LIKE 'createdWormholeID'");
+		$automapPendingAvailable = (bool)$stmt->fetchColumn();
+	}
+} catch (Throwable $error) {
+	// Do not take down the main client sync when this optional migration has
+	// not been applied yet. Automapping still creates a connection immediately.
+}
+
+if ($automapPendingAvailable && isset($_POST['automapDecision']) && is_array($_POST['automapDecision'])) {
 	$decisionID = isset($_POST['automapDecision']['id']) ? (int)$_POST['automapDecision']['id'] : 0;
 	$action = isset($_POST['automapDecision']['action']) ? $_POST['automapDecision']['action'] : '';
 	$selectedWormholeID = isset($_POST['automapDecision']['wormholeID'])
@@ -279,26 +291,28 @@ if (isset($_POST['automapDecision']) && is_array($_POST['automapDecision'])) {
 	$output['resultSet'][] = array('result' => $result, 'value' => $message);
 }
 
-$stmt = $mysql->prepare(
-	'SELECT id, characterID, characterName, fromSystemID, toSystemID,
-	        createdWormholeID, candidates
-	   FROM automap_pending
-	  WHERE userID = :userID AND maskID = :maskID
-	  ORDER BY createdAt ASC, id ASC
-	  LIMIT 1'
-);
-$stmt->bindValue(':userID', $userID, PDO::PARAM_INT);
-$stmt->bindValue(':maskID', $maskID);
-$stmt->execute();
-$pendingAutomap = $stmt->fetch(PDO::FETCH_ASSOC);
-if ($pendingAutomap) {
-	$pendingAutomap['id'] = (int)$pendingAutomap['id'];
-	$pendingAutomap['characterID'] = (int)$pendingAutomap['characterID'];
-	$pendingAutomap['fromSystemID'] = (int)$pendingAutomap['fromSystemID'];
-	$pendingAutomap['toSystemID'] = (int)$pendingAutomap['toSystemID'];
-	$pendingAutomap['createdWormholeID'] = (int)$pendingAutomap['createdWormholeID'];
-	$pendingAutomap['candidates'] = json_decode($pendingAutomap['candidates'], true);
-	$output['automapDecision'] = $pendingAutomap;
+if ($automapPendingAvailable) {
+	$stmt = $mysql->prepare(
+		'SELECT id, characterID, characterName, fromSystemID, toSystemID,
+		        createdWormholeID, candidates
+		   FROM automap_pending
+		  WHERE userID = :userID AND maskID = :maskID
+		  ORDER BY createdAt ASC, id ASC
+		  LIMIT 1'
+	);
+	$stmt->bindValue(':userID', $userID, PDO::PARAM_INT);
+	$stmt->bindValue(':maskID', $maskID);
+	$stmt->execute();
+	$pendingAutomap = $stmt->fetch(PDO::FETCH_ASSOC);
+	if ($pendingAutomap) {
+		$pendingAutomap['id'] = (int)$pendingAutomap['id'];
+		$pendingAutomap['characterID'] = (int)$pendingAutomap['characterID'];
+		$pendingAutomap['fromSystemID'] = (int)$pendingAutomap['fromSystemID'];
+		$pendingAutomap['toSystemID'] = (int)$pendingAutomap['toSystemID'];
+		$pendingAutomap['createdWormholeID'] = (int)$pendingAutomap['createdWormholeID'];
+		$pendingAutomap['candidates'] = json_decode($pendingAutomap['candidates'], true);
+		$output['automapDecision'] = $pendingAutomap;
+	}
 }
 
 /**
