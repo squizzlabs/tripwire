@@ -1097,28 +1097,23 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 #chainMap div.node > .statics { flex-wrap: wrap; justify-content: flex-end; row-gap: 2px; min-width: 0; }
 #chainMap div.node:has(> .nodeType:empty) { grid-template-areas: "class name pips" "statics statics statics"; }
 
-/* ── Flares breathe. ──────────────────────────────────────────────────────
-   As Aperture's underglow: a blurred pad in the flare colour behind the
-   card, scaling 0.96 -> 1.06 and 28% -> 80% opacity on a 1.4s cycle. The
-   card itself keeps its security edge and a faint tint; the top edge is
-   gone. Still under reduced-motion. */
-@keyframes flare-glow {
-	0%, 100% { opacity: .28; transform: scale(.96); }
-	50%      { opacity: .8;  transform: scale(1.06); }
-}
+/* ── Flares. ──────────────────────────────────────────────────────────────── */
+   Flare colors remain visible as a steady outer halo and faint card tint. */
 #chainMap div.redNode.node, #chainMap div.yellowNode.node, #chainMap div.greenNode.node { position: relative; z-index: 0; border-top-width: 1px; border-top-color: var(--node-edge); }
 #chainMap div.redNode.node::before, #chainMap div.yellowNode.node::before, #chainMap div.greenNode.node::before {
 	content: ""; position: absolute; inset: -3px; z-index: -1; border-radius: inherit;
 	background: var(--flare, transparent); filter: blur(9px);
-	animation: flare-glow 1400ms ease-in-out infinite; pointer-events: none;
+	pointer-events: none;
 }
 #chainMap div.redNode.node    { --flare: var(--data-critical); }
 #chainMap div.yellowNode.node { --flare: var(--data-loot-orange); }
 #chainMap div.greenNode.node  { --flare: var(--data-good); }
+#chainMap div.bubbledNode.node { --flare: var(--data-loot-purple); }
+#chainMap div.campedNode.node { --flare: var(--data-loot-orange); }
+#chainMap div.dangerousNode.node { --flare: var(--data-danger); }
+#chainMap div.do-not-jumpNode.node { --flare: var(--data-triglavian); }
+#chainMap div.do-not-pvpNode.node { --flare: var(--data-info); }
 #chainMap div.redNode.node, #chainMap div.yellowNode.node, #chainMap div.greenNode.node { background-color: color-mix(in oklab, var(--flare) 8%, var(--node-surface)); }
-@media (prefers-reduced-motion: reduce) {
-	#chainMap div.redNode.node::before, #chainMap div.yellowNode.node::before, #chainMap div.greenNode.node::before { animation: none; opacity: .55; }
-}
 
 /* ── Three lines, narrow: chains grow sideways, so width is the currency.
    Line 1 chip + name, line 2 hull or sig id with the pips at the right,
@@ -1172,19 +1167,16 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 #chainMap div.node > .nodeIcons .badge { height: 12px; font-size: 9px; padding: 0 4px; }
 #chainMap div.node.frig-chain { border-width: 1px; }
 #chainMap div.loop { width: fit-content; min-width: 0; padding: 3px 10px; margin: 6px auto 8px; }
-/* The glow is a halo around and behind the box, not a wash across it: an
-   animated shadow instead of a pad inside the card's own stacking layer. */
-#chainMap div.redNode.node::before, #chainMap div.yellowNode.node::before, #chainMap div.greenNode.node::before { content: none; animation: none; }
-@keyframes flare-halo {
-	0%, 100% { box-shadow: 0 0 6px 1px color-mix(in oklab, var(--flare) 45%, transparent), 0 2px 8px rgba(0, 0, 0, .35); }
-	50%      { box-shadow: 0 0 16px 5px color-mix(in oklab, var(--flare) 85%, transparent), 0 2px 8px rgba(0, 0, 0, .35); }
-}
+/* The glow is a steady halo around and behind the box, not a wash across it. */
+#chainMap div.redNode.node::before, #chainMap div.yellowNode.node::before, #chainMap div.greenNode.node::before { content: none; }
 #chainMap div.redNode.node, #chainMap div.yellowNode.node, #chainMap div.greenNode.node {
 	z-index: auto; border-color: color-mix(in oklab, var(--flare) 60%, var(--node-edge));
-	animation: flare-halo 1400ms ease-in-out infinite;
+	box-shadow: 0 0 12px 3px color-mix(in oklab, var(--flare) 70%, transparent), 0 2px 8px rgba(0, 0, 0, .35);
 }
-@media (prefers-reduced-motion: reduce) {
-	#chainMap div.redNode.node, #chainMap div.yellowNode.node, #chainMap div.greenNode.node { animation: none; box-shadow: 0 0 12px 3px color-mix(in oklab, var(--flare) 70%, transparent); }
+#chainMap div.flareNode.node {
+	background-color: color-mix(in oklab, var(--flare) 8%, var(--node-surface));
+	border-color: color-mix(in oklab, var(--flare) 60%, var(--node-edge));
+	box-shadow: 0 0 12px 3px color-mix(in oklab, var(--flare) 70%, transparent), 0 2px 8px rgba(0, 0, 0, .35);
 }
 /* The chip sits inline before the name (it was covering the first letter
    from the corner); the type line gets room above the hanging capsules. */

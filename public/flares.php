@@ -29,6 +29,16 @@ $mask = $_SESSION['mask'];
 if (isset($_REQUEST['flare']) && !empty($_REQUEST['flare'])) {
 	$systemID = $_REQUEST['systemID'];
 	$flare = $_REQUEST['flare'];
+	$allowedFlares = array(
+		'red', 'yellow', 'green',
+		'bubbled', 'camped', 'dangerous', 'do-not-jump', 'do-not-pvp'
+	);
+
+	if (!in_array($flare, $allowedFlares, true)) {
+		http_response_code(400);
+		echo json_encode(array('result' => false, 'error' => 'Invalid flare'));
+		exit();
+	}
 
 	$query = 'INSERT INTO flares (maskID, systemID, flare) VALUES (:mask, :systemID, :flare) ON DUPLICATE KEY UPDATE flare = :flare';
 	$stmt = $mysql->prepare($query);

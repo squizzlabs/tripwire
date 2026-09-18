@@ -114,6 +114,12 @@ ALTER TABLE `tokens`
 ALTER TABLE `signatures`
     MODIFY COLUMN `name` VARCHAR(100) CHARACTER SET utf8mb4 DEFAULT NULL;
 
+ALTER TABLE `flares`
+    MODIFY COLUMN `flare` ENUM(
+        'red', 'yellow', 'green',
+        'bubbled', 'camped', 'dangerous', 'do-not-jump', 'do-not-pvp'
+    ) NOT NULL;
+
 CALL `tripwire_add_column`('esi', 'lastActive',
     'TIMESTAMP NULL DEFAULT NULL');
 CALL `tripwire_add_column`('esi', 'online', 'TINYINT(1) DEFAULT NULL');

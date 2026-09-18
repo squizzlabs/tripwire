@@ -111,12 +111,14 @@ var chain = new function() {
 	this.flares = function(data) {
 		/*	function for coloring chain map nodes via flares  */
 		//var data = typeof(data) !== "undefined" ? data : this.data.flares;
+		var flareNames = ["red", "yellow", "green", "bubbled", "camped", "dangerous", "do-not-jump", "do-not-pvp"];
+		var flareNodeClasses = flareNames.map(function(flare) { return flare + "Node"; }).join(" ");
 
 		// Remove all current node coloring instead of checking each one
-		$("#chainMap div.node").removeClass("redNode yellowNode greenNode");
+		$("#chainMap div.node").removeClass("flareNode " + flareNodeClasses);
 
 		// Remove all coloring from chain grid
-		$("#chainGrid tr").removeClass("red yellow green");
+		$("#chainGrid tr").removeClass(flareNames.join(" "));
 
 		// Loop through passed data and add classes by system
 		if (data) {
@@ -124,7 +126,7 @@ var chain = new function() {
 				var systemID = data.flares[x].systemID;
 				var flare = data.flares[x].flare;
 
-				var row = ($("#chainMap [data-nodeid="+systemID+"]").addClass(flare+"Node").parent().index() - 1) / 3 * 2;
+				var row = ($("#chainMap [data-nodeid="+systemID+"]").addClass("flareNode " + flare + "Node").parent().index() - 1) / 3 * 2;
 
 				if (row > 0) {
 					$("#chainGrid tr:eq("+row+")").addClass(flare).next().addClass(flare);

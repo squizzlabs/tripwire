@@ -278,6 +278,11 @@ td.google-visualization-orgchart-linenode[data-signatureid] {
 .red { color: var(--data-critical);}
 .yellow { color: var(--data-warn);}
 .green { color: var(--data-good);}
+.bubbled { color: var(--data-loot-purple);}
+.camped { color: var(--data-loot-orange);}
+.dangerous { color: var(--data-danger);}
+.do-not-jump { color: var(--data-triglavian);}
+.do-not-pvp { color: var(--data-info);}
 
 #chainGrid {
 	position: absolute;
@@ -309,6 +314,26 @@ td.google-visualization-orgchart-linenode[data-signatureid] {
 
 #chainGrid .green td {
 	border-bottom-color: var(--data-good);
+}
+
+#chainGrid .bubbled td {
+	border-bottom-color: var(--data-loot-purple);
+}
+
+#chainGrid .camped td {
+	border-bottom-color: var(--data-loot-orange);
+}
+
+#chainGrid .dangerous td {
+	border-bottom-color: var(--data-danger);
+}
+
+#chainGrid .do-not-jump td {
+	border-bottom-color: var(--data-triglavian);
+}
+
+#chainGrid .do-not-pvp td {
+	border-bottom-color: var(--data-info);
 }
 
 #chainTabs {

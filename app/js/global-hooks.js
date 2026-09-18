@@ -743,13 +743,14 @@ $("#chainParent").contextmenu({
 				// CCPEVE.showMap(id);
 				break;
 			case "red":
-				nodeElem.hasClass("redNode") ? $(this).contextmenu("removeFlare", id, ui) : $(this).contextmenu("setFlare", id, ui.cmd, ui);
-				break;
 			case "yellow":
-				nodeElem.hasClass("yellowNode") ? $(this).contextmenu("removeFlare", id, ui) : $(this).contextmenu("setFlare", id, ui.cmd, ui);
-				break;
 			case "green":
-				nodeElem.hasClass("greenNode") ? $(this).contextmenu("removeFlare", id, ui) : $(this).contextmenu("setFlare", id, ui.cmd, ui);
+			case "bubbled":
+			case "camped":
+			case "dangerous":
+			case "do-not-jump":
+			case "do-not-pvp":
+				nodeElem.hasClass(ui.cmd + "Node") ? $(this).contextmenu("removeFlare", id, ui) : $(this).contextmenu("setFlare", id, ui.cmd, ui);
 				break;
 			case "mass":
 				$("#dialog-mass").data("id", nodeElem.data("sigid")).data("systemID", id).dialog("open");
@@ -832,8 +833,10 @@ $("#chainParent").contextmenu({
 				dataType: "JSON"
 			}).done(function(data) {
 				if (data && data.result) {
-					// $(ui.target[0]).closest("td").removeClass("redNode yellowNode greenNode").addClass(flare+"Node");
-
+					var existingFlare = Object.index(chain.data.flares.flares, "systemID", systemID);
+					if (existingFlare !== undefined) {
+						chain.data.flares.flares.splice(existingFlare, 1);
+					}
 					chain.data.flares.flares.push({systemID: systemID, flare: flare, time: null});
 					chain.flares(chain.data.flares);
 				}
