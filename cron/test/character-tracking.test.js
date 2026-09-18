@@ -179,6 +179,7 @@ test('a transition is not connected when its two observations are over ten secon
     row({ locationObservedAt: '2026-09-16T11:59:49.999Z' }),
   ]);
   let automapped = false;
+  const messages = [];
 
   const result = await trackCharacters({
     database,
@@ -189,11 +190,13 @@ test('a transition is not connected when its two observations are over ten secon
     },
     now: () => new Date('2026-09-16T12:00:00.000Z'),
     automap: async () => { automapped = true; },
-    logger: { error: assert.fail },
+    logger: { info: (message) => messages.push(message), error: assert.fail },
   });
 
   assert.equal(result.transitions, 1);
   assert.equal(automapped, false);
+  assert.match(messages[1], /^\[character-tracking\] connection not mapped /);
+  assert.match(messages[1], /"reason":"stale_observation"/);
 });
 
 test('browser-active characters are location-polled even when reported offline', async () => {

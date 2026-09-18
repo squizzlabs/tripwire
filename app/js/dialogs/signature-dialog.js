@@ -488,8 +488,8 @@ sigDialog.openSignatureDialog = function(e) {
 						}
 						$("#dialog-signature #durationPicker").val(signature.lifeLength).change();
 						
-						// Focus the sig ID, if it isn't set, otherwise the sig name
-						if(sigAlpha != '???') { $("#dialog-signature input[name='wormholeName']").select(); }
+						// Focus the sig ID, if it isn't set, otherwise the wormhole type
+						if(sigAlpha != '???') { $("#dialog-signature input[name='wormholeType']").select(); }
 						else { $("#dialog-signature input[name='signatureID_Alpha']").select(); }
 						
 						// Trigger the VM/display updates based on system

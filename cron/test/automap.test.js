@@ -63,6 +63,7 @@ test('automapping ignores stations and pods before acquiring a lock', async () =
     fromSystemId: 30000143,
     toSystemId: 31000005,
     observedAt: new Date(),
+    logger: { info: () => {} },
   };
 
   assert.equal(await automapTransition({ ...base, stationId: 60000001 }), false);
@@ -70,4 +71,48 @@ test('automapping ignores stations and pods before acquiring a lock', async () =
     await automapTransition({ ...base, stationId: null, ship: { ship_type_id: 670 } }),
     false,
   );
+});
+
+test('automapping creates a real loop when both systems already appear in the chain', async () => {
+  const calls = [];
+  let nextSignatureId = 100;
+  const connection = {
+    execute: async (sql, values) => {
+      calls.push({ sql, values });
+      if (sql.includes('GET_LOCK')) return [[{ acquired: 1 }]];
+      if (sql.includes('FROM wormholes w') && sql.includes('LIMIT 1')) return [[]];
+      if (sql.includes('FROM wormholes w')) return [[]];
+      if (sql.includes('INSERT INTO signatures')) return [{ insertId: nextSignatureId++ }];
+      return [{ affectedRows: 1 }];
+    },
+    beginTransaction: async () => { calls.push({ sql: 'BEGIN' }); },
+    rollback: async () => { calls.push({ sql: 'ROLLBACK' }); },
+    commit: async () => { calls.push({ sql: 'COMMIT' }); },
+    release: () => { calls.push({ sql: 'RELEASE CONNECTION' }); },
+  };
+
+  const mapped = await automapTransition({
+    database: { getConnection: async () => connection },
+    staticData: {
+      system: (id) => ({ name: String(id), regionID: 11000001, security: -1, wormholeClass: 3 }),
+      isGate: () => false,
+      wormholeTypes: {},
+    },
+    row: { userID: 7, characterID: 9001, characterName: 'Airkio' },
+    maskId: '42.2',
+    fromSystemId: 31000005,
+    toSystemId: 30000143,
+    stationId: null,
+    ship: { ship_type_id: 11188 },
+    observedAt: new Date('2026-09-16T12:00:00Z'),
+    logger: { info: () => {} },
+  });
+
+  assert.equal(mapped, true);
+  assert.equal(
+    calls.some(({ sql }) => sql.includes('COUNT(DISTINCT systemID)')),
+    false,
+  );
+  assert.ok(calls.some(({ sql }) => sql.includes('INSERT INTO wormholes')));
+  assert.ok(calls.some(({ sql }) => sql === 'COMMIT'));
 });

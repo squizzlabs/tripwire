@@ -75,13 +75,28 @@ export async function automapTransition({
   stationId,
   ship,
   observedAt,
+  logger = console,
 }) {
-  if (
-    stationId ||
-    POD_TYPE_IDS.has(Number(ship?.ship_type_id)) ||
-    NO_MAP_SYSTEMS.has(fromSystemId) ||
-    NO_MAP_SYSTEMS.has(toSystemId)
-  ) return false;
+  const notMapped = (reason, details = {}) => {
+    logger.info?.(`[character-tracking] connection not mapped ${JSON.stringify({
+      characterID: Number(row.characterID),
+      characterName: row.characterName,
+      maskID: maskId,
+      fromSystemID: fromSystemId,
+      toSystemID: toSystemId,
+      reason,
+      ...details,
+    })}`);
+    return false;
+  };
+
+  if (stationId) return notMapped('in_station', { stationID: stationId });
+  if (POD_TYPE_IDS.has(Number(ship?.ship_type_id))) {
+    return notMapped('in_pod', { shipTypeID: Number(ship.ship_type_id) });
+  }
+  if (NO_MAP_SYSTEMS.has(fromSystemId) || NO_MAP_SYSTEMS.has(toSystemId)) {
+    return notMapped('pod_out_system');
+  }
 
   const connection = await database.getConnection();
   const low = Math.min(fromSystemId, toSystemId);
@@ -92,16 +107,15 @@ export async function automapTransition({
   try {
     const [lockRows] = await connection.execute('SELECT GET_LOCK(?, 5) AS acquired', [lockName]);
     locked = Number(lockRows[0]?.acquired) === 1;
-    if (!locked) return false;
+    if (!locked) return notMapped('lock_timeout');
 
     const fromSystem = staticData.system(fromSystemId);
     const toSystem = staticData.system(toSystemId);
-    if (
-      !fromSystem || !toSystem ||
-      Number(fromSystem.regionID) > 12000000 ||
-      Number(toSystem.regionID) > 12000000 ||
-      staticData.isGate(fromSystemId, toSystemId)
-    ) return false;
+    if (!fromSystem || !toSystem) return notMapped('unknown_system');
+    if (Number(fromSystem.regionID) > 12000000 || Number(toSystem.regionID) > 12000000) {
+      return notMapped('special_space');
+    }
+    if (staticData.isGate(fromSystemId, toSystemId)) return notMapped('stargate');
 
     await connection.beginTransaction();
 
@@ -118,18 +132,7 @@ export async function automapTransition({
     );
     if (existing.length) {
       await connection.rollback();
-      return false;
-    }
-
-    const [chainRows] = await connection.execute(
-      `SELECT COUNT(DISTINCT systemID) AS systems
-         FROM signatures
-        WHERE maskID = ? AND systemID IN (?, ?)`,
-      [maskId, fromSystemId, toSystemId],
-    );
-    if (Number(chainRows[0].systems) === 2) {
-      await connection.rollback();
-      return false;
+      return notMapped('connection_exists');
     }
 
     const [candidateRows] = await connection.execute(
@@ -146,7 +149,7 @@ export async function automapTransition({
 
     if (candidates.length > 1) {
       await connection.rollback();
-      return false;
+      return notMapped('multiple_candidates', { candidates: candidates.length });
     }
 
     if (candidates.length === 1) {

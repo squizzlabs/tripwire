@@ -260,11 +260,29 @@ export async function trackCharacters({
 
       if (changed) {
         result.transitions += 1;
-        if (
-          gap <= AUTOMAP_MAX_GAP_MS &&
-          automapEnabled(options) &&
-          typeof automap === 'function'
-        ) {
+        if (gap > AUTOMAP_MAX_GAP_MS) {
+          logChange(logger, 'connection not mapped', {
+            ...characterDetails(row),
+            fromSystemID: previousSystemId,
+            toSystemID: location.solar_system_id,
+            reason: 'stale_observation',
+            observationGapMs: gap,
+          });
+        } else if (!automapEnabled(options)) {
+          logChange(logger, 'connection not mapped', {
+            ...characterDetails(row),
+            fromSystemID: previousSystemId,
+            toSystemID: location.solar_system_id,
+            reason: 'automapper_disabled',
+          });
+        } else if (typeof automap !== 'function') {
+          logChange(logger, 'connection not mapped', {
+            ...characterDetails(row),
+            fromSystemID: previousSystemId,
+            toSystemID: location.solar_system_id,
+            reason: 'automapper_unavailable',
+          });
+        } else {
           const mapped = await automap({
             database,
             staticData,
@@ -275,6 +293,7 @@ export async function trackCharacters({
             stationId: location.station_id || null,
             ship,
             observedAt,
+            logger,
           });
           if (mapped) {
             result.automapped += 1;
