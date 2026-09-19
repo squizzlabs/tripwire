@@ -103,7 +103,7 @@ test.describe("signatures", () => {
 		expect(matches).toHaveLength(1);
 	});
 
-	test("pasted wormholes can be mapped to an existing connection", async ({ page }) => {
+	test("pasted wormholes import immediately and can then be mapped to an existing connection", async ({ page }) => {
 		await page.evaluate(() => {
 			tripwire.client.signatures = tripwire.client.signatures || {};
 			tripwire.client.wormholes = tripwire.client.wormholes || {};
@@ -122,13 +122,23 @@ test.describe("signatures", () => {
 
 			window.__mappingOriginalRefresh = tripwire.refresh;
 			tripwire.refresh = function(mode, payload, success, always) {
-				var updates = payload && payload.signatures && payload.signatures.update;
-				var mapped = updates && updates.some(function(update) {
-					return update.wormhole && update.wormhole.id === "paste-map-wh";
-				});
-				if (!mapped) return window.__mappingOriginalRefresh.apply(this, arguments);
-				window.__mappingPayload = JSON.parse(JSON.stringify(payload));
-				if (success) success({resultSet: [{result: true}]});
+				var signatures = payload && payload.signatures || {};
+				if (signatures.add && signatures.add.length) {
+					window.__pastePayload = JSON.parse(JSON.stringify(payload));
+					if (success) success({
+						resultSet: [{result: true}],
+						results: [{
+							wormhole: {id: "paste-new-wh", initialID: "paste-new-local", secondaryID: "paste-new-other"},
+							signatures: [
+								{id: "paste-new-local", signatureID: "ZZQ851", systemID: viewingSystemID, type: "wormhole"},
+								{id: "paste-new-other", signatureID: null, systemID: null, type: "wormhole"}
+							]
+						}]
+					});
+				} else {
+					window.__mappingPayload = JSON.parse(JSON.stringify(payload));
+					if (success) success({resultSet: [{result: true}]});
+				}
 				if (always) always();
 			};
 
@@ -136,6 +146,9 @@ test.describe("signatures", () => {
 		});
 
 		const mapButton = page.locator("#map-pasted-wormholes");
+		await page.waitForFunction(() => !!window.__pastePayload);
+		const pastePayload = await page.evaluate(() => window.__pastePayload);
+		expect(pastePayload.signatures.add).toHaveLength(1);
 		await expect(mapButton).toBeVisible();
 		await expect(mapButton).toHaveClass(/is-pending/);
 		await expect(page.locator("#dialog-map-pasted-signatures")).toBeHidden();
@@ -143,18 +156,19 @@ test.describe("signatures", () => {
 		const dialog = page.locator(".ui-dialog:visible", { has: page.locator("#dialog-map-pasted-signatures") });
 		await expect(dialog.getByText("ZZQ-851")).toBeVisible();
 		await dialog.locator("select").selectOption("paste-map-wh");
-		await dialog.getByRole("button", { name: "Import", exact: true }).click();
+		await dialog.getByRole("button", { name: "Apply", exact: true }).click();
 		await page.waitForFunction(() => !!window.__mappingPayload);
 		await expect(mapButton).not.toHaveClass(/is-pending/);
 
 		const payload = await page.evaluate(() => window.__mappingPayload);
-		expect(payload.signatures.add).toHaveLength(0);
+		expect(payload.signatures.remove).toEqual([{id: "paste-new-wh", initialID: "paste-new-local", secondaryID: "paste-new-other"}]);
 		expect(payload.signatures.update).toHaveLength(1);
 		expect(payload.signatures.update[0].signatures.find(sig => sig.id === "paste-map-local").signatureID).toBe("ZZQ851");
 
 		await page.evaluate(() => {
 			tripwire.refresh = window.__mappingOriginalRefresh;
 			delete window.__mappingOriginalRefresh;
+			delete window.__pastePayload;
 			delete window.__mappingPayload;
 			delete tripwire.client.wormholes["paste-map-wh"];
 			delete tripwire.client.signatures["paste-map-local"];

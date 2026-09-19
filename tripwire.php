@@ -1113,7 +1113,7 @@ $system = $_REQUEST['system'] ?? '';
 			<span>Existing connection</span>
 		</div>
 		<div class="paste-map-rows"></div>
-		<p class="paste-map-hint">Leave a signature set to “Create a new connection” if it is not one of the connections already on the map.</p>
+		<p class="paste-map-hint">Leave a signature set to “Keep new connection” if it is not one of the connections already on the map.</p>
 	</div>
 
 	<div id="dialog-error" title="Error" class="hidden">

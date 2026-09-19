@@ -141,9 +141,6 @@ tripwire.pasteSignatures = function() {
 	}
 
 	function mapWormhole(payload, undo, pending, candidate) {
-		var addIndex = payload.signatures.add.indexOf(pending.add);
-		if (addIndex !== -1) payload.signatures.add.splice(addIndex, 1);
-
 		var local = $.extend({}, candidate.local, {
 			signatureID: pending.signatureID,
 			type: "wormhole"
@@ -158,10 +155,14 @@ tripwire.pasteSignatures = function() {
 				tripwire.signaturePayload.signatureRecord(local)
 			]
 		});
+		// The paste has already created this connection. Replacing it with the
+		// selected existing connection keeps paste immediate without leaving a
+		// duplicate behind when the optional Map action is used.
+		payload.signatures.remove.push(pending.created.wormhole);
 		undo.push(tripwire.signaturePayload.undoEntryFor(candidate.local.id));
 	}
 
-	function submitPaste(payload, undo) {
+	function submitPaste(payload, undo, successCallback) {
         if (payload.signatures.add.length || payload.signatures.update.length) {
             var success = function(data) {
                 if (data.resultSet && data.resultSet[0].result == true) {
@@ -184,6 +185,7 @@ tripwire.pasteSignatures = function() {
 					}
 
 					sessionStorage.setItem("tripwire_undo", JSON.stringify(tripwire.signatures.undo));
+					if (successCallback) successCallback(data);
                 }
             };
 
@@ -206,8 +208,8 @@ tripwire.pasteSignatures = function() {
 		});
 	}
 
-	function setMappingPending(pending, candidates, payload, undo) {
-		pendingMapping = {pending: pending, candidates: candidates, payload: payload, undo: undo, applied: false};
+	function setMappingPending(pending, candidates, systemID) {
+		pendingMapping = {pending: pending, candidates: candidates, systemID: systemID, applied: false};
 		$("#map-pasted-wormholes")
 			.addClass("is-pending")
 			.attr("data-tooltip", "Map pasted wormholes from the latest scan");
@@ -232,10 +234,10 @@ tripwire.pasteSignatures = function() {
 		var candidates = pendingMapping.candidates;
 		var dialog = $("#dialog-map-pasted-signatures");
 		var rows = dialog.find(".paste-map-rows").empty();
-		var systemID = pendingMapping.payload.systemID;
+		var systemID = pendingMapping.systemID;
 		var systemName = tripwire.systems[systemID] ? tripwire.systems[systemID].name : "this system";
 		dialog.find(".paste-map-intro").text(
-			"The scan contains new wormhole signatures and " + systemName + " already has connections. Map any signatures that belong to those connections."
+			"The wormholes were imported. Map any signatures that belong to existing connections in " + systemName + "."
 		);
 
 		$.each(pending, function(index, item) {
@@ -245,7 +247,7 @@ tripwire.pasteSignatures = function() {
 				"aria-label": "Existing connection for " + formatSignatureID(item.signatureID),
 				"data-pending-index": index
 			});
-			select.append($("<option value=''></option>").text("Create a new connection"));
+			select.append($("<option value=''></option>").text("Keep new connection"));
 			$.each(candidates, function(_, candidate) {
 				var type = candidate.wormhole.type && candidate.wormhole.type !== "???" ? " · " + candidate.wormhole.type : "";
 				var label = formatSignatureID(candidate.local.signatureID) + " → " + displaySystem(candidate.other.systemID) + type;
@@ -262,8 +264,10 @@ tripwire.pasteSignatures = function() {
 				width: 600,
 				buttons: {
 					Cancel: function() { $(this).dialog("close"); },
-					Import: function() {
+					Apply: function() {
 						var state = pendingMapping;
+						var payload = {"signatures": {"add": [], "remove": [], "update": []}, "systemID": state.systemID};
+						var undo = [];
 						state.applied = true;
 						$(this).find("select").each(function() {
 							if (!this.value) return;
@@ -272,10 +276,10 @@ tripwire.pasteSignatures = function() {
 							var candidate = $.grep(state.candidates, function(candidate) {
 								return String(candidate.wormhole.id) === String(selectedWormhole);
 							})[0];
-							if (item && candidate) mapWormhole(state.payload, state.undo, item, candidate);
+							if (item && candidate) mapWormhole(payload, undo, item, candidate);
 						});
 						$(this).dialog("close");
-						submitPaste(state.payload, state.undo);
+						submitPaste(payload, undo);
 					}
 				},
 				close: function() {
@@ -292,6 +296,8 @@ tripwire.pasteSignatures = function() {
 
     this.pasteSignatures.parsePaste = function(paste) {
 		if (processing) return;
+		// The Map action always describes the most recent paste.
+		if (pendingMapping) clearMappingPending();
         var paste = paste.split("\n");
         var payload = {"signatures": {"add": [], "update": []}, "systemID": viewingSystemID};
         var undo = [];
@@ -393,11 +399,19 @@ tripwire.pasteSignatures = function() {
         }
 
 		var candidates = pendingWormholes.length ? mappingCandidates(pastedIDs) : [];
-		if (pendingWormholes.length) {
-			setMappingPending(pendingWormholes, candidates, payload, undo);
-		} else {
-			submitPaste(payload, undo);
-		}
+		var addIndexes = $.map(pendingWormholes, function(item) {
+			return payload.signatures.add.indexOf(item.add);
+		});
+		submitPaste(payload, undo, candidates.length ? function(data) {
+			var mappable = [];
+			$.each(pendingWormholes, function(index, item) {
+				var created = data.results && data.results[addIndexes[index]];
+				if (created && created.wormhole) {
+					mappable.push({signatureID: item.signatureID, created: created});
+				}
+			});
+			if (mappable.length) setMappingPending(mappable, candidates, payload.systemID);
+		} : null);
     }
 
     this.pasteSignatures.init = function() {
