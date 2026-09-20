@@ -234,6 +234,40 @@ test.describe("signatures", () => {
 		});
 	});
 
+	test("a destination signature cached during a jump still renders its missing row", async ({ page }) => {
+		await page.evaluate(() => {
+			const localID = "jump-render-local";
+			const otherID = "jump-render-other";
+			const wormholeID = "jump-render-wh";
+			const local = {
+				id: localID, signatureID: "ZZQ853", systemID: viewingSystemID,
+				type: "wormhole", name: "", life: "stable", lifeLength: 259200,
+				lifeTime: "2026-09-20 00:00:00", lifeLeft: "2026-09-23 00:00:00"
+			};
+			const other = {
+				id: otherID, signatureID: "???", systemID: 31000005,
+				type: "wormhole", name: "", life: "stable", lifeLength: 259200,
+				lifeTime: local.lifeTime, lifeLeft: local.lifeLeft
+			};
+			const wormhole = {
+				id: wormholeID, initialID: localID, secondaryID: otherID,
+				type: "B274", parent: "initial", life: "stable", mass: "stable"
+			};
+
+			// Reproduce the jump race: the cache knows the destination signature,
+			// but its table row was not rendered during the preceding poll.
+			tripwire.signatures.list[localID] = local;
+			$("#sigTable tbody tr[data-id='" + localID + "']").remove();
+			tripwire.parse({
+				signatures: {[localID]: local, [otherID]: other},
+				wormholes: {[wormholeID]: wormhole}
+			}, "change");
+		});
+
+		await expect(page.locator("#sigTable tbody tr[data-id='jump-render-local']")).toBeVisible();
+		await expect(page.locator("#sigTable tbody tr[data-id='jump-render-local'] td:first-child")).toContainText("ZZQ-853");
+	});
+
 	test("undo removes what was just added", async ({ page }) => {
 		await page.click("#add-signature");
 		await page.fill("#dialog-signature input[name=signatureID_Alpha]", "ZZQ");

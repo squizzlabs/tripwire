@@ -4,6 +4,17 @@ tripwire.parse = function(server, mode) {
     var updateSignatureTable = false;
 	const newSigsInSystem = { };
 
+	// A jump can change viewingSystemID while the poll that observed it is
+	// still being parsed. In that race the signature may enter `list` before
+	// addSig can render it (its wormhole partner can arrive in the following
+	// system-change response). The cache therefore cannot prove that a row is
+	// on screen; reconcile against the table as well.
+	function signatureRowExists(signatureID) {
+		return $("#sigTable tbody tr[data-id]").filter(function() {
+			return String($(this).data("id")) === String(signatureID);
+		}).length > 0;
+	}
+
     if (options.chain.active == null || (options.chain.tabs[options.chain.active] && options.chain.tabs[options.chain.active].evescout != true)) {
         if (options.masks.active != "273.0") {
             for (var key in data.signatures) {
@@ -28,7 +39,7 @@ tripwire.parse = function(server, mode) {
             var disabled = data.signatures[key].mask == "273.0" && options.masks.active != "273.0" ? true : false;
 
             // Check for differences
-            if (!tripwire.signatures.list[key]) {
+            if (!tripwire.signatures.list[key] || !signatureRowExists(key)) {
 				tripwire.signatures.list[key] = data.signatures[key];	// To reduce race condition chance
                 this.addSig(data.signatures[key], {animate: true}, disabled);
                 updateSignatureTable = true;
@@ -64,7 +75,7 @@ tripwire.parse = function(server, mode) {
 			newSigsInSystem[key] = data.signatures[key];
             var disabled = data.signatures[key].mask == "273.0" && options.masks.active != "273.0" ? true : false;
 			
-			if(!tripwire.signatures.list[key]) {
+			if(!tripwire.signatures.list[key] || !signatureRowExists(key)) {
 				this.addSig(data.signatures[key], {animate: false}, disabled);
 				updateSignatureTable = true;
 			}
