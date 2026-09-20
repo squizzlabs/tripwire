@@ -176,6 +176,64 @@ test.describe("signatures", () => {
 		});
 	});
 
+	test("selected wormholes can be mapped without a recent paste", async ({ page }) => {
+		await page.evaluate(() => {
+			tripwire.client.signatures = tripwire.client.signatures || {};
+			tripwire.client.wormholes = tripwire.client.wormholes || {};
+			const signatures = {
+				"selected-source-local": {id: "selected-source-local", signatureID: "ZZQ852", systemID: viewingSystemID, type: "wormhole", name: "", lifeLength: 259200},
+				"selected-source-other": {id: "selected-source-other", signatureID: "???", systemID: null, type: "wormhole", name: "", lifeLength: 259200},
+				"selected-target-local": {id: "selected-target-local", signatureID: "???", systemID: viewingSystemID, type: "wormhole", name: "", lifeLength: 259200},
+				"selected-target-other": {id: "selected-target-other", signatureID: "???", systemID: 31000005, type: "wormhole", name: "", lifeLength: 259200}
+			};
+			Object.assign(tripwire.client.signatures, signatures);
+			tripwire.client.wormholes["selected-source-wh"] = {
+				id: "selected-source-wh", initialID: "selected-source-local", secondaryID: "selected-source-other",
+				type: null, parent: "initial", life: "stable", mass: "stable"
+			};
+			tripwire.client.wormholes["selected-target-wh"] = {
+				id: "selected-target-wh", initialID: "selected-target-local", secondaryID: "selected-target-other",
+				type: "B274", parent: "initial", life: "stable", mass: "stable"
+			};
+			$("#sigTable tbody").append(
+				"<tr class='selected' data-id='selected-source-local'><td>ZZQ-852</td></tr>" +
+				"<tr class='selected' data-id='selected-target-local'><td>???-###</td></tr>"
+			);
+
+			window.__selectionOriginalRefresh = tripwire.refresh;
+			window.__selectionUndo = JSON.parse(JSON.stringify(tripwire.signatures.undo));
+			tripwire.refresh = function(mode, payload, success, always) {
+				window.__selectionMappingPayload = JSON.parse(JSON.stringify(payload));
+				if (success) success({resultSet: [{result: true}]});
+				if (always) always();
+			};
+		});
+
+		await page.click("#map-pasted-wormholes");
+		const dialog = page.locator(".ui-dialog:visible", {has: page.locator("#dialog-map-pasted-signatures")});
+		await expect(dialog.getByText("ZZQ-852")).toBeVisible();
+		await expect(dialog.locator("select")).toHaveValue("selected-target-wh");
+		await dialog.getByRole("button", {name: "Apply", exact: true}).click();
+		await page.waitForFunction(() => !!window.__selectionMappingPayload);
+
+		const payload = await page.evaluate(() => window.__selectionMappingPayload);
+		expect(payload.signatures.remove).toEqual([expect.objectContaining({id: "selected-source-wh"})]);
+		expect(payload.signatures.update).toHaveLength(1);
+		expect(payload.signatures.update[0].signatures.find(sig => sig.id === "selected-target-local").signatureID).toBe("ZZQ852");
+
+		await page.evaluate(() => {
+			tripwire.refresh = window.__selectionOriginalRefresh;
+			tripwire.signatures.undo = window.__selectionUndo;
+			sessionStorage.setItem("tripwire_undo", JSON.stringify(tripwire.signatures.undo));
+			$("#sigTable tbody tr[data-id^='selected-']").remove();
+			["selected-source-wh", "selected-target-wh"].forEach(id => delete tripwire.client.wormholes[id]);
+			["selected-source-local", "selected-source-other", "selected-target-local", "selected-target-other"].forEach(id => delete tripwire.client.signatures[id]);
+			delete window.__selectionOriginalRefresh;
+			delete window.__selectionMappingPayload;
+			delete window.__selectionUndo;
+		});
+	});
+
 	test("undo removes what was just added", async ({ page }) => {
 		await page.click("#add-signature");
 		await page.fill("#dialog-signature input[name=signatureID_Alpha]", "ZZQ");

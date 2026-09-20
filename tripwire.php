@@ -183,7 +183,7 @@ $system = $_REQUEST['system'] ?? '';
 						<span class="bar-label">Paste scan</span><kbd>&#8984;V</kbd>
 					</i>
 					<span class="bar-sep"></span>
-					<i id="map-pasted-wormholes" class="bar-btn" role="button" tabindex="0" data-tooltip="Map pasted wormholes" aria-label="Map pasted wormholes">
+					<i id="map-pasted-wormholes" class="bar-btn" role="button" tabindex="0" data-tooltip="Map wormhole connections" aria-label="Map wormhole connections">
 						<svg class="bar-map-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 5-2 8 3 5-2v13l-5 2-8-3-5 2Z"/><path d="M8 4v13M16 7v13"/></svg>
 						<span class="bar-label">Map</span>
 					</i>
@@ -1106,14 +1106,14 @@ $system = $_REQUEST['system'] ?? '';
 			</table>
 	</div>
 
-	<div id="dialog-map-pasted-signatures" title="Map pasted wormholes" class="hidden">
+	<div id="dialog-map-pasted-signatures" title="Map wormhole connections" class="hidden">
 		<p class="paste-map-intro"></p>
 		<div class="paste-map-columns" aria-hidden="true">
 			<span>Pasted signature</span>
 			<span>Existing connection</span>
 		</div>
 		<div class="paste-map-rows"></div>
-		<p class="paste-map-hint">Leave a signature set to “Keep new connection” if it is not one of the connections already on the map.</p>
+		<p class="paste-map-hint"></p>
 	</div>
 
 	<div id="dialog-error" title="Error" class="hidden">

@@ -1021,7 +1021,7 @@ $("#sigTable tbody").on("click", "tr", function(e) {
 
 // Un-Highlight signaturesWidget tr on clicking outside
 $(document).click(function(e) {
-    if(!$(e.target).closest('#sigTable tbody').length && !$(e.target).closest('#edit-signature').length && !$(e.target).closest('#delete-signature').length) {
+    if(!$(e.target).closest('#sigTable tbody').length && !$(e.target).closest('#edit-signature').length && !$(e.target).closest('#delete-signature').length && !$(e.target).closest('#map-pasted-wormholes').length) {
 		$("#sigTable tbody tr.selected").removeClass("selected");
     }
 });
