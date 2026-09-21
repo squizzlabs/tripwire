@@ -96,7 +96,7 @@ function openDeleteDialog(vm, successFunction) {
 				var $delete = $buttons.filter(function() { return $.trim($(this).text()) === "Delete"; });
 				if (!$cancel.find("[data-icon]").length) { $cancel.prepend('<i data-icon="times" aria-hidden="true"></i>'); }
 				if (!$delete.find("[data-icon]").length) { $delete.prepend('<i data-icon="trash" aria-hidden="true"></i>'); }
-				$cancel.focus();
+				$delete.focus();
 			},
 			close: function() {
 				$("#sigTable tr.selected").removeClass("selected");

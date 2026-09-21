@@ -279,6 +279,28 @@ test.describe("signatures", () => {
 		await page.click("#undo");
 		await page.waitForFunction(() => !Object.values((tripwire.client && tripwire.client.signatures) || {}).some(s => /zzq501/i.test(s.signatureID)), null, { timeout: 15000 });
 	});
+
+	test("Delete key then Enter deletes the selected signature", async ({ page }) => {
+		await page.click("#add-signature");
+		await page.fill("#dialog-signature input[name=signatureID_Alpha]", "ZZQ");
+		await page.fill("#dialog-signature input[name=signatureID_Numeric]", "502");
+		await chooseType(page, "Ore");
+		await page.locator(".ui-dialog:visible").getByRole("button", { name: "Add", exact: true }).click();
+
+		const row = page.locator("#sigTable tbody tr", { hasText: "ZZQ-502" });
+		await expect(row).toBeVisible();
+		await row.click();
+		await page.keyboard.press("Delete");
+
+		const dialog = page.locator(".ui-dialog:visible", { has: page.locator("#dialog-deleteSig") });
+		await expect(dialog).toBeVisible();
+		await expect(dialog.getByRole("button", { name: "Delete", exact: true })).toBeFocused();
+		await page.keyboard.press("Enter");
+
+		await expect(dialog).toBeHidden();
+		await expect(row).toHaveCount(0);
+		await page.waitForFunction(() => !Object.values((tripwire.client && tripwire.client.signatures) || {}).some(s => /zzq502/i.test(s.signatureID)), null, { timeout: 15000 });
+	});
 });
 
 test.describe("the traps", () => {
