@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   AUTOMAP_MAX_GAP_MS,
+  CHARACTER_CONCURRENCY,
   LOCATION_INTERVAL_MS,
   ONLINE_INTERVAL_MS,
   trackCharacters,
@@ -59,6 +60,37 @@ test('tracking intervals and transition gap constants match the ESI policy', () 
   assert.equal(ONLINE_INTERVAL_MS, 60_000);
   assert.equal(LOCATION_INTERVAL_MS, 6_000);
   assert.equal(AUTOMAP_MAX_GAP_MS, 20_000);
+  assert.equal(CHARACTER_CONCURRENCY, 4);
+});
+
+test('multiple characters are location-polled concurrently', async () => {
+  const database = databaseFor([
+    row({ characterID: 9001 }),
+    row({ characterID: 9002 }),
+  ]);
+  const pendingLocations = [];
+  const esi = {
+    getLocation: () => new Promise((resolve) => pendingLocations.push(resolve)),
+    getShip: async () => ({}),
+  };
+
+  const tracking = trackCharacters({
+    database,
+    esi,
+    staticData,
+    now: () => new Date('2026-09-16T12:00:00.000Z'),
+    logger: { info() {}, error: assert.fail },
+  });
+
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(pendingLocations.length, 2);
+  for (const resolve of pendingLocations) {
+    resolve({ solar_system_id: 30000142 });
+  }
+
+  const result = await tracking;
+  assert.equal(result.locationChecks, 2);
+  assert.equal(result.errors, 0);
 });
 
 test('online characters are location-polled and a fresh transition is automapped', async () => {

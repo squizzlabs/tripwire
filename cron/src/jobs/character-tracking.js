@@ -2,7 +2,23 @@ export const ACTIVE_WINDOW_MS = 4 * 60 * 60 * 1000;
 export const ONLINE_INTERVAL_MS = 60 * 1000;
 export const LOCATION_INTERVAL_MS = 6 * 1000;
 export const AUTOMAP_MAX_GAP_MS = 20 * 1000;
+export const CHARACTER_CONCURRENCY = 4;
 const TOKEN_REFRESH_WINDOW_MS = 5 * 60 * 1000;
+
+async function forEachConcurrent(items, concurrency, callback) {
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < items.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      await callback(items[index]);
+    }
+  }
+
+  const workerCount = Math.min(concurrency, items.length);
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+}
 
 function mysqlDate(date) {
   return date.toISOString().slice(0, 23).replace('T', ' ');
@@ -174,7 +190,7 @@ export async function trackCharacters({
     errors: 0,
   };
 
-  for (const row of rows) {
+  await forEachConcurrent(rows, CHARACTER_CONCURRENCY, async (row) => {
     try {
       const options = parseOptions(row.options);
       const maskId = selectedMask(row, options);
@@ -205,9 +221,9 @@ export async function trackCharacters({
       // Browser activity owns the tracking lease. ESI's online value remains
       // useful display state, but it must not prevent linked characters from
       // updating while their Tripwire user is active.
-      if (!due(row.locationCheckedAt, LOCATION_INTERVAL_MS, checkNow)) continue;
+      if (!due(row.locationCheckedAt, LOCATION_INTERVAL_MS, checkNow)) return;
       const cutoff = new Date(checkNow.getTime() - LOCATION_INTERVAL_MS);
-      if (!(await claim(database, 'locationCheckedAt', row, cutoff, checkNow))) continue;
+      if (!(await claim(database, 'locationCheckedAt', row, cutoff, checkNow))) return;
 
       token ||= await accessTokenFor(row, { database, esi, now: checkNow });
       const [location, ship] = await Promise.all([
@@ -325,7 +341,7 @@ export async function trackCharacters({
       result.errors += 1;
       logger.error(`[character-tracking] ${row.characterID} failed`, error);
     }
-  }
+  });
 
   return result;
 }
