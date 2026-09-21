@@ -1,34 +1,33 @@
 // Handles pulling TQ status & player count
-tripwire.serverStatus = function() {
-    this.data;
-    this.timer;
-
+tripwire.serverStatus = async function() {
     clearTimeout(tripwire.serverStatus.timer);
 
-    tripwire.esi.eveStatus()
-        .always(function(data) {
-            if (data && data.players && data.players > 0) {
-                if (!tripwire.serverStatus.data || tripwire.serverStatus.data.players !== data.players) {
-                    $('#serverStatus .bar-value').text(Intl.NumberFormat().format(data.players));
+    try {
+        const data = await tripwire.esi.eveStatus();
+        if (data && data.players && data.players > 0) {
+            if (!tripwire.serverStatus.data || tripwire.serverStatus.data.players !== data.players) {
+                $('#serverStatus .bar-value').text(Intl.NumberFormat().format(data.players));
 
-                    // Only pulse when the tab is actually being looked at, and
-                    // clear any backlog first. jQuery animates off
-                    // requestAnimationFrame, which is suspended while the tab is
-                    // hidden, but .effect() still queues -- so a tab left open in
-                    // the background accumulates one 5-pulse effect per player
-                    // count change and plays all of them at once on return.
-                    if (tripwire.serverStatus.data && !document.hidden) {
-                        $("#serverStatus").stop(true, true).effect('pulsate', {times: 5});
-                    }
+                // Only pulse when the tab is actually being looked at, and
+                // clear any backlog first. jQuery animates off
+                // requestAnimationFrame, which is suspended while the tab is
+                // hidden, but .effect() still queues -- so a tab left open in
+                // the background accumulates one 5-pulse effect per player
+                // count change and plays all of them at once on return.
+                if (tripwire.serverStatus.data && !document.hidden) {
+                    $("#serverStatus").stop(true, true).effect('pulsate', {times: 5});
                 }
-
-                tripwire.serverStatus.data = data;
-            } else {
-                $('#serverStatus').addClass("is-down").find('.bar-value').text("offline");
             }
-
-            tripwire.serverStatus.timer = setTimeout(tripwire.serverStatus, 15000);
-        });
+            tripwire.serverStatus.data = data;
+        } else {
+            $('#serverStatus').addClass("is-down").find('.bar-value').text("offline");
+        }
+    } catch (error) {
+        $('#serverStatus').addClass("is-down").find('.bar-value').text("offline");
+        console.warn("EVE server status unavailable:", error);
+    } finally {
+        tripwire.serverStatus.timer = setTimeout(tripwire.serverStatus, 15000);
+    }
 }
 tripwire.serverStatus();
 

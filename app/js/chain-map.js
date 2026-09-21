@@ -686,38 +686,27 @@ var chain = new function() {
 		// Gather latest system activity
 		if (!this.data.activity || new Date() > this.data.activity.expires) {
 			data.activity = {};
-			tripwire.esi.universeJumps()
-				.done(function(results, status, request) {
-					data.activity.expires = new Date(request.getResponseHeader("expires"));
-					$.each(results, function(x) {
-						data.activity[results[x].system_id] = {
-							systemID: results[x].system_id,
-							shipJumps: results[x].ship_jumps
-						}
-					});
-				})
-				.then(function() {
-					 return tripwire.esi.universeKills()
-						.done(function(results) {
-							$.each(results, function(x) {
-								if (data.activity[results[x].system_id]) {
-									data.activity[results[x].system_id].podKills = results[x].pod_kills;
-									data.activity[results[x].system_id].shipKills = results[x].ship_kills;
-									data.activity[results[x].system_id].npcKills = results[x].npc_kills;
-								} else {
-									data.activity[results[x].system_id] = {
-										systemID: results[x].system_id,
-										podKills: results[x].pod_kills,
-										shipKills: results[x].ship_kills,
-										npcKills: results[x].npc_kills,
-									}
-								}
-							});
-						});
-				})
-				.then(function() {
-					chain.data.activity = chain.activity(data.activity);
-				});
+			(async function() {
+				const jumps = await tripwire.esi.universeJumps();
+				data.activity.expires = new Date(jumps.expires);
+				for (const result of jumps.data) {
+					data.activity[result.system_id] = {
+						systemID: result.system_id,
+						shipJumps: result.ship_jumps
+					};
+				}
+				const kills = await tripwire.esi.universeKills();
+				for (const result of kills) {
+					const activity = data.activity[result.system_id] ||
+						(data.activity[result.system_id] = {systemID: result.system_id});
+					activity.podKills = result.pod_kills;
+					activity.shipKills = result.ship_kills;
+					activity.npcKills = result.npc_kills;
+				}
+				chain.data.activity = chain.activity(data.activity);
+			})().catch(function(error) {
+				console.warn("System activity unavailable:", error);
+			});
 		} else if (data.map) {
 			chain.activity(this.data.activity);
 		}

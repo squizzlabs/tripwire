@@ -37,6 +37,7 @@ export class EsiClient {
     this.loginUrl = loginUrl || 'https://login.eveonline.com/v2/oauth/token';
     this.compatibilityDate = compatibilityDate;
     this.fetch = fetchImplementation;
+    this.etagCache = new Map();
   }
 
   getJumps() {
@@ -130,6 +131,8 @@ export class EsiClient {
   }
 
   async request(path, body, accessToken) {
+    const cacheKey = body === undefined ? `${accessToken || ''}\n${path}` : null;
+    const cached = cacheKey === null ? null : this.etagCache.get(cacheKey);
     const response = await this.fetch(`${this.baseUrl}${path}`, {
       method: body === undefined ? 'GET' : 'POST',
       headers: {
@@ -139,16 +142,30 @@ export class EsiClient {
           ? { 'X-Compatibility-Date': this.compatibilityDate }
           : {}),
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        ...(cached?.etag ? { 'If-None-Match': cached.etag } : {}),
         ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: AbortSignal.timeout(this.timeoutMs),
     });
 
+    if (response.status === 304 && cached) return cached.data;
     if (!response.ok) {
       throw new EsiRequestError(response, path);
     }
 
-    return response.json();
+    const data = await response.json();
+    if (cacheKey !== null) {
+      const etag = response.headers?.get?.('etag');
+      if (etag) {
+        this.etagCache.delete(cacheKey);
+        this.etagCache.set(cacheKey, { etag, data });
+        if (this.etagCache.size > 1000) {
+          this.etagCache.delete(this.etagCache.keys().next().value);
+        }
+      }
+      else this.etagCache.delete(cacheKey);
+    }
+    return data;
   }
 }

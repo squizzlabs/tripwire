@@ -10,6 +10,7 @@ class esi {
 	private static $loginUrl = 'https://login.eveonline.com/v2/oauth';
 	private static $jwksUrl = 'https://login.eveonline.com/oauth/jwks';
 	private static $esiUrl = 'https://esi.evetech.net';
+	private static $responseCache = array();
 	public $lastError = null;
 	public $httpCode = null;
 	public $characterID = null;
@@ -19,9 +20,23 @@ class esi {
 	public $tokenExpire = null;
 
 	private function getAPI($url, $headers = array(), $params = false, $method = null) {
+		$cacheKey = (!$params && $method !== 'POST' && strpos($url, self::$esiUrl.'/') === 0)
+			? hash('sha256', $url."\n".implode("\n", $headers)) : null;
+		$cache =& self::$responseCache;
+		if ($cacheKey !== null && session_status() === PHP_SESSION_ACTIVE) {
+			if (!isset($_SESSION['esiResponseCache'])) $_SESSION['esiResponseCache'] = array();
+			$cache =& $_SESSION['esiResponseCache'];
+		}
+		$cached = $cacheKey !== null && isset($cache[$cacheKey]) ? $cache[$cacheKey] : null;
+		if ($cached && isset($cached['etag'])) $headers[] = 'If-None-Match: '.$cached['etag'];
+		$etag = null;
 		$curl = curl_init();
 		curl_setopt($curl, CURLOPT_URL, $url);
 		curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+		curl_setopt($curl, CURLOPT_HEADERFUNCTION, function($curl, $header) use (&$etag) {
+			if (stripos($header, 'ETag:') === 0) $etag = trim(substr($header, 5));
+			return strlen($header);
+		});
 		if ($method === 'POST') {
 			curl_setopt($curl, CURLOPT_POST, true);
 		}
@@ -45,6 +60,25 @@ class esi {
 
 		if ($result === false) {
 			$this->lastError = curl_error($curl);
+		}
+		curl_close($curl);
+
+		if ($this->httpCode === 304) {
+			if ($cached) {
+				$this->httpCode = 200;
+				return $cached['body'];
+			}
+			$this->lastError = 'ESI returned 304 without a cached response';
+			return false;
+		}
+		if ($cacheKey !== null && $this->httpCode >= 200 && $this->httpCode < 300) {
+			if ($etag && $result !== false && strlen($result) <= 262144) {
+				unset($cache[$cacheKey]);
+				$cache[$cacheKey] = array('etag' => $etag, 'body' => $result);
+				if (count($cache) > 50) array_shift($cache);
+			} else {
+				unset($cache[$cacheKey]);
+			}
 		}
 
 		return $result;

@@ -406,7 +406,7 @@ const joinMask = maskID => {
 					}).then(function(response) {
 						if (response && response.results && response.results.length) {
 							return tripwire.esi.fullLookup(response.results)
-								.done(function(results) {
+								.then(function(results) {
 									if (results) {
 										for (var x in results) {
 											var node = makeAccessListNode(results[x], 'edit', '');
@@ -418,6 +418,10 @@ const joinMask = maskID => {
 					}).then(function(response) {
 						$("#dialog-editMask #accessList label.static").show();
 						$("#dialog-editMask #loading").hide();
+					}).fail(function() {
+						$("#dialog-editMask #loading").hide();
+						$("#dialog-error #msg").text("Unable to load access list from ESI");
+						$("#dialog-error").dialog("open");
 					});
 				},
 				close: function() {
@@ -475,7 +479,7 @@ const joinMask = maskID => {
 									total = results.length;
 									results = results.slice(0, 10);
 									return tripwire.esi.fullLookup(results)
-										.done(function(results) {
+										.then(function(results) {
 											$("#EVEsearch #searchCount").html("Found: "+total+"<br/>Showing: "+(total<10?total:10));
 											if (results) {
 												for (var x in results) {
@@ -483,7 +487,11 @@ const joinMask = maskID => {
 													$("#EVESearchResults").append(node);
 												}
 											}
-										}).always(function() {
+						}).catch(function(error) {
+							console.warn("Unable to load ESI search results:", error);
+							$("#dialog-error #msg").text("Unable to load search results from ESI");
+							$("#dialog-error").dialog("open");
+						}).finally(function() {
 											$("#EVEsearch #searchSpinner").hide();
 											$("#EVEsearch input[type='submit']").removeAttr("disabled");
 											$("#dialog-EVEsearch").parent().find(".ui-dialog-buttonpane button:contains('Add')").removeAttr("disabled").removeClass("ui-state-disabled");

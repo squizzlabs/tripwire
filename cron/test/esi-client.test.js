@@ -87,6 +87,42 @@ test('EsiClient authenticates character tracking requests with bearer tokens', a
   assert.equal(calls[0].options.headers['X-Compatibility-Date'], '2026-09-15');
 });
 
+test('EsiClient reuses ETags and returns the cached body on 304', async () => {
+  const calls = [];
+  const esi = new EsiClient(
+    { baseUrl: 'https://esi.example.test', timeoutMs: 1000, userAgent: 'test' },
+    async (url, options) => {
+      calls.push({ url, options });
+      if (calls.length === 1) return {
+        ok: true,
+        status: 200,
+        headers: { get: () => '"version-1"' },
+        json: async () => ({ online: true }),
+      };
+      return { ok: false, status: 304, statusText: 'Not Modified' };
+    },
+  );
+
+  assert.deepEqual(await esi.getOnline(10, 'token-a'), { online: true });
+  assert.deepEqual(await esi.getOnline(10, 'token-a'), { online: true });
+  assert.equal(calls[1].options.headers['If-None-Match'], '"version-1"');
+});
+
+test('EsiClient keeps authenticated ETags separate and rejects an uncached 304', async () => {
+  const calls = [];
+  const esi = new EsiClient(
+    { baseUrl: 'https://esi.example.test', timeoutMs: 1000, userAgent: 'test' },
+    async (url, options) => {
+      calls.push(options);
+      return { ok: false, status: 304, statusText: 'Not Modified' };
+    },
+  );
+
+  await assert.rejects(esi.getOnline(10, 'token-a'), { status: 304 });
+  await assert.rejects(esi.getOnline(10, 'token-b'), { status: 304 });
+  assert.equal(calls[1].headers['If-None-Match'], undefined);
+});
+
 test('refresh errors include the OAuth code without exposing response details', async () => {
   const esi = new EsiClient(
     {

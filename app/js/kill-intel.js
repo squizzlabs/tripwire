@@ -4,6 +4,7 @@ var killIntel = new function() {
 	var lastKey = null;
 	var lastRefresh = 0;
 	var cache = {};
+	var esiResponses = new Map();
 	var maxAge = 5 * 60 * 1000;
 	var base = "https://zkillboard.com";
 
@@ -33,9 +34,23 @@ var killIntel = new function() {
 	}
 
 	async function json(url) {
-		var response = await fetch(url, {headers: {Accept: "application/json"}});
+		var isEsi = url.startsWith("https://esi.evetech.net/");
+		var cached = isEsi && esiResponses.get(url);
+		var headers = {Accept: "application/json"};
+		if (cached) headers["If-None-Match"] = cached.etag;
+		var response = await fetch(url, {headers: headers});
+		if (response.status === 304 && cached) return cached.data;
 		if (!response.ok) throw new Error("Killmail request failed: " + response.status);
-		return response.json();
+		var data = await response.json();
+		if (isEsi) {
+			var etag = response.headers.get("etag");
+			esiResponses.delete(url);
+			if (etag) {
+				esiResponses.set(url, {etag: etag, data: data});
+				if (esiResponses.size > 100) esiResponses.delete(esiResponses.keys().next().value);
+			}
+		}
+		return data;
 	}
 
 	async function identity(characterID) {
