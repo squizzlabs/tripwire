@@ -1,3 +1,6 @@
+import { EsiSsoError } from '../esi-client.js';
+import { removeInvalidCharacter } from './remove-invalid-character.js';
+
 export const ACTIVE_WINDOW_MS = 4 * 60 * 60 * 1000;
 export const ONLINE_INTERVAL_MS = 60 * 1000;
 export const LOCATION_INTERVAL_MS = 6 * 1000;
@@ -339,7 +342,17 @@ export async function trackCharacters({
       );
     } catch (error) {
       result.errors += 1;
-      logger.error(`[character-tracking] ${row.characterID} failed`, error);
+      if (error instanceof EsiSsoError && error.code === 'invalid_grant') {
+        try {
+          if (await removeInvalidCharacter(database, row)) {
+            logger.info?.(`[character-tracking] removed invalid character ${JSON.stringify(characterDetails(row))}`);
+          }
+        } catch (cleanupError) {
+          logger.error(`[character-tracking] ${row.characterID} cleanup failed`, cleanupError);
+        }
+      } else {
+        logger.error(`[character-tracking] ${row.characterID} failed`, error);
+      }
     }
   });
 

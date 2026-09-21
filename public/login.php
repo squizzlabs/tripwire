@@ -206,6 +206,35 @@ if ($mode == 'login') {
 			$stmt->bindValue(':characterID', $esi->characterID);
 			$stmt->execute();
 
+			// An invalid linked grant can remove the account's last character.
+			// Let the same EVE character reclaim its existing Tripwire account
+			// through a fresh SSO login, without deleting the account's data.
+			if (!$stmt->fetchColumn()) {
+				$orphan = $mysql->prepare(
+					'SELECT id FROM accounts WHERE username = :username '
+					. 'AND NOT EXISTS (SELECT 1 FROM characters WHERE userID = accounts.id)'
+				);
+				$orphan->bindValue(':username', $esi->characterName);
+				$orphan->execute();
+				$orphanID = $orphan->fetchColumn();
+				if ($orphanID && ($affiliation = $esi->getAffilitation($esi->characterID))
+					&& isset($affiliation[$esi->characterID])
+					&& ($corporation = $esi->getCorporation($affiliation[$esi->characterID]->corporation_id))) {
+					$restore = $mysql->prepare(
+						'INSERT INTO characters (userID, characterID, characterName, corporationID, corporationName) '
+						. 'VALUES (:userID, :characterID, :characterName, :corporationID, :corporationName)'
+					);
+					$restore->bindValue(':userID', $orphanID, PDO::PARAM_INT);
+					$restore->bindValue(':characterID', $esi->characterID, PDO::PARAM_INT);
+					$restore->bindValue(':characterName', $esi->characterName);
+					$restore->bindValue(':corporationID', $affiliation[$esi->characterID]->corporation_id, PDO::PARAM_INT);
+					$restore->bindValue(':corporationName', $corporation->name);
+					$restore->execute();
+				}
+			}
+
+			$stmt->execute();
+
 			if ($account = $stmt->fetchObject()) {
 				if($error = doLogin($output, $account, $esi, $mysql, $ip, $username, $method)) {
 					header('Location: ./?error=login-unknown#login#sso');

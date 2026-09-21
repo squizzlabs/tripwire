@@ -9,6 +9,7 @@ import {
   trackCharacters,
 } from '../src/jobs/character-tracking.js';
 import { jobs } from '../src/jobs.js';
+import { EsiSsoError } from '../src/esi-client.js';
 
 function row(overrides = {}) {
   return {
@@ -287,4 +288,44 @@ test('per-character failures are visible in the job summary', async () => {
 
   assert.equal(result.errors, 1);
   assert.equal(logged.length, 1);
+});
+
+test('invalid grants remove the affected character and stop repeated refreshes', async () => {
+  const database = databaseFor([row({
+    tokenExpire: '2026-09-16T11:00:00.000Z',
+    onlineCheckedAt: '2026-09-16T11:58:00.000Z',
+  })]);
+  const statements = [];
+  database.getConnection = async () => ({
+    beginTransaction: async () => {},
+    commit: async () => {},
+    rollback: async () => {},
+    release: () => {},
+    query: async (sql) => {
+      if (sql.includes('SELECT refreshToken')) return [[{ refreshToken: 'refresh' }]];
+      if (sql.includes('information_schema.COLUMNS')) return [[
+        { tableName: 'esi', hasUserID: 1 },
+        { tableName: 'characters', hasUserID: 1 },
+      ]];
+      if (sql.includes('SELECT characterID FROM characters')) return [[]];
+      throw new Error(`Unexpected query ${sql}`);
+    },
+    execute: async (sql) => { statements.push(sql); return [{ affectedRows: 1 }]; },
+  });
+  const messages = [];
+  const result = await trackCharacters({
+    database,
+    staticData,
+    esi: {
+      refreshAccessToken: async () => {
+        throw new EsiSsoError({ status: 400, statusText: 'Bad Request' }, 'invalid_grant');
+      },
+    },
+    now: () => new Date('2026-09-16T12:00:00.000Z'),
+    logger: { info: (message) => messages.push(message), error: assert.fail },
+  });
+
+  assert.equal(result.errors, 1);
+  assert.equal(statements.some((sql) => sql.includes('DELETE FROM `esi`')), true);
+  assert.match(messages[0], /removed invalid character/);
 });

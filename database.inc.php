@@ -58,3 +58,24 @@ try {
     http_response_code(503);
     exit('Database unavailable');
 }
+
+// Cron removes a login character when EVE rejects its authorization. PHP
+// sessions live outside MySQL, so reject an existing session as soon as its
+// next authenticated request finds no remaining login character.
+if (session_status() === PHP_SESSION_ACTIVE && isset($_SESSION['userID'])) {
+    $characterCheck = $mysql->prepare(
+        'SELECT 1 FROM characters WHERE userID = :userID LIMIT 1'
+    );
+    $characterCheck->bindValue(':userID', $_SESSION['userID'], PDO::PARAM_INT);
+    $characterCheck->execute();
+    if (!$characterCheck->fetchColumn()) {
+        setcookie('username', '', time() - 3600, '/');
+        setcookie('password', '', time() - 3600, '/');
+        setcookie('tripwire', '', time() - 3600, '/');
+        $_SESSION = array();
+        session_regenerate_id(true);
+        session_destroy();
+        http_response_code(403);
+        exit();
+    }
+}

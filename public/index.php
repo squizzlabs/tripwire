@@ -15,6 +15,10 @@ session_start();
 if (!isset($_SESSION['username']) && isset($_COOKIE['tripwire']))
 	include('login.php');
 
+if (isset($_SESSION['userID'])) {
+	require_once('../database.inc.php');
+}
+
 if (isset($_GET['system']) && isset($_SESSION['userID'])) {
 	require('../tripwire.php');
 } else {
