@@ -21,13 +21,13 @@
   "accent": { "dark": "#4f8fe0", "on-dark": "#0e1420", "light": "#2f6fc4", "on-light": "#ffffff" },
   "components": {
     "type-label": {
-      "height": "14px",
+      "height": "15px",
       "padding-inline": "5px",
       "radius": "999px",
       "font-family": "var(--font-ui)",
-      "font-size": "9px",
+      "font-size": "10px",
       "font-weight": "700",
-      "letter-spacing": ".04em",
+      "letter-spacing": ".01em",
       "border-width": "0px",
       "border-color": "transparent",
       "shadow": "none",

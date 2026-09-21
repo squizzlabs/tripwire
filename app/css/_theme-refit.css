@@ -1343,6 +1343,20 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
    not centre on its own), with a round minimum so "1" and "12" both sit true. */
 #chainMap div.node > .nodeIcons .badge { justify-content: center; min-width: 14px; padding: 0 4px; box-sizing: border-box; text-align: center; }
 
+/* Keep the original floating-pill composition, but give the slightly larger
+   labels enough room to clear the signature line and the following row. */
+#chainMap div.node,
+#chainMap div.redNode.node, #chainMap div.yellowNode.node, #chainMap div.greenNode.node {
+	margin-top: 9px;
+	margin-bottom: 12px;
+}
+#chainMap div.node > .nodeClass { top: -7px; }
+#chainMap div.node > .statics {
+	position: absolute;
+	grid-row: auto;
+	margin-top: -4px;
+}
+
 /* Activity pips straddle the node edge, so the current-system highlight can
    otherwise swallow them. Draw real circles instead of tiny text bullets and
    cut a canvas-coloured halo through the border around each one. */
@@ -1442,7 +1456,7 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 	box-sizing: border-box;
 	width: auto;
 	min-width: var(--type-label-min-width, 18px);
-	height: var(--type-label-height, 14px);
+	height: var(--type-label-height, 15px);
 	margin: 0;
 	padding: 0 var(--type-label-padding-inline, 5px);
 	border: var(--type-label-border-width, 0) solid var(--type-label-border-color, transparent);
@@ -1452,9 +1466,9 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 	color: var(--type-label-foreground, #101010);
 	-webkit-text-fill-color: var(--type-label-foreground, #101010);
 	font-family: var(--type-label-font-family, var(--font-ui));
-	font-size: var(--type-label-font-size, 9px);
+	font-size: var(--type-label-font-size, 10px);
 	font-weight: var(--type-label-font-weight, 700);
-	letter-spacing: var(--type-label-letter-spacing, .04em);
+	letter-spacing: var(--type-label-letter-spacing, .01em);
 	line-height: 1;
 	text-transform: none;
 }
