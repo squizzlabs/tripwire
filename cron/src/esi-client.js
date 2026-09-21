@@ -7,6 +7,15 @@ export class EsiRequestError extends Error {
   }
 }
 
+export class EsiSsoError extends Error {
+  constructor(response, code) {
+    super(`EVE SSO ${response.status} ${response.statusText} while refreshing token${code ? ` (${code})` : ''}`);
+    this.name = 'EsiSsoError';
+    this.status = response.status;
+    this.code = code;
+  }
+}
+
 export class EsiClient {
   constructor(
     {
@@ -100,7 +109,18 @@ export class EsiClient {
     });
 
     if (!response.ok) {
-      throw new Error(`EVE SSO ${response.status} ${response.statusText} while refreshing token`);
+      // Only log the OAuth error code. Descriptions and raw response bodies can
+      // contain sensitive details supplied by the remote service.
+      let code;
+      try {
+        const body = await response.json();
+        if (typeof body?.error === 'string' && /^[a-z][a-z0-9_]{0,63}$/i.test(body.error)) {
+          code = body.error;
+        }
+      } catch {
+        // Preserve the HTTP status when SSO returns an empty or invalid body.
+      }
+      throw new EsiSsoError(response, code);
     }
     return response.json();
   }

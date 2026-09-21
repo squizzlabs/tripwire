@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { EsiClient } from '../src/esi-client.js';
+import { EsiClient, EsiSsoError } from '../src/esi-client.js';
 
 test('EsiClient uses the expected ESI routes and request bodies', async () => {
   const calls = [];
@@ -85,4 +85,56 @@ test('EsiClient authenticates character tracking requests with bearer tokens', a
   ]);
   assert.equal(calls[0].options.headers.Authorization, 'Bearer secret-token');
   assert.equal(calls[0].options.headers['X-Compatibility-Date'], '2026-09-15');
+});
+
+test('refresh errors include the OAuth code without exposing response details', async () => {
+  const esi = new EsiClient(
+    {
+      baseUrl: 'https://esi.example.test',
+      timeoutMs: 1000,
+      userAgent: 'Tripwire test',
+      clientId: 'client',
+      clientSecret: 'secret',
+    },
+    async () => ({
+      ok: false,
+      status: 400,
+      statusText: 'Bad Request',
+      json: async () => ({ error: 'invalid_grant', error_description: 'sensitive detail' }),
+    }),
+  );
+
+  await assert.rejects(esi.refreshAccessToken('refresh-secret'), (error) => {
+    assert.ok(error instanceof EsiSsoError);
+    assert.equal(error.status, 400);
+    assert.equal(error.code, 'invalid_grant');
+    assert.match(error.message, /EVE SSO 400 Bad Request while refreshing token \(invalid_grant\)/);
+    assert.doesNotMatch(error.message, /sensitive|refresh-secret|secret/);
+    return true;
+  });
+});
+
+test('refresh errors preserve the status when SSO sends an invalid body', async () => {
+  const esi = new EsiClient(
+    {
+      baseUrl: 'https://esi.example.test',
+      timeoutMs: 1000,
+      userAgent: 'Tripwire test',
+      clientId: 'client',
+      clientSecret: 'secret',
+    },
+    async () => ({
+      ok: false,
+      status: 400,
+      statusText: 'Bad Request',
+      json: async () => { throw new SyntaxError('Invalid JSON'); },
+    }),
+  );
+
+  await assert.rejects(esi.refreshAccessToken('refresh-secret'), (error) => {
+    assert.ok(error instanceof EsiSsoError);
+    assert.equal(error.status, 400);
+    assert.equal(error.code, undefined);
+    return true;
+  });
 });
