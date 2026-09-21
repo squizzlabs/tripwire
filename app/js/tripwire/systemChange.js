@@ -2,6 +2,9 @@
 tripwire.systemChange = function(systemID, mode) {
 	const system = systemAnalysis.analyse(systemID);
 	if(!system || !system.name) { return; }
+	// Hourly ESI activity is unavailable for wormhole systems.
+	$("#infoWidget").toggleClass("is-wormhole", !!system.class);
+	if (window.placeSystemLinks) placeSystemLinks();
 		
     if (mode != "init") {
         $("#infoSecurity").removeClass();
@@ -12,6 +15,7 @@ tripwire.systemChange = function(systemID, mode) {
 
         // Reset activity
         activity.refresh(true);
+        killIntel.refresh(systemID);
 
         // Reset signatures
         $("#sigTable span[data-age]").countdown("destroy");

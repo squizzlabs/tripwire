@@ -16,6 +16,13 @@ var activity = new function() {
 	this.getData = function(span, cache) {
 		var span = typeof(span) !== "undefined" ? span : this.span;
 		var cache = typeof(cache) !== "undefined" ? cache : true;
+		var systemID = viewingSystemID;
+		// ESI's hourly system activity feed does not cover wormhole space.
+		if (systemAnalysis.analyse(systemID).class) {
+			if (activity.graph) activity.graph.clearChart();
+			activity.view = null;
+			return false;
+		}
 
 		// Google hasn't finished loading yet
 		if (!activity.graph) {
@@ -25,11 +32,12 @@ var activity = new function() {
 
 		return $.ajax({
 			url: "activity_graph.php",
-			data: {systemID: viewingSystemID, time: span},
+			data: {systemID: systemID, time: span},
 			type: "GET",
 			dataType: "JSON",
 			cache: cache
 		}).done(function(json) {
+			if (systemID != viewingSystemID || systemAnalysis.analyse(viewingSystemID).class) return;
 			if (json) {
 				json.rows.reverse();
 				activity.view = new google.visualization.DataView(new google.visualization.DataTable(json));

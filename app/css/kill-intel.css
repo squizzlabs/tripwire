@@ -1,0 +1,19 @@
+#infoWidget #killIntel { margin-top: auto; border-top: 1px solid var(--border); padding-top: 6px; }
+.kill-intel-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; color: var(--foreground); font-size: var(--fs-xs); }
+.kill-intel-heading #infoLinks { flex-wrap: wrap; gap: 5px 10px; margin: 0; padding: 0; border: 0; }
+.kill-intel-counts { display: inline-flex; flex-wrap: wrap; gap: 5px 12px; margin-left: auto; font-family: var(--font-mono); color: var(--muted-foreground); }
+.kill-intel-counts a { display: inline-flex; align-items: center; gap: 4px; color: inherit; text-decoration: none; }
+.kill-intel-counts img { display: block; width: 18px; height: 18px; object-fit: contain; }
+.kill-intel-counts img[hidden] { display: none; }
+#killImageMe { border-radius: 50%; }
+.kill-intel-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.kill-intel-counts a[href]:hover { color: var(--primary); text-decoration: underline; }
+.kill-intel-counts a:not([href]) { cursor: default; }
+.kill-intel-counts b { color: var(--foreground); font-weight: 700; font-variant-numeric: tabular-nums; }
+.kill-intel-body { padding: 8px 0 2px; }
+.kill-streambox-wrap { position: relative; }
+#killStreambox { display: block; box-sizing: border-box; width: 100%; height: 125px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); }
+.kill-streambox-window { position: absolute; right: 6px; bottom: 3px; padding: 2px 4px; border-radius: 3px; background: color-mix(in srgb, var(--card) 88%, transparent); color: var(--muted-foreground); font-family: var(--font-mono); font-size: 9px; line-height: 1; pointer-events: none; }
+#infoWidget.is-wormhole #activityGraph,
+#infoWidget.is-wormhole #activityGraphControls,
+#infoWidget.is-wormhole #sys-range { display: none; }

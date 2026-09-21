@@ -167,6 +167,12 @@ $system = $_REQUEST['system'] ?? '';
 					<div id="infoExtra" class="sys-extra"></div>
 					<div id="activityGraph"></div>
 					<div id="activityGraphControls" class="sys-range"><a href="javascript: activity.time(168);">Week</a><a href="javascript: activity.time(48);">48h</a><a href="javascript: activity.time(24);">24h</a></div>
+					<div id="killIntel" class="kill-intel">
+						<div class="kill-intel-heading"><span class="kill-intel-counts" aria-live="polite"><a id="killLinkMe" title="Pilot killmails" target="_blank" rel="noopener noreferrer"><span class="kill-intel-sr">Pilot killmails: </span><img id="killImageMe" alt="" hidden><b id="killCountMe">—</b></a><a id="killLinkCorp" title="Corporation killmails" target="_blank" rel="noopener noreferrer"><span class="kill-intel-sr">Corporation killmails: </span><img id="killImageCorp" alt="" hidden><b id="killCountCorp">—</b></a><a id="killLinkAlliance" title="Alliance killmails" target="_blank" rel="noopener noreferrer"><span class="kill-intel-sr">Alliance killmails: </span><img id="killImageAlliance" alt="" hidden><b id="killCountAlliance">—</b></a></span></div>
+						<div class="kill-intel-body">
+							<div class="kill-streambox-wrap"><iframe id="killStreambox" title="Recent killmails in the viewed system" loading="lazy" referrerpolicy="no-referrer" scrolling="no"></iframe><span class="kill-streambox-window">Past 8 hours</span></div>
+						</div>
+					</div>
 					<div id="infoLinks" class="sys-links">
 						<a class="infoLink infoLink-anoikis" data-href="https://anoik.is/systems/$systemName" href="" target="_blank" rel="noopener noreferrer"><img src="https://anoik.is/static/favicon.png" alt="" width="16" height="16"><span>Anoikis</span></a>
 						<a class="infoLink infoLink-dotlan" data-href="https://evemaps.dotlan.net/search?q=$systemName" href="" target="_blank" rel="noopener noreferrer"><img src="https://evemaps.dotlan.net/favicon.ico" alt="" width="16" height="16"><span>DOTLAN</span></a>
@@ -1175,6 +1181,8 @@ $system = $_REQUEST['system'] ?? '';
 		$init_fields = [
 			'characterID' => $_SESSION['characterID'],
 			'characterName' => $_SESSION['characterName'],
+			'corporationID' => $_SESSION['corporationID'],
+			'allianceID' => $_SESSION['allianceID'] ?? null,
 			'options' => $_SESSION['options'],
 			'csrfToken' => $_SESSION['csrfToken']
 		];

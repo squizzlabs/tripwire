@@ -79,4 +79,6 @@ tripwire.EVE = function(EVE, characterChange) {
         shipDate: EVE.shipDate,
         systemChange: systemChange
     } : null;
+	// The selected pilot can change without changing the viewed system.
+	if (window.killIntel) killIntel.refresh(viewingSystemID);
 }
