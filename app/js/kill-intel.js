@@ -42,7 +42,7 @@ var killIntel = new function() {
 		if (characterID === validID(init.characterID)) {
 			return {corporation_id: validID(init.corporationID), alliance_id: validID(init.allianceID)};
 		}
-		return json("https://esi.evetech.net/latest/characters/" + characterID + "/");
+		return json("https://esi.evetech.net/characters/" + characterID + "/");
 	}
 
 	async function count(systemID, scope, id) {

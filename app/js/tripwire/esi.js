@@ -98,7 +98,7 @@ tripwire.esi = function() {
     this.esi.characterLookup = function(eveID, reference, async) {
         var async = typeof(async) !== 'undefined' ? async : true;
         const xhr = $.ajax({
-            url: baseUrl + "/latest/characters/" + eveID + "/?" + $.param({"user_agent": userAgent}),
+            url: baseUrl + "/characters/" + eveID + "/?" + $.param({"user_agent": userAgent}),
             type: "GET",
             dataType: "JSON",
             async: async,

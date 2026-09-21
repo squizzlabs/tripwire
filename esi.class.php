@@ -170,7 +170,7 @@ class esi {
 			'strict' => $strict ? 'true' : 'false'
 		));
 		return $this->getAPI(
-			self::$esiUrl.'/latest/characters/'.intval($characterID).'/search/?'.$query,
+			self::$esiUrl.'/characters/'.intval($characterID).'/search/?'.$query,
 			$this->authenticatedHeaders($accessToken)
 		);
 	}
@@ -182,7 +182,7 @@ class esi {
 			'add_to_beginning' => $beginning ? 'true' : 'false'
 		));
 		return $this->getAPI(
-			self::$esiUrl.'/latest/ui/autopilot/waypoint/?'.$query,
+			self::$esiUrl.'/ui/autopilot/waypoint/?'.$query,
 			$this->authenticatedHeaders($accessToken),
 			false,
 			'POST'
@@ -192,7 +192,7 @@ class esi {
 	public function showInfo($accessToken, $targetID) {
 		$query = http_build_query(array('target_id' => intval($targetID)));
 		return $this->getAPI(
-			self::$esiUrl.'/latest/ui/openwindow/information/?'.$query,
+			self::$esiUrl.'/ui/openwindow/information/?'.$query,
 			$this->authenticatedHeaders($accessToken),
 			false,
 			'POST'
@@ -208,7 +208,7 @@ class esi {
 	}
 
 	public function getCharacter($characterID) {
-		$result = $this->getAPI(self::$esiUrl.'/latest/characters/'.$characterID.'/');
+		$result = $this->getAPI(self::$esiUrl.'/characters/'.$characterID.'/');
 
 		if ($result === false || !json_decode($result) || !isset(json_decode($result)->name)) {
 			return false;

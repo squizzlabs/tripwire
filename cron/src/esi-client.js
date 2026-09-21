@@ -56,34 +56,34 @@ export class EsiClient {
   }
 
   getCharacter(characterId) {
-    return this.request(`/latest/characters/${characterId}/`);
+    return this.request(`/characters/${characterId}/`);
   }
 
   getCorporation(corporationId) {
-    return this.request(`/latest/corporations/${corporationId}/`);
+    return this.request(`/corporations/${corporationId}/`);
   }
 
   getAlliance(allianceId) {
-    return this.request(`/latest/alliances/${allianceId}/`);
+    return this.request(`/alliances/${allianceId}/`);
   }
 
   getOnline(characterId, accessToken) {
     return this.authenticatedRequest(
-      `/latest/characters/${characterId}/online/`,
+      `/characters/${characterId}/online/`,
       accessToken,
     );
   }
 
   getLocation(characterId, accessToken) {
     return this.authenticatedRequest(
-      `/latest/characters/${characterId}/location/`,
+      `/characters/${characterId}/location/`,
       accessToken,
     );
   }
 
   getShip(characterId, accessToken) {
     return this.authenticatedRequest(
-      `/latest/characters/${characterId}/ship/`,
+      `/characters/${characterId}/ship/`,
       accessToken,
     );
   }

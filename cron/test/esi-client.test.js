@@ -33,9 +33,9 @@ test('EsiClient uses the expected ESI routes and request bodies', async () => {
       'https://esi.example.test/v2/universe/system_kills/',
       'https://esi.example.test/v2/characters/affiliation/',
       'https://esi.example.test/v3/universe/names',
-      'https://esi.example.test/latest/characters/10/',
-      'https://esi.example.test/latest/corporations/100/',
-      'https://esi.example.test/latest/alliances/1000/',
+      'https://esi.example.test/characters/10/',
+      'https://esi.example.test/corporations/100/',
+      'https://esi.example.test/alliances/1000/',
     ],
   );
   assert.equal(calls[0].options.method, 'GET');
@@ -79,9 +79,9 @@ test('EsiClient authenticates character tracking requests with bearer tokens', a
   await esi.getShip(9001, 'secret-token');
 
   assert.deepEqual(calls.map(({ url }) => url), [
-    'https://esi.example.test/latest/characters/9001/online/',
-    'https://esi.example.test/latest/characters/9001/location/',
-    'https://esi.example.test/latest/characters/9001/ship/',
+    'https://esi.example.test/characters/9001/online/',
+    'https://esi.example.test/characters/9001/location/',
+    'https://esi.example.test/characters/9001/ship/',
   ]);
   assert.equal(calls[0].options.headers.Authorization, 'Bearer secret-token');
   assert.equal(calls[0].options.headers['X-Compatibility-Date'], '2026-09-15');
