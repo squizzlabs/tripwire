@@ -67968,6 +67968,27 @@ var appData = {
             "mass": 1000000000,
             "jump": 375000000
         },
+        "I078": {
+            "life": "12 Hours",
+            "from": "Triglavian",
+            "leadsTo": "Triglavian",
+            "mass": 750000000,
+            "jump": 62000000
+        },
+        "L687": {
+            "life": "12 Hours",
+            "from": "Triglavian",
+            "leadsTo": "Triglavian",
+            "mass": 750000000,
+            "jump": 62000000
+        },
+        "O546": {
+            "life": "12 Hours",
+            "from": "Triglavian",
+            "leadsTo": "Triglavian",
+            "mass": 750000000,
+            "jump": 62000000
+        },
         "J377": {
             "life": "24 Hours",
             "from": [
