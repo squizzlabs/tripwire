@@ -8,6 +8,21 @@ export const AUTOMAP_MAX_GAP_MS = 20 * 1000;
 export const CHARACTER_CONCURRENCY = 4;
 const TOKEN_REFRESH_WINDOW_MS = 5 * 60 * 1000;
 
+async function removeInactiveTracking(database) {
+  try {
+    await database.execute(
+      `DELETE t FROM tracking t
+        INNER JOIN esi e ON e.userID = t.userID AND e.characterID = t.characterID
+        WHERE e.lastActive IS NULL
+           OR e.lastActive < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 4 HOUR)`,
+    );
+  } catch (error) {
+    // Cleanup runs every second. A deadlock rolls back this statement, so the
+    // next sweep can try again without blocking active character updates.
+    if (error.code !== 'ER_LOCK_DEADLOCK') throw error;
+  }
+}
+
 async function forEachConcurrent(items, concurrency, callback) {
   let nextIndex = 0;
 
@@ -161,12 +176,7 @@ export async function trackCharacters({
 }) {
   if (!staticData) throw new Error('Static application data is required');
 
-  await database.execute(
-    `DELETE t FROM tracking t
-      INNER JOIN esi e ON e.userID = t.userID AND e.characterID = t.characterID
-      WHERE e.lastActive IS NULL
-         OR e.lastActive < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 4 HOUR)`,
-  );
+  await removeInactiveTracking(database);
   const [rows] = await database.query(
     `SELECT e.userID, e.characterID, e.characterName, e.accessToken,
             e.refreshToken, e.tokenExpire, e.online, e.onlineCheckedAt,

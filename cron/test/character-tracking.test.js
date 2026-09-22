@@ -64,6 +64,48 @@ test('tracking intervals and transition gap constants match the ESI policy', () 
   assert.equal(CHARACTER_CONCURRENCY, 4);
 });
 
+test('inactive tracking cleanup defers a deadlock and continues the sweep', async () => {
+  const database = databaseFor([row()]);
+  const execute = database.execute;
+  let attempts = 0;
+  database.execute = async (sql, values) => {
+    if (sql.includes('DELETE t FROM tracking')) {
+      attempts += 1;
+      throw Object.assign(new Error('Deadlock'), { code: 'ER_LOCK_DEADLOCK' });
+    }
+    return execute(sql, values);
+  };
+
+  const result = await trackCharacters({
+    database,
+    staticData,
+    esi: {
+      getLocation: async () => ({ solar_system_id: 30000142 }),
+      getShip: async () => ({}),
+    },
+    now: () => new Date('2026-09-16T12:00:00.000Z'),
+    logger: { error: assert.fail },
+  });
+
+  assert.equal(attempts, 1);
+  assert.equal(result.eligible, 1);
+  assert.equal(result.locationChecks, 1);
+  assert.equal(result.errors, 0);
+});
+
+test('inactive tracking cleanup does not retry unrelated database errors', async () => {
+  const database = databaseFor([]);
+  let attempts = 0;
+  const failure = Object.assign(new Error('Connection lost'), { code: 'PROTOCOL_CONNECTION_LOST' });
+  database.execute = async () => {
+    attempts += 1;
+    throw failure;
+  };
+
+  await assert.rejects(trackCharacters({ database, staticData, esi: {} }), failure);
+  assert.equal(attempts, 1);
+});
+
 test('multiple characters are location-polled concurrently', async () => {
   const database = databaseFor([
     row({ characterID: 9001 }),
