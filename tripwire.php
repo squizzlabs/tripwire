@@ -474,6 +474,8 @@ $system = $_REQUEST['system'] ?? '';
 						<label for="wormholeLife4H" class="critical">&lt;4h</label>
 						<input type="radio" class="mini-selector" name="wormholeLife" id="wormholeLife1H" value="critical1"/>
 						<label for="wormholeLife1H" class="critical">&lt;1h</label>
+						<input type="radio" class="mini-selector" name="wormholeLife" id="wormholeLifeExpiring" value="expiring"/>
+						<label for="wormholeLifeExpiring" class="critical">Expring</label>
 					</div>
 					<div class="row">
 						<span class="label">Mass:</span>

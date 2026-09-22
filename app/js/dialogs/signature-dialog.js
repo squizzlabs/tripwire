@@ -238,7 +238,7 @@ sigDialog.openSignatureDialog = function(e) {
 				$("#form-signature").submit(function(e) {
 					e.preventDefault();
 					var form = $(this).serializeObject();
-					var lifePresets = {critical4: 4, critical1: 1};
+					var lifePresets = {critical4: 4, critical1: 1, expiring: 1};
 					var valid = true;
 					ValidationTooltips.close();
 

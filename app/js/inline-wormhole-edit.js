@@ -17,7 +17,8 @@
 		5: {key: "life", options: [
 			{value: "stable",    label: "Stable", life: "stable"},
 			{value: "critical4", label: "<4h",    life: "critical", lifeHours: 4, className: "critical"},
-			{value: "critical1", label: "<1h",    life: "critical", lifeHours: 1, className: "critical"}
+			{value: "critical1", label: "<1h",    life: "critical", lifeHours: 1, className: "critical"},
+			{value: "expiring",  label: "Expring", life: "critical", lifeHours: 1, className: "critical"}
 		]},
 		6: {key: "mass", options: [
 			{value: "stable",   label: "Stable"},
