@@ -102,6 +102,10 @@ body .class-15, body .class-16, body .class-17 {	/* Drifter */
 	color: var(--data-loot-red);
 }
 
+body .drifter {
+	color: var(--data-loot-red);
+}
+
 body .hisec, body .stable, body .frig {
 	color: var(--data-good);
 }

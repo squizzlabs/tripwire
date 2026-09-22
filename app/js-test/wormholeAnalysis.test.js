@@ -11,9 +11,11 @@ include('app/js/helpers');
 
 describe('Wormhole analysis', () => {
 	const lowsec = appData.genericSystemTypes.indexOf('Low-Sec');
+	const drifter = appData.genericSystemTypes.indexOf('Drifter');
 	describe('Target system ID', () => {
 		it('Specific system', () => { assert.equal(wormholeAnalysis.targetSystemID('J123405', undefined), 31001031); });
 		it('System type in text', () => { assert.equal(wormholeAnalysis.targetSystemID('Low-Sec', undefined), lowsec); });
+		it('Drifter system type in text', () => { assert.equal(wormholeAnalysis.targetSystemID('Drifter', undefined), drifter); });
 		it('System type from wormhole type', () => { assert.equal(wormholeAnalysis.targetSystemID(undefined, 'U210'), lowsec); });
 		it('Specific system from wormhole type', () => { assert.equal(wormholeAnalysis.targetSystemID(undefined, 'J377'), 30002086); });	// Turnur
 		it('Unknown for K162', () => { assert.equal(wormholeAnalysis.targetSystemID(undefined, 'K162'), null); });
@@ -22,6 +24,15 @@ describe('Wormhole analysis', () => {
 
 	describe('Eligible wormhole types', () => {
 		const extractNames = types => ({ from: types.from.map(w => w.key), to: types.to.map(w => w.key) });
+		it('Drifter represents classes 14 through 18', () => {
+			assert.deepEqual(systemAnalysis.classForTypeName('Drifter'), [14, 15, 16, 17, 18]);
+			const system = systemAnalysis.analyse(drifter);
+			assert.equal(system.systemTypeName, 'Drifter');
+			assert.equal(system.systemTypeClass, 'wh drifter');
+			assert.deepEqual(system.genericSystemType, ['Class-14', 'Class-15', 'Class-16', 'Class-17', 'Class-18']);
+			assert.deepEqual(extractNames(wormholeAnalysis.eligibleWormholeTypes(drifter, 6)),
+				{ from: ['Y683'], to: [] });
+		});
 		
 		it('Unknown at both sides', () => assert.deepEqual(wormholeAnalysis.eligibleWormholeTypes(undefined, undefined), null));
 		

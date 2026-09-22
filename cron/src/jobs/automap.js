@@ -2,7 +2,7 @@ const GENERIC_SYSTEM_TYPES = [
   'Null-Sec', 'Low-Sec', 'High-Sec',
   'Class-1', 'Class-2', 'Class-3', 'Class-4', 'Class-5', 'Class-6', 'Class-13',
   'Triglavian', 'Unknown', 'Unknown (small)', 'Dangerous',
-  'Class-14', 'Class-15', 'Class-16', 'Class-17', 'Class-18',
+  'Class-14', 'Class-15', 'Class-16', 'Class-17', 'Class-18', 'Drifter',
 ];
 const POD_TYPE_IDS = new Set([33328, 670]);
 const NO_MAP_SYSTEMS = new Set([30000142, 30002187]);
@@ -18,6 +18,7 @@ function genericTypes(system) {
 function classesForTypeName(name) {
   if (name?.startsWith('Class-')) return [Number(name.slice(6))];
   if (name === 'Dangerous') return [4, 5];
+  if (name === 'Drifter') return [14, 15, 16, 17, 18];
   if (name === 'Unknown') return [2, 3];
   if (name === 'Unknown (small)') return [1, 2, 3, 13];
   return [];
