@@ -166,7 +166,7 @@ tripwire.keyboard = (function() {
                 }
             };
         };
-        return [set("life", "stable", "Life: stable"), set("life", "critical", "Life: <4h", 4), set("life", "critical", "Life: <1h", 1), set("life", "critical", "Life: Expring", 1),
+        return [set("life", "stable", "Life: stable"), set("life", "critical", "Life: <4h", 4), set("life", "critical", "Life: <1h", 1), set("life", "critical", "Life: Expiring", 1),
                 set("mass", "stable", "Mass: Stable"), set("mass", "destab", "Mass: <50%"), set("mass", "critical", "Mass: <10%")];
     }
 

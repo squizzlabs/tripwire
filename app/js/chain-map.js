@@ -297,7 +297,7 @@ var chain = new function() {
 				case 4:
 					var lifePreset = tripwire.signaturePayload && tripwire.signaturePayload.lifePreset
 						? tripwire.signaturePayload.lifePreset(wormhole, signature) : wormhole.life;
-					return ({stable: "Stable", critical4: "<4h", critical1: "<1h"}[lifePreset] || lifePreset || "").toLowerCase();
+					return ({stable: "Stable", critical4: "<4h", expiring: "Expiring"}[lifePreset] || lifePreset || "").toLowerCase();
 				case 5:
 					return ({stable: "Stable", destab: "<50%", critical: "<10%"}[wormhole.mass] || wormhole.mass || "").toLowerCase();
 				default: return "";

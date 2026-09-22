@@ -46,13 +46,13 @@ tripwire.signaturePayload = (function() {
 	}
 
 	// Wormholes still use the database-compatible stable/critical states. The
-	// critical state is presented as either <4h or <1h from the shared signature
+	// critical state is presented as either <4h or Expiring from the shared signature
 	// expiry, so no schema change is needed for the more useful picker.
 	function lifePreset(wormhole, signature) {
 		if (!wormhole || wormhole.life === "stable") { return "stable"; }
 		if (!signature || !signature.lifeLeft) { return "critical4"; }
 		var now = tripwire.serverTime.time || new Date();
-		return moment.utc(signature.lifeLeft).diff(moment.utc(now), "seconds") <= 3600 ? "critical1" : "critical4";
+	return moment.utc(signature.lifeLeft).diff(moment.utc(now), "seconds") <= 3600 ? "expiring" : "critical4";
 	}
 
 	// The update payload for a wormhole and its two signatures. The dialog
