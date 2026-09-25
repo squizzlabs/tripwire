@@ -781,7 +781,9 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
    and Mass are connected segmented controls, the class chips two even
    groups, type and leads each one control with its menu button attached.
    ─────────────────────────────────────────────────────────────────────── */
-.ui-dialog:has(#dialog-signature) { width: min(392px, calc(100vw - 2rem)) !important; }
+/* Six destination columns fit at this width without making the rest of the
+   form needlessly broad. The viewport cap still protects narrow screens. */
+.ui-dialog:has(#dialog-signature) { width: min(32rem, calc(100vw - 2rem)) !important; }
 #dialog-signature #form-signature > .row,
 #dialog-signature #site > .row { padding-left: 20px; }
 
@@ -841,15 +843,55 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 #dialog-signature .mini-selector:checked + label.critical { background: var(--data-critical); color: #ffffff; }
 
 /* Class and hull chips: two even groups, the text divider gone. */
-#dialog-signature .quickSelectBar { display: inline-flex; flex-wrap: nowrap; gap: 3px; font-size: 0; margin: 0; }
-#dialog-signature .row > .quickSelectBar { flex-basis: 100%; margin-left: 60px; }
+#dialog-signature .quickSelectBar { display: inline-flex; flex-wrap: wrap; gap: 3px; font-size: 0; margin: 0; }
+#dialog-signature .row > .quickSelectBar {
+	/* The bar is indented beneath the value column. Its old 100% basis was
+	   calculated before this margin, making the item 60px wider than the row
+	   and stranding the final destination choices behind horizontal scroll. */
+	flex: 1 1 calc(100% - 60px);
+	max-width: calc(100% - 60px);
+	margin-left: 60px;
+}
 #dialog-signature .quickSelectBar button {
 	min-width: 26px; height: 22px; padding: 0 5px; border: 1px solid var(--border); border-radius: 3px;
 	background: var(--input); font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: .04em; line-height: 1;
 	display: inline-flex; align-items: center; justify-content: center;
 }
 #dialog-signature .quickSelectBar button:hover { border-color: var(--border-strong); background: var(--muted); }
-#dialog-signature #leadsToQuickBar button[value="High-Sec"] { margin-left: 8px; }
+#dialog-signature #leadsToQuickBar {
+	display: grid;
+	grid-template-columns: repeat(6, minmax(0, 1fr));
+	box-sizing: border-box;
+	padding-left: 6px;
+}
+#dialog-signature #leadsToQuickBar button {
+	width: 100%;
+	height: auto;
+	min-width: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+	opacity: 1;
+}
+#dialog-signature #leadsToQuickBar button:hover,
+#dialog-signature #leadsToQuickBar button:focus-visible {
+	border: 0;
+	background: transparent;
+}
+#dialog-signature #leadsToQuickBar button:hover > .type-label {
+	filter: brightness(1.18);
+}
+#dialog-signature #leadsToQuickBar button:focus-visible > .type-label {
+	outline: 2px solid var(--ring);
+	outline-offset: 2px;
+}
+#dialog-signature #leadsToQuickBar button[value="Triglavian"] > .type-label {
+	min-width: calc(2ch + var(--type-label-padding-inline, 5px) + var(--type-label-padding-inline, 5px));
+}
+@media (max-width: 30rem) {
+	#dialog-signature #leadsToQuickBar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 #dialog-signature .wormholeTypeQuickSelect { margin-left: 0; flex-basis: auto; }
 #dialog-signature .wormholeTypeQuickSelect:empty { display: none; }
 
@@ -1488,4 +1530,5 @@ kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .type-label.class-15,
 .type-label.class-16,
 .type-label.class-17                      { --type-label-fill: var(--data-loot-red); }
+.type-label.drifter                       { --type-label-fill: var(--data-loot-red); }
 .type-label.multi-static                  { --type-label-fill: var(--muted-foreground); }

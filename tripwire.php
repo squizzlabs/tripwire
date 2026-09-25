@@ -457,9 +457,18 @@ $system = $_REQUEST['system'] ?? '';
 								<!-- Values filled in by signature dialog JS -->
 							</select>
 						</span>
-						<!-- needs to not be whitespace between the buttons for alignment, even though it's ugly markup -->
-						<div id="leadsToQuickBar" class="quickSelectBar"><button type="button" class="quick-select" value="Class-1" tabindex="-1"><span class="type-label class-1">C1</span></button><button type="button" class="quick-select" value="Class-2" tabindex="-1"><span class="type-label class-2">C2</span></button><button type="button" class="quick-select" value="Class-3" tabindex="-1"><span class="type-label class-3">C3</span></button><button type="button" class="quick-select" value="Class-4" tabindex="-1"><span class="type-label class-4">C4</span></button><button type="button" class="quick-select" value="Class-5" tabindex="-1"><span class="type-label class-5">C5</span></button><button type="button" class="quick-select" value="Class-6" tabindex="-1"><span class="type-label class-6">C6</span></button> |
-						<button type="button" class="quick-select" value="High-Sec" tabindex="-1"><span class="type-label hisec">HS</span></button><button type="button" class="quick-select" value="Low-Sec" tabindex="-1"><span class="type-label lowsec">LS</span></button><button type="button" class="quick-select" value="Null-Sec" tabindex="-1"><span class="type-label nullsec">NS</span></button>
+						<div id="leadsToQuickBar" class="quickSelectBar">
+							<button type="button" class="quick-select" value="Class-1" tabindex="-1"><span class="type-label class-1">C1</span></button>
+							<button type="button" class="quick-select" value="Class-2" tabindex="-1"><span class="type-label class-2">C2</span></button>
+							<button type="button" class="quick-select" value="Class-3" tabindex="-1"><span class="type-label class-3">C3</span></button>
+							<button type="button" class="quick-select" value="Class-4" tabindex="-1"><span class="type-label class-4">C4</span></button>
+							<button type="button" class="quick-select" value="Class-5" tabindex="-1"><span class="type-label class-5">C5</span></button>
+							<button type="button" class="quick-select" value="Class-6" tabindex="-1"><span class="type-label class-6">C6</span></button>
+							<button type="button" class="quick-select" value="High-Sec" tabindex="-1"><span class="type-label hisec">HS</span></button>
+							<button type="button" class="quick-select" value="Low-Sec" tabindex="-1"><span class="type-label lowsec">LS</span></button>
+							<button type="button" class="quick-select" value="Null-Sec" tabindex="-1"><span class="type-label nullsec">NS</span></button>
+							<button type="button" class="quick-select" value="Drifter" tabindex="-1"><span class="type-label drifter">DR</span></button>
+							<button type="button" class="quick-select" value="Triglavian" tabindex="-1" aria-label="Pochven"><span class="type-label triglavian" aria-hidden="true">▲</span></button>
 						</div>
 					</div>
 					<div class="row">
