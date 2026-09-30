@@ -7,6 +7,16 @@ const GENERIC_SYSTEM_TYPES = [
 const POD_TYPE_IDS = new Set([33328, 670]);
 const NO_MAP_SYSTEMS = new Set([30000142, 30002187]);
 
+export function isJSpace(system) {
+  const regionId = Number(system?.regionID);
+  return regionId >= 11000000 && regionId < 12000000;
+}
+
+export function isBlockedPodOutTransition(fromSystemId, toSystemId, fromSystem, toSystem) {
+  const includesPodOutSystem = NO_MAP_SYSTEMS.has(fromSystemId) || NO_MAP_SYSTEMS.has(toSystemId);
+  return includesPodOutSystem && !isJSpace(fromSystem) && !isJSpace(toSystem);
+}
+
 function genericTypes(system) {
   if (system.wormholeClass) return [`Class-${system.wormholeClass}`];
   if (Number(system.factionID) === 500026) return ['Triglavian'];
@@ -95,7 +105,11 @@ export async function automapTransition({
   if (POD_TYPE_IDS.has(Number(ship?.ship_type_id))) {
     return notMapped('in_pod', { shipTypeID: Number(ship.ship_type_id) });
   }
-  if (NO_MAP_SYSTEMS.has(fromSystemId) || NO_MAP_SYSTEMS.has(toSystemId)) {
+
+  const fromSystem = staticData.system(fromSystemId);
+  const toSystem = staticData.system(toSystemId);
+  if (!fromSystem || !toSystem) return notMapped('unknown_system');
+  if (isBlockedPodOutTransition(fromSystemId, toSystemId, fromSystem, toSystem)) {
     return notMapped('pod_out_system');
   }
 
@@ -110,9 +124,6 @@ export async function automapTransition({
     locked = Number(lockRows[0]?.acquired) === 1;
     if (!locked) return notMapped('lock_timeout');
 
-    const fromSystem = staticData.system(fromSystemId);
-    const toSystem = staticData.system(toSystemId);
-    if (!fromSystem || !toSystem) return notMapped('unknown_system');
     if (Number(fromSystem.regionID) > 12000000 || Number(toSystem.regionID) > 12000000) {
       return notMapped('special_space');
     }

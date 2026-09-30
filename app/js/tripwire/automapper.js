@@ -32,9 +32,12 @@ tripwire.autoMapper = function(from, to) {
 		return false;
 	}
 	
-	// Not into a special system
+	// Do not map likely pod-out transitions unless the other side is J-space.
+	// Trade-hub wormholes are legitimate connections and should be recorded.
 	const noMapSystems = [30000142, 30002187];	// Jita/Amarr
-	if(noMapSystems.indexOf(from) >= 0 || noMapSystems.indexOf(to) >= 0) {	
+	const isJSpace = system => system.regionID >= 11000000 && system.regionID < 12000000;
+	if((noMapSystems.indexOf(from) >= 0 || noMapSystems.indexOf(to) >= 0) &&
+		!isJSpace(tripwire.systems[from]) && !isJSpace(tripwire.systems[to])) {
 		console.info('Not automapping into likely pod-out destination');
 		return false;
 	}

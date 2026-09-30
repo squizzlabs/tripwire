@@ -1,7 +1,22 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { automapTransition } from '../src/jobs/automap.js';
+import {
+  automapTransition,
+  isBlockedPodOutTransition,
+} from '../src/jobs/automap.js';
+
+test('Jita and Amarr are allowed when the transition connects to J-space', () => {
+  const jita = { regionID: 10000002 };
+  const amarr = { regionID: 10000043 };
+  const jSpace = { regionID: 11000001 };
+  const kSpace = { regionID: 10000001 };
+
+  assert.equal(isBlockedPodOutTransition(30000142, 31000005, jita, jSpace), false);
+  assert.equal(isBlockedPodOutTransition(31000005, 30002187, jSpace, amarr), false);
+  assert.equal(isBlockedPodOutTransition(30000142, 30000143, jita, kSpace), true);
+  assert.equal(isBlockedPodOutTransition(30000143, 30002187, kSpace, amarr), true);
+});
 
 function connectionWithExistingLink() {
   const calls = [];
