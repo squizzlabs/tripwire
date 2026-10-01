@@ -29,6 +29,9 @@ const ChainMapRendererOrgchart = function(owner) {
 	/** Redraw the map, based on the given node set, line overrides and list of collapsed systems */
 	this.draw = function(map, lines, collapsed) {
 		this.drawing = true;
+		const spacing = options.chain.nodeSpacing || {x: 1.4, y: 1.4};
+		document.getElementById('chainMap').style.setProperty('--classic-node-spacing-x', spacing.x / 1.4);
+		document.getElementById('chainMap').style.setProperty('--classic-node-spacing-y', spacing.y / 1.4);
 		this.map.draw(newView(map), this.options); 
 		
 		for (var x in collapsed) {

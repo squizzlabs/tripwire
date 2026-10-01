@@ -86,6 +86,8 @@ $(".options").click(function(e) {
 				options.chain["node-reference"] = $("#dialog-options input[name=node-reference]:checked").val();
 				
 				options.chain.renderer = $("#dialog-options #renderer").val();
+				options.chain.nodeSpacingByRenderer = options.chain.nodeSpacingByRenderer || {};
+				options.chain.nodeSpacingByRenderer[options.chain.renderer] = $.extend({}, options.chain.nodeSpacing);
 
 				options.signatures.editType = $("#dialog-options #editType").val();
 
@@ -200,9 +202,16 @@ $(".options").click(function(e) {
 						$("body").css("zoom", ui.value);
 						fitOptionsDialogToViewport();
 					});
-			setUpSlider('node-spacing-x-slider', options.chain.nodeSpacing.x);
-			setUpSlider('node-spacing-y-slider', options.chain.nodeSpacing.y);
+			setUpSlider('node-spacing-x-slider', options.chain.nodeSpacing.x, undefined, { min: 0.7, max: 4, step: 0.05 });
+			setUpSlider('node-spacing-y-slider', options.chain.nodeSpacing.y, undefined, { min: 0.7, max: 4, step: 0.05 });
 			setUpSlider('node-spacing-line-weight-slider', options.chain.lineWeight, undefined, { min: 0.5, max: 1.5 });
+			$("#dialog-options #renderer").on("change.nodeSpacing", function() {
+				const renderer = $(this).val();
+				const defaults = renderer === 'orgChart' ? {x: 1.4, y: 1.4} : {x: 2, y: 2};
+				const spacing = (options.chain.nodeSpacingByRenderer || {})[renderer] || defaults;
+				$("#node-spacing-x-slider").slider("value", spacing.x);
+				$("#node-spacing-y-slider").slider("value", spacing.y);
+			});
 			setUpSlider('signature-row-padding-slider', options.signatures.rowPadding, function(e, ui) {
 				var value = ui.value;
 				$("#sigTable").css({
