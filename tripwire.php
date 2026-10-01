@@ -730,7 +730,7 @@ $system = $_REQUEST['system'] ?? '';
 						<option value="none">Not shown</option>
 					</select>
 				</div>
-				<div class="field"><span class="field-label">Node spacing <small>not in Classic</small></span>
+				<div class="field"><span class="field-label">Node spacing</span>
 					<span class="slider-wrap slider-pair">
 						<span>X <div id="node-spacing-x-slider" class="spacing-slider"></div><label for="node-spacing-x-slider" class="slider-value"></label></span>
 						<span>Y <div id="node-spacing-y-slider" class="spacing-slider"></div><label for="node-spacing-y-slider" class="slider-value"></label></span>

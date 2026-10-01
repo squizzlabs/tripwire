@@ -31,6 +31,19 @@ describe('Org-chart collapsing', function() {
 		assert.deepStrictEqual(new ChainMapRendererOrgchartSide(owner).centringOptions, {y: true, rootNode: true});
 	});
 
+	it('does not cancel top-tree horizontal spacing while sizing wide nodes', function() {
+		const renderer = new ChainMapRendererOrgchartTop({updateCollapsed: function() {}});
+		global.options = {chain: {nodeSpacing: {x: 0.7, y: 1}}};
+		const compactArc = renderer.calcMinArc({requestedSize: {width: 110}});
+
+		global.options.chain.nodeSpacing.x = 1.4;
+		const spaciousArc = renderer.calcMinArc({requestedSize: {width: 110}});
+
+		// Arc allocation must stay stable so project() can scale the resulting
+		// node positions by the selected spacing value.
+		assert.strictEqual(spaciousArc, compactArc);
+	});
+
 	it('collapses a Classic Tree system from the context-menu renderer API', function() {
 		const systemID = 30000142;
 		let collapsedRows = [];

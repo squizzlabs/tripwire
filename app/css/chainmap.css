@@ -27,8 +27,7 @@
 	   and occupant badges intentionally hang outside the card, so reserve a
 	   real gutter in the layout cell rather than letting those decorations
 	   collide with the next child. */
-	padding-left: 10px;
-	padding-right: 10px;
+	padding: calc(6px * var(--classic-node-spacing-y, 1)) calc(10px * var(--classic-node-spacing-x, 1));
 	font-family: verdana;
 	font-size: 1em;
 	cursor: default;

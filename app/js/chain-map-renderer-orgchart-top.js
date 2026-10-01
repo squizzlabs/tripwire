@@ -17,7 +17,10 @@ const ChainMapRendererOrgchartTop = function(owner) {
 	}
 	
 	this.calcMinArc = function(node) {
-		const arcFromSize = 0.2 + node.requestedSize.width / (1.0 * GRID_SIZE.x * options.chain.nodeSpacing.x); // 0.2 to leave a gap between adjacent nodes
+		// Keep collision sizing in the renderer's unscaled coordinate system.
+		// Dividing by nodeSpacing here cancelled the multiplier in project(), so
+		// wide nodes barely moved when the horizontal spacing setting changed.
+		const arcFromSize = 0.2 + node.requestedSize.width / GRID_SIZE.x; // 0.2 to leave a gap between adjacent nodes
 		return Math.max(arcFromSize, 1);
 	}
 	

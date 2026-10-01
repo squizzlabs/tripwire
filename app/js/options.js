@@ -11,7 +11,7 @@ var options = new function() {
 	this.grid = {};
 	this.tracking = {active: "new", characterOptions: {}};
 	this.masks = {active: init.corporationID + ".2"};
-	this.chain = {gridlines: true, aura: true, lineWeight: 1.0, scrollWithoutCtrl: false, active: 0, tabs: [], collapsed: [], "node-reference": "type", zoom: 1.0, sigNameLocation: 'name', routingLimit: 15, routeSecurity: 'shortest', routeIgnore: { enabled: false, systems: [ 'Tama', 'Rancer' ] }, renderer: 'radial', nodeSpacing: { x: 1.0, y: 1.0 } };
+	this.chain = {gridlines: true, aura: true, lineWeight: 1.0, scrollWithoutCtrl: false, active: 0, tabs: [], collapsed: [], "node-reference": "type", zoom: 1.0, sigNameLocation: 'name', routingLimit: 15, routeSecurity: 'shortest', routeIgnore: { enabled: false, systems: [ 'Tama', 'Rancer' ] }, renderer: 'radial', nodeSpacing: { x: 2.0, y: 2.0 }, nodeSpacingByRenderer: {orgChart: {x: 1.4, y: 1.4}, orgChartTop: {x: 2.0, y: 2.0}, orgChartSide: {x: 2.0, y: 2.0}, radial: {x: 2.0, y: 2.0}} };
 	this.signatures = {editType: "unknown", copySeparator: ",", pasteLife: 72, rowPadding: 6, alignment: {sigID: "leftAlign", sigType: "leftAlign", sigAge: "leftAlign", leadsTo: "leftAlign", sigLife: "rightAlign", sigMass: "rightAlign"}};
 	this.buttons = {follow: false, chainWidget: {viewing: false, favorites: false, sortChildren: false}, signaturesWidget: {autoMapper: false}};
 
@@ -39,8 +39,18 @@ var options = new function() {
 	this.load = function(data) {
 		if (data && typeof(data) != "undefined") {
 			this.set(this, data);
+			if (data.chain && data.chain.nodeSpacing && !data.chain.nodeSpacingByRenderer) {
+				for (var renderer in this.chain.nodeSpacingByRenderer) {
+					this.chain.nodeSpacingByRenderer[renderer] = $.extend({}, data.chain.nodeSpacing);
+				}
+			}
 		} else if (localOptions) {
 			this.set(this, localOptions);
+			if (localOptions.chain && localOptions.chain.nodeSpacing && !localOptions.chain.nodeSpacingByRenderer) {
+				for (var renderer in this.chain.nodeSpacingByRenderer) {
+					this.chain.nodeSpacingByRenderer[renderer] = $.extend({}, localOptions.chain.nodeSpacing);
+				}
+			}
 		}
 
 		this.apply();
@@ -84,6 +94,9 @@ var options = new function() {
 
 	// Applies settings
 	this.apply = function() {
+		if (this.chain.nodeSpacingByRenderer && this.chain.nodeSpacingByRenderer[this.chain.renderer]) {
+			this.chain.nodeSpacing = $.extend({}, this.chain.nodeSpacingByRenderer[this.chain.renderer]);
+		}
 		// Local browser overrides
 		if (localOptions) {
             for (key in localOverrides) {
