@@ -120,6 +120,9 @@ body { font-size: var(--fs-base); }
    the payload, and no template. */
 .comment:not(.hidden) { display: flex; flex-direction: column; }
 .comment.hidden { display: none !important; }
+/* The editor toolbar sits in the existing space above the note instead of
+   participating in layout and pushing the content down. */
+#notesWidget > .content:has(.rte) { overflow: visible; }
 .comment > .commentBody { order: 1; }
 .comment > .commentToolbar { order: 2; margin: 6px 0 0; }
 .comment > .commentFooter { order: 3; }

@@ -100,19 +100,26 @@
    ========================================================================= */
 
 .rte {
+	position: relative;
 	border: 1px solid var(--input);
+	border-top: 0;
 	border-radius: var(--radius-sm);
 	background: var(--muted);
-	overflow: hidden;
+	overflow: visible;
 }
 
 .rte-bar {
+	position: absolute;
+	right: -1px;
+	bottom: 100%;
+	left: -1px;
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
 	gap: 2px;
 	padding: var(--space-1);
-	border-bottom: 1px solid var(--border);
+	border: 1px solid var(--input);
+	border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 	background: color-mix(in oklab, var(--card) 60%, transparent);
 }
 
@@ -157,10 +164,10 @@
 	min-height: 7rem;
 	max-height: 22rem;
 	overflow-y: auto;
-	padding: var(--space-2);
+	padding: 8px;
 	color: var(--foreground);
-	font-size: var(--fs-base);
-	line-height: 1.6;
+	font-size: 12px;
+	line-height: 1.5;
 	outline: none;
 }
 .rte-area:focus { background: var(--background); }
