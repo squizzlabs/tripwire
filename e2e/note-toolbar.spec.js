@@ -21,7 +21,7 @@ for (const width of [320, 490, 800]) {
 		expect(bar.y).toBeGreaterThanOrEqual(panel.y);
 		expect(bar.y + bar.height).toBeLessThanOrEqual(area.y);
 		const controls = page.locator('.rte-bar button, .rte-bar select');
-		await expect(controls).toHaveCount(15);
+		await expect(controls).toHaveCount(17);
 		for (const control of await controls.all()) {
 			const box = await control.boundingBox();
 			expect(box.x).toBeGreaterThanOrEqual(panel.x);
@@ -32,5 +32,21 @@ for (const width of [320, 490, 800]) {
 				return el.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2));
 			})).toBe(true);
 		}
+
+		// Clear selected text styles and links without changing other text.
+		await page.evaluate(() => {
+			const area = document.querySelector('.rte-area');
+			area.innerHTML = '<div><a href="https://example.com"><b><i><u><s><font color="#f06090" size="5">Formatted text</font></s></u></i></b></a></div><div><b>Keep bold</b></div>';
+			area.focus();
+			const range = document.createRange();
+			range.selectNodeContents(area.firstChild);
+			window.getSelection().removeAllRanges();
+			window.getSelection().addRange(range);
+		});
+		await page.getByRole('button', { name: 'Clear formatting', exact: true }).click();
+		const cleared = page.locator('.rte-area > div').first();
+		await expect(cleared).toHaveText('Formatted text');
+		await expect(cleared.locator('b, strong, i, em, u, s, strike, font, a, [style]')).toHaveCount(0);
+		await expect(page.locator('.rte-area > div').last().locator('b')).toHaveText('Keep bold');
 	});
 }

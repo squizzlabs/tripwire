@@ -27,12 +27,14 @@ tripwire.editor = (function() {
 		{cmd: "insertOrderedList",   label: "1.", title: "Numbered list"},
 		{sep: true},
 		{cmd: "createLink",        label: "🔗", title: "Link"},
-		{cmd: "unlink",            label: "⛓", title: "Remove link"}
+		{cmd: "unlink",            label: "⛓", title: "Remove link"},
+		{sep: true},
+		{cmd: "removeFormat",      label: "Tx", title: "Clear formatting"}
 	];
 
 	// The colours notes actually use: the brand accent and the data semantics,
 	// so a note can mark something critical in the same red the map uses.
-	var COLOURS = ["--foreground", "--primary", "--data-critical", "--data-warn", "--data-good", "--data-info"];
+	var COLOURS = ["--foreground", "--primary", "--data-critical", "--data-warn", "--data-good", "--data-info", "--data-loot-pink"];
 
 	function resolve(token) {
 		return getComputedStyle(document.documentElement).getPropertyValue(token).trim();
@@ -64,6 +66,7 @@ tripwire.editor = (function() {
 			if (t.sep) { $('<span class="rte-sep"></span>').appendTo($bar); return; }
 			$('<button type="button" class="rte-btn"></button>')
 				.attr("title", t.title)
+				.attr("aria-label", t.title)
 				.attr("data-cmd", t.cmd)
 				.attr("style", t.style || "")
 				.text(t.label)
@@ -77,6 +80,8 @@ tripwire.editor = (function() {
 						document.execCommand("createLink", false, url);
 					} else {
 						document.execCommand(t.cmd, false, null);
+						// removeFormat clears text styles but leaves hyperlinks behind.
+						if (t.cmd === "removeFormat") { document.execCommand("unlink", false, null); }
 					}
 				})
 				.appendTo($bar);
