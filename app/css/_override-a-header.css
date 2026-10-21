@@ -109,10 +109,8 @@
 }
 
 .rte-bar {
-	position: absolute;
-	right: -1px;
-	bottom: 100%;
-	left: -1px;
+	/* Reserve room for every toolbar row, including on narrow notes panels. */
+	position: relative;
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
