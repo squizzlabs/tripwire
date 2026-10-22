@@ -1,10 +1,8 @@
 const gulp = require('gulp');
 const pump = require('pump');
-const shell = require('gulp-shell');
 const mocha = require('gulp-mocha');
 const notify = require('gulp-notify');
 const uglify = require('gulp-uglify-es').default;
-const cleancss = require('gulp-clean-css');
 const concat = require('gulp-concat');
 const sourcemaps = require('gulp-sourcemaps');
 const rename = require('gulp-rename');
@@ -38,23 +36,6 @@ var jsFiles = [
             'app/js/**/*.js'
         ],
         output: 'public/js'
-    }
-];
-
-var cssFiles = [
-    {
-        name: 'app.css',
-        nameMin: 'app.min.css',
-        src: ['app/css/_tokens.css', 'app/css/base.css', 'app/css/*.css', 'app/css/**/*.css',
-              // Load order is tokens -> components -> overrides -> theme. The
-              // last two groups override component rules at equal specificity,
-              // so they have to come after them -- and gulp.src dedupes, so the
-              // globs above must be told to skip them or the trailing entries
-              // are no-ops. (_override-* sorts before signatures.css otherwise,
-              // which silently lost every tie.)
-              '!app/css/_override-*.css', '!app/css/_theme-*.css',
-              'app/css/_override-*.css', 'app/css/_theme-base.css', 'app/css/_theme-refit.css'],
-        output: 'public/css'
     }
 ];
 
@@ -93,34 +74,15 @@ gulp.task('js_dev', function(cb) {
     }
 });
 
-gulp.task('css', function(cb) {
-    for (var c in cssFiles) {
-        pump([
-            gulp.src(cssFiles[c].src),
-            sourcemaps.init(),
-            cleancss({level: {1: {all: true}, 2: {all: false}}}),
-            concat(cssFiles[c].name),
-            rename(cssFiles[c].nameMin),
-            sourcemaps.write('.'),
-            gulp.dest(cssFiles[c].output),
-            notify({
-                message: "Finished css",
-                onLast: true
-            })
-        ], cb);
-    }
-});
-
 gulp.task('test', cb => {
 	gulp.src(['app/js-test/**/*.js']).pipe(mocha());
 	cb();
 });
 
 // Local Compose serves public/ from the checkout. Build once when the watcher
-// starts, then keep the browser bundles current as source files change.
+// starts, then keep the JavaScript bundle current as source files change.
 gulp.task('watch-files', function() {
 	gulp.watch('app/js/**/*.js', gulp.series('js'));
-	gulp.watch('app/css/**/*.css', gulp.series('css'));
 });
 
-gulp.task('watch', gulp.series(gulp.parallel('js', 'css'), 'watch-files'));
+gulp.task('watch', gulp.series('js', 'watch-files'));

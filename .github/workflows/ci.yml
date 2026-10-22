@@ -29,14 +29,14 @@ jobs:
       - name: Build
         run: npm run build
 
-      # The repo tracks public/css/app.min.css and public/js/app.min.js. If a
+      # The repo tracks public/js/app.min.js. If a
       # source change landed without its rebuild, the bundle here differs from
       # the committed one -- catch that rather than letting the two drift.
       - name: Built assets match committed ones
         run: |
-          if ! git diff --quiet -- public/css public/js; then
+          if ! git diff --quiet -- public/js; then
             echo "::error::Committed build output is stale. Run 'npm run build' and commit the result."
-            git diff --stat -- public/css public/js
+            git diff --stat -- public/js
             exit 1
           fi
 

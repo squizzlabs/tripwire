@@ -9,7 +9,7 @@ for (const width of [320, 490, 800]) {
 			<div class="content"><div id="comment-container"><div class="comment">
 				<div id="comment0" class="commentBody">A system note<br><br>with several lines</div>
 			</div></div></div></div>`);
-		await page.addStyleTag({ path: path.join(__dirname, '../public/css/app.min.css') });
+		await page.addStyleTag({ path: path.join(__dirname, '../public/css/app.css') });
 		await page.addScriptTag({ path: path.join(__dirname, '../public/js/jquery-3.3.1.min.js') });
 		await page.evaluate(() => { window.tripwire = {}; });
 		await page.addScriptTag({ path: path.join(__dirname, '../app/js/editor.js') });

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-# Build the browser bundles from source instead of trusting checked-in output.
+# Build the JavaScript bundle from source instead of trusting checked-in output.
 FROM node:24-bookworm-slim AS assets
 WORKDIR /build
 COPY package.json package-lock.json gulpfile.js ./

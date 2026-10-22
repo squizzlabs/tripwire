@@ -34,7 +34,7 @@ $system = $_REQUEST['system'] ?? '';
 	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/jquery-ui-1.12.1.min.css?v=<?= VERSION ?>">
 	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/jquery-ui-custom.css?v=<?= VERSION ?>">
 	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/introjs.min.css?v=<?= VERSION ?>">
-	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/app.min.css?v=<?= assetVersion('css/app.min.css') ?>">
+	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/app.css?v=<?= assetVersion('css/app.css') ?>">
 <?php brand_head(); ?>
 
 	<title></title>

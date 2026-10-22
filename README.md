@@ -202,8 +202,8 @@ For day-to-day development, use `scripts/local-dev.sh`. The database lives in
 the named volume `tripwire-local-db`, so removing or rebuilding the application
 container does not remove its data. The checkout is mounted into the container:
 PHP/template changes appear on refresh, while a second container automatically
-rebuilds the browser JavaScript and CSS after a source file is saved. The script
-uses `sudo docker`; it never removes the database volume.
+rebuilds the browser JavaScript after a source file is saved. CSS is served
+directly. The script uses `sudo docker`; it never removes the database volume.
 
 The first start builds the images:
 
@@ -372,6 +372,14 @@ If you see that the .env file is not being loaded, run the stack with
 - Base off of production or development
 - Create PRs into development
 - Look over issues, branches or get with me to ensure it isn't already being worked on
+
+Application styles live in `public/css/app.css`, grouped into theme defaults and
+component sections.
+The browser loads it directly, with a content hash in the URL for cache invalidation.
+Brand variables are applied afterward from the selected `brand.json`.
+Keep the section order intact: equal-specificity rules depend on the cascade.
+Third-party and landing-page stylesheets also live in `public/css`.
+`npm run build` builds JavaScript; `npm run dev` watches it for changes.
 
 ### Who do I talk to?
 - Astriania / Kariyo Astrien (Main contributor/maintainer)

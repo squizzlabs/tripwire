@@ -11,5 +11,5 @@ pipelines:
               - node
             script:
               - npm install gulp
-              - npx gulp js css
+              - npx gulp js
               - ./push-changes-to-deploy.sh
