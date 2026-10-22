@@ -1,9 +1,9 @@
 const assert = require('assert');
 const { include } = require('./helpers/helpers');
 include('public/js/combine');
-include('app/js/guidance');
-include('app/js/guidance_profiles');
-include('app/js/systemAnalysis');
+include('guidance');
+include('guidance_profiles');
+include('systemAnalysis');
 
 beforeEach(() => {
 	options = { chain: { routeIgnore: { enabled: false } } };
@@ -31,7 +31,7 @@ describe('Route to profile', () => {
 
 describe('Conditional gates', () => {
 	it('Athounon-Samanuni open', () => {
-		include('app/js/fw');
+		include('fw');
 		fw.SamanuniAthounonGateOpen = true;
 
 		assert.deepEqual( [ sid('Uuhulanen'), sid('Samanuni'), sid('Athounon'), sid("Mercomesier")], guidance.findShortestPath(appData.map.shortest, sid('Uuhulanen'), sid("Mercomesier"))); 
@@ -44,7 +44,7 @@ describe('Conditional gates', () => {
 		], guidance.connections(appData.map.shortest, sid('Samanuni')));
 	});
 	it('Athounon-Samanuni closed', () => {
-		include('app/js/fw');
+		include('fw');
 		fw.SamanuniAthounonGateOpen = false;
 		
 		assert.deepEqual( [ sid('Uuhulanen'), sid('Onnamon'), sid('Kinakka'), sid('Innia'), sid('Eha'), sid('Oicx'), sid('Vlillirier'), sid('Aldranette'), sid('Evaulon'), sid('Anchauttes'), sid('Odamia'), sid('Arderonne'), sid('Reschard'), sid("Mercomesier")], guidance.findShortestPath(appData.map.shortest, sid('Uuhulanen'), sid("Mercomesier"))); 

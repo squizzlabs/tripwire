@@ -1,10 +1,5 @@
 name: CI
 
-# The Bitbucket pipeline this replaces was manual-trigger only, ran on node:16
-# (end of life September 2023), never ran the test suite, and committed build
-# artifacts back to the repo. This runs on every push and PR, and checks the
-# build output matches what is committed rather than rewriting it.
-
 on:
   push:
     branches: ['**']
@@ -26,19 +21,8 @@ jobs:
       - name: Unit tests
         run: npm test
 
-      - name: Build
-        run: npm run build
-
-      # The repo tracks public/js/app.min.js. If a
-      # source change landed without its rebuild, the bundle here differs from
-      # the committed one -- catch that rather than letting the two drift.
-      - name: Built assets match committed ones
-        run: |
-          if ! git diff --quiet -- public/js; then
-            echo "::error::Committed build output is stale. Run 'npm run build' and commit the result."
-            git diff --stat -- public/js
-            exit 1
-          fi
+      - name: JavaScript syntax
+        run: node --check public/js/app.js
 
   php:
     runs-on: ubuntu-latest

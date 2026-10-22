@@ -1,7 +1,7 @@
 const assert = require('assert');
 const { include, loadJSON } = require('./helpers/helpers');
 const { document } = require('./helpers/fakeDOM');
-include('app/js/maskRendering');
+include('maskRendering');
 
 describe('Mask rendering', () => {
 	const sampleData = loadJSON('app/js-test/testdata/masks-sample');

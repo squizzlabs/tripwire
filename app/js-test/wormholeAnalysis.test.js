@@ -1,13 +1,13 @@
 const assert = require('assert');
 const { include } = require('./helpers/helpers');
 include('public/js/combine');
-include('app/js/tripwire/genericSystemTypes');
-include('app/js/wormholeAnalysis');
-include('app/js/systemAnalysis');
+include('tripwire/genericSystemTypes');
+include('wormholeAnalysis');
+include('systemAnalysis');
 
 // temp
 jQuery = { fn: {} };
-include('app/js/helpers');
+include('helpers');
 
 describe('Wormhole analysis', () => {
 	const lowsec = appData.genericSystemTypes.indexOf('Low-Sec');

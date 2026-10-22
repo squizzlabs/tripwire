@@ -1,7 +1,4 @@
-/* Landing and sign-in, in the same language as the app behind it.
-   Static file: the landing page does not go through the gulp bundle. The
-   colours and the backdrop come from the brand pack (brand.inc.php emits
-   them as the variables below, after this file). */
+/* Landing and sign-in. Brand variables supply the colours and backdrop. */
 
 :root {
 	--bg: #1b1b1b;

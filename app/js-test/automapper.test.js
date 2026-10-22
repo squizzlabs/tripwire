@@ -2,7 +2,7 @@ const assert = require('assert');
 const { include } = require('./helpers/helpers');
 tripwire = {};
 include('public/js/combine');
-include('app/js/tripwire/automapper');
+include('tripwire/automapper');
 
 // Sample well known systems for 'leads to' in sigs
 const C1 = 31000083, C2 = 31000537, C3 = 31001053, C4 = 31001477, C5 = 31001916, C6 = 31002464,

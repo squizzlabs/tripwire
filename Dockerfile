@@ -1,14 +1,5 @@
 # syntax=docker/dockerfile:1.7
 
-# Build the JavaScript bundle from source instead of trusting checked-in output.
-FROM node:24-bookworm-slim AS assets
-WORKDIR /build
-COPY package.json package-lock.json gulpfile.js ./
-RUN npm ci
-COPY app ./app
-COPY public ./public
-RUN npm run build
-
 # Install the PHP dependency without shipping Composer in the runtime image.
 FROM composer:2 AS php-dependencies
 WORKDIR /build
@@ -59,7 +50,6 @@ RUN printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d \
 WORKDIR /opt/app
 
 COPY . /opt/app
-COPY --from=assets /build/public /opt/app/public
 COPY --from=php-dependencies /build/vendor /opt/app/vendor
 COPY --from=cron-dependencies /build/cron/node_modules /opt/app/cron/node_modules
 COPY --from=cron-dependencies /usr/local/bin/node /usr/local/bin/node

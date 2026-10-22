@@ -195,17 +195,15 @@ browser refresh responses contain only character identity and tracking state.
 ### Local testing: complete Docker environment
 
 The root `Dockerfile` is a complete local environment: Nginx, PHP-FPM, MySQL,
-the schema/migrations, Composer packages, compiled browser assets, and the Node
+the schema/migrations, Composer packages, browser assets, and the Node
 scheduler are all included. It is separate from the production cron container.
 
 For day-to-day development, use `scripts/local-dev.sh`. The database lives in
 the named volume `tripwire-local-db`, so removing or rebuilding the application
-container does not remove its data. The checkout is mounted into the container:
-PHP/template changes appear on refresh, while a second container automatically
-rebuilds the browser JavaScript after a source file is saved. CSS is served
-directly. The script uses `sudo docker`; it never removes the database volume.
+container does not remove its data. The checkout is mounted into the container,
+so PHP, JavaScript, and CSS changes appear on refresh. The script uses `sudo docker`.
 
-The first start builds the images:
+The first start builds the image:
 
 ```bash
 scripts/local-dev.sh build
@@ -219,13 +217,12 @@ scripts/local-dev.sh up
 scripts/local-dev.sh down
 ```
 
-Open `http://localhost:8080`. Check both containers or follow their logs with:
+Open `http://localhost:8080`. Check the container or follow its logs with:
 
 ```bash
 scripts/local-dev.sh status
 scripts/local-dev.sh diagnose
 sudo docker logs --follow tripwire
-sudo docker logs --follow tripwire-assets
 ```
 
 `diagnose` is safe to run while Tripwire is active. It reports the scheduler
@@ -234,8 +231,8 @@ timestamps, current tracking rows, and recent character-tracking messages. It
 does not print access or refresh tokens. Immediately after a restart it waits
 up to 60 seconds for database initialization and migrations to finish.
 
-A rebuild is only needed after changing `Dockerfile`, `composer.lock`, either
-`package-lock.json`, or `scripts/local-dev.sh`:
+Rebuild the image after changing `Dockerfile`, `composer.lock`, or
+`cron/package-lock.json`:
 
 ```bash
 scripts/local-dev.sh build
@@ -379,7 +376,9 @@ The browser loads it directly, with a content hash in the URL for cache invalida
 Brand variables are applied afterward from the selected `brand.json`.
 Keep the section order intact: equal-specificity rules depend on the cascade.
 Third-party and landing-page stylesheets also live in `public/css`.
-`npm run build` builds JavaScript; `npm run dev` watches it for changes.
+Application JavaScript lives in `public/js/app.js`. Its named sections execute
+in dependency order, and the browser loads the file directly with a content hash
+in its URL. `npm test` exercises those sections and the application logic.
 
 ### Who do I talk to?
 - Astriania / Kariyo Astrien (Main contributor/maintainer)

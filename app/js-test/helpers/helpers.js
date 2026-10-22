@@ -1,15 +1,15 @@
-// Allow include of non-module script - https://stackoverflow.com/questions/5797852/
-var fs = require("fs");
+const fs = require("fs");
+const { readSource } = require("./source");
 
-function read(f) {
-  return fs.readFileSync(f).toString()
+function read(section) {
+  return (section.startsWith('public/') ? fs.readFileSync(section + '.js', 'utf8') : readSource(section))
 	.replace(/^var /, '')
 	.replace(/^const /, '')
 	.replace(/\nconst /, '');
 }
-function include(f) {
+function include(section) {
 	return eval.apply(global, [
-		read(f + '.js') + '\n//# sourceURL=' + f
+		read(section) + '\n//# sourceURL=app.js/' + section
 	]);
 }
 function loadJSON(f) {

@@ -1,9 +1,9 @@
 const assert = require('assert');
 const { include, loadJSON, fake$ } = require('../helpers/helpers');
 include('public/js/combine');
-include('app/js/tripwire/genericSystemTypes');
+include('tripwire/genericSystemTypes');
 fake$('dialog', arg => {});
-include('app/js/dialogs/mass-dialog');
+include('dialogs/mass-dialog');
 
 const sampleData = loadJSON('app/js-test/testdata/mass-sample');
 

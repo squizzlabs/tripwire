@@ -3,11 +3,11 @@ const { include } = require('./helpers/helpers');
 
 describe('Org-chart collapsing', function() {
 	before(function() {
-		include('app/js/chain-map-renderer-base');
-		include('app/js/chain-map-renderer-orgchart-top');
-		include('app/js/chain-map-renderer-orgchart-side');
-		include('app/js/chain-map-renderer-radial');
-		include('app/js/chain-map-renderer-orgchart');
+		include('chain-map-renderer-base');
+		include('chain-map-renderer-orgchart-top');
+		include('chain-map-renderer-orgchart-side');
+		include('chain-map-renderer-radial');
+		include('chain-map-renderer-orgchart');
 	});
 
 	it('exposes the collapse API in every map layout', function() {

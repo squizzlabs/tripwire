@@ -9,7 +9,7 @@ tripwire = { systemChange: () => {} };
 viewingSystemID = 30000001;
 fakeAjax();
 
-include('app/js/fw');
+include('fw');
 
 describe('Faction warfare', () => {
 	it('System data parsed', () => { 

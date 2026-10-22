@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const path = require('path');
+const { readSource } = require('../app/js-test/helpers/source');
 
 // Exercise the real editor and bundled styles without needing saved notes or a server.
 for (const width of [320, 490, 800]) {
@@ -12,7 +13,7 @@ for (const width of [320, 490, 800]) {
 		await page.addStyleTag({ path: path.join(__dirname, '../public/css/app.css') });
 		await page.addScriptTag({ path: path.join(__dirname, '../public/js/jquery-3.3.1.min.js') });
 		await page.evaluate(() => { window.tripwire = {}; });
-		await page.addScriptTag({ path: path.join(__dirname, '../app/js/editor.js') });
+		await page.addScriptTag({ content: readSource('editor') });
 		await page.evaluate(() => tripwire.editor.replace('comment0').focus());
 
 		const panel = await page.locator('#notesWidget > .content').boundingBox();

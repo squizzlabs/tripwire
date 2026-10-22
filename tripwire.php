@@ -1251,7 +1251,7 @@ $system = $_REQUEST['system'] ?? '';
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/moment.min.js?v=<?= VERSION ?>"></script>
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/intro.min.js?v=<?= VERSION ?>"></script>
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/combine.js?v=<?= assetVersion('js/combine.js') ?>"></script>
-	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/app.min.js?v=<?= assetVersion('js/app.min.js') ?>"></script>
+	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/app.js?v=<?= assetVersion('js/app.js') ?>"></script>
 	<!-- JS Includes -->
 </body>
 </html>

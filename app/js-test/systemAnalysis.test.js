@@ -1,6 +1,6 @@
 const assert = require('assert');
 const { include } = require('./helpers/helpers');
-include('app/js/systemAnalysis');
+include('systemAnalysis');
 include('public/js/combine');
 
 describe('System analysis', () => {

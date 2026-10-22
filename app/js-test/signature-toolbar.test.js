@@ -40,7 +40,7 @@ describe('Responsive signature toolbar', function() {
 		};
 		global.window = {ResizeObserver: global.ResizeObserver};
 
-		include('app/js/signature-toolbar');
+		include('signature-toolbar');
 	});
 
 	after(function() {

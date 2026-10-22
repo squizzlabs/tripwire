@@ -1,6 +1,6 @@
 const assert = require('assert');
 const { include, loadJSON } = require('./helpers/helpers');
-include('app/js/wormholeRendering');
+include('wormholeRendering');
 const wormholes = loadJSON('tools/wormholes');
 
 describe('Wormhole rendering', () => {

@@ -2,7 +2,7 @@ const assert = require('assert');
 const { include } = require('./helpers/helpers');
 
 global.tripwire = {};
-include('app/js/tripwire/eve');
+include('tripwire/eve');
 
 describe('Backend ESI tracking handoff', function() {
     const systems = {

@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
+const { readSource } = require('./helpers/source');
 const vm = require('node:vm');
 
 describe('Browser ESI ETags', () => {
@@ -26,7 +26,7 @@ describe('Browser ESI ETags', () => {
                 };
             }
         };
-        vm.runInNewContext(fs.readFileSync('app/js/tripwire/esi.js', 'utf8'), sandbox);
+        vm.runInNewContext(readSource('tripwire/esi'), sandbox);
         tripwire.esi.call(tripwire);
 
         assert.equal((await tripwire.esi.characterLookup(10)).name, 'Pilot');
@@ -43,7 +43,7 @@ describe('Browser ESI ETags', () => {
             $: { param: () => 'user_agent=test', extend: Object.assign },
             console
         };
-        vm.runInNewContext(fs.readFileSync('app/js/tripwire/esi.js', 'utf8'), sandbox);
+        vm.runInNewContext(readSource('tripwire/esi'), sandbox);
         tripwire.esi.call(tripwire);
         tripwire.esi.idLookup = async () => [{ id: 10, category: 'character' }];
         tripwire.esi.characterLookup = async () => ({ name: 'Pilot', corporation_id: 20 });
