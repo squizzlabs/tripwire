@@ -20,3 +20,4 @@ public/brands/*
 !public/brands/tripwire/
 !public/brands/example/
 !public/brands/README.md
+cache/*.etag
