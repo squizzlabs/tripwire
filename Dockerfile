@@ -24,8 +24,13 @@ FROM ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
+# Ubuntu 24.04 ships PHP 8.3. Use Ondrej Sury's PHP repository for the
+# current stable branch, leaving patch versions unpinned for security updates.
 RUN printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d \
  && chmod +x /usr/sbin/policy-rc.d \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates software-properties-common \
+ && add-apt-repository --yes ppa:ondrej/php \
  && apt-get update \
  && apt-get install -y --no-install-recommends \
       ca-certificates \
@@ -35,14 +40,14 @@ RUN printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d \
       mysql-client \
       mysql-server \
       nginx \
-      php8.3-cli \
-      php8.3-curl \
-      php8.3-fpm \
-      php8.3-gd \
-      php8.3-intl \
-      php8.3-mbstring \
-      php8.3-mysql \
-      php8.3-xml \
+      php8.5-cli \
+      php8.5-curl \
+      php8.5-fpm \
+      php8.5-gd \
+      php8.5-intl \
+      php8.5-mbstring \
+      php8.5-mysql \
+      php8.5-xml \
       supervisor \
  && rm -f /usr/sbin/policy-rc.d \
  && rm -rf /var/lib/apt/lists/* /var/lib/mysql/* /var/www/html/*
@@ -57,8 +62,8 @@ COPY --from=cron-dependencies /usr/local/bin/node /usr/local/bin/node
 COPY .docker/all-in-one/app-config.php /opt/app/config.php
 COPY .docker/all-in-one/nginx.conf /etc/nginx/nginx.conf
 COPY .docker/all-in-one/site.conf /etc/nginx/sites-enabled/default
-COPY .docker/all-in-one/php.ini /etc/php/8.3/fpm/conf.d/99-tripwire.ini
-COPY .docker/all-in-one/php-fpm.conf /etc/php/8.3/fpm/pool.d/99-tripwire.conf
+COPY .docker/all-in-one/php.ini /etc/php/8.5/fpm/conf.d/99-tripwire.ini
+COPY .docker/all-in-one/php-fpm.conf /etc/php/8.5/fpm/pool.d/99-tripwire.conf
 COPY .docker/all-in-one/supervisord.conf /etc/supervisor/conf.d/tripwire.conf
 COPY .docker/all-in-one/entrypoint.sh /usr/local/bin/tripwire-entrypoint
 

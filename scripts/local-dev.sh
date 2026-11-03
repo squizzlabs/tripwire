@@ -18,7 +18,8 @@ managed_database() {
 
 build() {
     cd "$root_dir"
-    "${docker_cmd[@]}" build --tag "$app_image" .
+    # Refresh base images and APT packages even when the Dockerfile is unchanged.
+    "${docker_cmd[@]}" build --pull --no-cache --tag "$app_image" .
 }
 
 up() {
@@ -80,7 +81,7 @@ status() {
 }
 
 diagnose() {
-    local attempt container_state tracking_query
+    local attempt container_state tracking_query ready=false
     if ! exists "$app_container"; then
         printf 'The %s container does not exist. Run: scripts/local-dev.sh up\n' "$app_container" >&2
         exit 1
@@ -88,8 +89,8 @@ diagnose() {
 
     tracking_query='SELECT characterID, characterName, lastActive, TIMESTAMPDIFF(MINUTE, lastActive, UTC_TIMESTAMP()) AS leaseAgeMinutes, online, onlineCheckedAt, locationCheckedAt, locationObservedAt, lastLocationSystemID FROM esi ORDER BY userID, characterID; SELECT userID, characterID, characterName, systemID, systemName, maskID FROM tracking ORDER BY userID, characterID;'
 
-    # A fresh container initializes/migrates MySQL before supervisord starts.
-    # Make `restart && diagnose` reliable instead of racing that bootstrap.
+    # Bootstrap stops MySQL before Supervisor starts it again. Wait for both
+    # Supervisor and a working database connection before running diagnostics.
     for attempt in {1..60}; do
         container_state=$("${docker_cmd[@]}" inspect --format '{{.State.Status}}' "$app_container")
         if [[ "$container_state" != "running" ]]; then
@@ -98,7 +99,10 @@ diagnose() {
             "${docker_cmd[@]}" logs --tail 150 "$app_container" >&2
             exit 1
         fi
-        if "${docker_cmd[@]}" exec "$app_container" test -S /var/run/supervisor.sock 2>/dev/null; then
+        if "${docker_cmd[@]}" exec "$app_container" /bin/sh -c \
+            'test -S /var/run/supervisor.sock && mysql --protocol=socket --user=root --execute="SELECT 1"' \
+            >/dev/null 2>&1; then
+            ready=true
             break
         fi
         if [[ "$attempt" == 1 ]]; then
@@ -107,8 +111,8 @@ diagnose() {
         sleep 1
     done
 
-    if ! "${docker_cmd[@]}" exec "$app_container" test -S /var/run/supervisor.sock 2>/dev/null; then
-        printf 'Supervisor did not start within 60 seconds. Recent container logs:\n' >&2
+    if [[ "$ready" != true ]]; then
+        printf 'Supervisor and MySQL did not become ready within 60 seconds. Recent container logs:\n' >&2
         "${docker_cmd[@]}" logs --tail 150 "$app_container" >&2
         exit 1
     fi

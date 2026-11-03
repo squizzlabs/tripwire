@@ -39,6 +39,8 @@ password_bytes=$(LC_ALL=C printf '%s' "$MYSQL_PASSWORD" | wc -c)
 password_hex=$(printf '%s' "$MYSQL_PASSWORD" | od -An -v -tx1 | tr -d ' \n')
 
 install -d -m 0755 -o mysql -g mysql /run/mysqld /var/lib/mysql
+# Rebuilt images can assign mysql a different UID/GID than the preserved volume.
+chown -R mysql:mysql /var/lib/mysql
 install -d -m 0755 -o www-data -g www-data /run/php /var/lib/php/sessions /opt/app/cache
 
 if [[ ! -d /var/lib/mysql/mysql ]]; then
@@ -56,14 +58,17 @@ stop_bootstrap_mysql() {
 trap stop_bootstrap_mysql EXIT
 
 log 'Starting MySQL for database bootstrap'
-mysqld \
+if ! mysqld \
     --user=mysql \
     --daemonize \
     --pid-file="$bootstrap_pid" \
     --socket=/run/mysqld/mysqld.sock \
     --bind-address=127.0.0.1 \
     --event-scheduler=ON \
-    --log-error=/tmp/tripwire-mysql-bootstrap.log
+    --log-error=/tmp/tripwire-mysql-bootstrap.log; then
+    cat /tmp/tripwire-mysql-bootstrap.log >&2 || true
+    die 'MySQL failed to start during database bootstrap'
+fi
 
 for attempt in {1..60}; do
     if mysqladmin ping --protocol=socket --user=root --silent; then
