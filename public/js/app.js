@@ -3044,15 +3044,19 @@ const ChainMapRendererOrgchart = function(owner) {
 	/** Balance the chart's outside space so the root sits on its exact
 	 * horizontal centre line, independent of sibling subtree order. */
 	const centerRoot = function(map) {
-		const root = map.rows.find(function(row) { return !row.c[1] || row.c[1].v === null; });
-		if(!root) return;
-
 		const table = document.querySelector("#chainMap .google-visualization-orgchart-table");
-		const rootNode = document.getElementById("node" + root.c[0].v);
-		if(!table || !rootNode) return;
+		if(!table) return;
 
 		table.style.paddingLeft = "0px";
 		table.style.paddingRight = "0px";
+		const roots = map.rows.filter(function(row) { return !row.c[1] || row.c[1].v === null; });
+		// K-space and multi-system tabs have independent roots. Balancing the
+		// whole chart around the first one adds a chart's worth of empty space
+		// before the systems, leaving the initial viewport blank.
+		if(roots.length !== 1) return;
+		const rootNode = document.getElementById("node" + roots[0].c[0].v);
+		if(!rootNode) return;
+
 		const tableRect = table.getBoundingClientRect();
 		const rootRect = rootNode.getBoundingClientRect();
 		const rootCenter = rootRect.left + rootRect.width / 2;
