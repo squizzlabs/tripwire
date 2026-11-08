@@ -3,7 +3,7 @@ services:
   # COMPOSER DEPENDENCIES
   #################################################################
   composer:
-    image: composer:2
+    build: .docker/composer
     working_dir: /opt/app
     command:
       - install

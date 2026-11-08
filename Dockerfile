@@ -2,6 +2,8 @@
 
 # Install the PHP dependency without shipping Composer in the runtime image.
 FROM composer:2 AS php-dependencies
+# Composer checks the application's required extensions during installation.
+RUN docker-php-ext-install pdo_mysql
 WORKDIR /build
 COPY composer.json composer.lock ./
 RUN composer install \
