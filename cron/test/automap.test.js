@@ -191,3 +191,22 @@ test('automapping asks the user instead of guessing among multiple candidates', 
   assert.match(messages[0], /^\[character-tracking\] multiple connection candidates /);
   assert.match(messages[0], /"action":"awaiting_user_selection"/);
 });
+
+test('bookmark destination hints narrow server automap candidates', async () => {
+  const { candidateMatches } = await import('../src/jobs/automap.js');
+  const c3 = { name: 'J113432', wormholeClass: 3 };
+  assert.equal(candidateMatches({ targetSystemID: 5, targetName: '432' }, c3, {}), true);
+  assert.equal(candidateMatches({ targetSystemID: 5, targetName: '433' }, c3, {}), false);
+  const highsec = { name: 'Jita', security: 0.9, factionID: 500001 };
+  assert.equal(candidateMatches({ targetSystemID: 2, targetBookmark: 'sQuId', targetName: 'Trade hub' }, highsec, {}), true);
+  assert.equal(candidateMatches({ targetSystemID: 2, targetName: 'rUsT' }, highsec, {}), false);
+});
+
+
+test('Drifter bookmark class matches only Drifter jump destinations', async () => {
+  const { candidateMatches } = await import('../src/jobs/automap.js');
+  for (const wormholeClass of [14, 15, 16, 17, 18]) {
+    assert.equal(candidateMatches({ targetSystemID: 19 }, { wormholeClass }, {}), true);
+  }
+  assert.equal(candidateMatches({ targetSystemID: 19 }, { wormholeClass: 3 }, {}), false);
+});

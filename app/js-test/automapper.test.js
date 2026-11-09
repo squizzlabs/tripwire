@@ -1,5 +1,6 @@
 const assert = require('assert');
 const { include } = require('./helpers/helpers');
+global.bookmarkDestinations = require('../../public/js/bookmark-destinations');
 tripwire = {};
 include('public/js/combine');
 include('tripwire/automapper');

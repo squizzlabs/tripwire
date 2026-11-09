@@ -416,6 +416,7 @@ $system = $_REQUEST['system'] ?? '';
 				<span id="signatureType" class="select">
 					<select name="signatureType">
 						<option value="unknown">Unknown</option>
+						<option value="other">Other</option>
 						<option value="combat">Combat</option>
 						<option value="wormhole">Wormhole</option>
 						<option value="ore">Ore</option>
@@ -767,6 +768,7 @@ $system = $_REQUEST['system'] ?? '';
 				<div class="field"><label class="field-label" for="editType">Default type when adding</label>
 					<select id="editType">
 						<option value="unknown">Unknown</option>
+						<option value="other">Other</option>
 						<option value="combat">Combat</option>
 						<option value="wormhole">Wormhole</option>
 						<option value="ore">Ore</option>
@@ -1251,6 +1253,7 @@ $system = $_REQUEST['system'] ?? '';
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/moment.min.js?v=<?= VERSION ?>"></script>
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/intro.min.js?v=<?= VERSION ?>"></script>
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/combine.js?v=<?= assetVersion('js/combine.js') ?>"></script>
+	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/bookmark-destinations.js?v=<?= assetVersion('js/bookmark-destinations.js') ?>"></script>
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/app.js?v=<?= assetVersion('js/app.js') ?>"></script>
 	<!-- JS Includes -->
 </body>

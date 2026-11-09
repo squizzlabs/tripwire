@@ -1,3 +1,4 @@
+import bookmarkDestinations from '../../public/js/bookmark-destinations.js';
 import { readFileSync } from 'node:fs';
 
 export function loadStaticData(
@@ -15,7 +16,7 @@ export function loadStaticData(
     system(systemId) {
       const system = data.systems[systemId];
       return system
-        ? { ...system, wormholeClass: system.class }
+        ? { ...system, wormholeClass: system.class, spaceFactionID: bookmarkDestinations.spaceFaction(system, data.systems) }
         : undefined;
     },
     isGate(fromSystemId, toSystemId) {

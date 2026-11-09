@@ -1,3 +1,5 @@
+import bookmarkDestinations from '../../../public/js/bookmark-destinations.js';
+
 const GENERIC_SYSTEM_TYPES = [
   'Null-Sec', 'Low-Sec', 'High-Sec',
   'Class-1', 'Class-2', 'Class-3', 'Class-4', 'Class-5', 'Class-6', 'Class-13',
@@ -39,7 +41,8 @@ function includesType(value, targetTypes) {
   return values.some((item) => targetTypes.includes(item));
 }
 
-function candidateMatches(candidate, targetSystem, wormholeTypes) {
+export function candidateMatches(candidate, targetSystem, wormholeTypes) {
+  if (!bookmarkDestinations.hintsMatch(candidate.targetBookmark || candidate.targetName, targetSystem)) return false;
   const targetTypes = genericTypes(targetSystem);
   const targetClass = Number(targetSystem.wormholeClass) || null;
   if (candidate.targetSystemID === null) {
@@ -149,7 +152,7 @@ export async function automapTransition({
 
     const [candidateRows] = await connection.execute(
       `SELECT w.id AS wormholeID, w.type AS wormholeType,
-              b.id AS targetSignatureID, b.systemID AS targetSystemID
+              b.id AS targetSignatureID, b.systemID AS targetSystemID, b.name AS targetName, b.bookmark AS targetBookmark
          FROM wormholes w
          INNER JOIN signatures a ON a.id = w.initialID
          INNER JOIN signatures b ON b.id = w.secondaryID

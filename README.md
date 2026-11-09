@@ -41,9 +41,39 @@ What the refit changes, in one screen:
   on each box's corner, name and sig inside, statics hanging off the bottom
   edge, activity dots on the edge, pilots on the top-right. Flares breathe.
   The wheel pans, Ctrl-wheel zooms, Reset zoom is always there when needed.
-- **Signatures**: paste a scan anywhere (Ctrl-V, or the Paste-scan button),
+- **Signatures**: see the [Bookmark Reference](docs/bookmark-reference.md) for bookmark formats and examples; paste a scan anywhere (Ctrl-V, or the Paste-scan button),
   re-paste to update, type an id as `ABC-123`, click Life or Mass on a row to
   change it in place, undo. Columns line up. On phones a row is two lines.
+  Custom EVE bookmarks can also be pasted as `TYPE ABC DESTINATION` (folder
+  and timestamp columns are ignored). Types: `HS`, `LS`, `NS`, `C1`–`C6`
+  and other supported numbered classes, `C?`, `DR` (Drifter), `TR`/`PC` (Pochven), and
+  `GS`/`DC`/`RC` (gas/data/relic). `Z ABC-123 Site name` imports a regular
+  signature. Site-name recognition includes Unsecured (Data), Forgotten
+  (Relic), faction-qualified Local/Regional/Central (Data) and
+  Crumbling/Decayed/Ruined (Relic), plus known wormhole gas reservoir names. Exact matches also cover the three
+  Sleeper Cache variants (Data), Besieged Covert Research Facility and known
+  wormhole combat anomalies (Combat), and known wormhole deposits (Ore).
+  These rules also apply to unprefixed `ABC-123 Site name` bookmarks and
+  ignore case and repeated spaces. Unrecognized site names default to Other and remain available
+  on hover over the type; known classifications are preserved. Prefixes match
+  signatures in the current system; ambiguous
+  prefixes are skipped. A bookmark-only prefix is expanded when a later scan
+  supplies its full ID. Destination classes feed the auto-mapper; exact EVE
+  names, class-qualified last-three-digit J-number suffixes, and partial system/
+  region names resolve when they identify exactly one system. Faction aliases
+  are `SQUID` (Caldari), `RUST` (Minmatar), `FRANCE` (Gallente), and `CHINA`
+  (Amarr), before or after the name fragments. Matching is case-insensitive.
+  Destination hints are stored separately from custom system names;
+  ambiguous destinations retain their class and hints. Both auto-mappers
+  use faction and J-number suffix hints to narrow jump candidates. Bookmark
+  pastes offer the same deletion of missing signatures as scanner pastes;
+  abbreviated IDs retain all signatures matching their prefix. Wormhole bookmark
+  markers `<4H`/`<1H` set remaining life and `<50%`/`<10%` set remaining mass.
+  These markers are excluded from destination hints. Re-pasting preserves any
+  tighter existing life or mass limit. `*` home markers are ignored for wormholes;
+  `???` in the signature position denotes an unknown ID and is matched by
+  destination rather than merged with unrelated unknown signatures.
+
 - **A layout that holds still**: panels do not resize when you change
   systems; the System panel fits without scrolling; three columns from 960px.
 - **Command palette** (`/` or Ctrl-K): jump to a system, a chain tab or a

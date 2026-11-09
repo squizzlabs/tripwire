@@ -4,7 +4,7 @@ class signature {
     protected $id = null;
     protected $signatureID = null;
     protected $systemID = null;
-    protected $type = ['unknown', 'combat', 'data', 'relic', 'ore', 'gas', 'wormhole'];
+    protected $type = ['unknown', 'combat', 'data', 'relic', 'ore', 'gas', 'wormhole', 'other'];
     protected $name = null;
     protected $bookmark = null;
     protected $lifeTime = null;
@@ -55,7 +55,7 @@ class signature {
                 $this->systemID = is_numeric($value) ? (int)$value : null;
                 break;
             case 'type':
-                $this->type = in_array(strtolower($value), ['unknown', 'combat', 'data', 'relic', 'ore', 'gas', 'wormhole']) ? strtolower($value) : $this->type;
+                $this->type = in_array(strtolower($value), ['unknown', 'combat', 'data', 'relic', 'ore', 'gas', 'wormhole', 'other']) ? strtolower($value) : $this->type;
                 break;
             case 'name':
                 $this->name = $value;

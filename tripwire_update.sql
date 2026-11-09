@@ -40,6 +40,22 @@ CREATE TABLE IF NOT EXISTS `automap_pending` (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;;
 
+-- Preserve enum ordinals; extend both live rows and undo/history snapshots.
+DROP PROCEDURE IF EXISTS `tripwire_add_other_signature_type`;;
+CREATE PROCEDURE `tripwire_add_other_signature_type`()
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'signatures' AND COLUMN_NAME = 'type' AND COLUMN_TYPE NOT LIKE '%''other''%') THEN
+        ALTER TABLE signatures MODIFY COLUMN type ENUM('unknown','combat','data','relic','ore','gas','wormhole','other') NOT NULL;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = '_history_signatures' AND COLUMN_NAME = 'type' AND COLUMN_TYPE NOT LIKE '%''other''%') THEN
+        ALTER TABLE _history_signatures MODIFY COLUMN type ENUM('unknown','combat','data','relic','ore','gas','wormhole','other') NOT NULL;
+    END IF;
+END;;
+CALL `tripwire_add_other_signature_type`();;
+DROP PROCEDURE `tripwire_add_other_signature_type`;;
+
 -- Add an index only when no index with the same ordered columns already exists.
 DROP PROCEDURE IF EXISTS `tripwire_add_index`;;
 CREATE PROCEDURE `tripwire_add_index`(
