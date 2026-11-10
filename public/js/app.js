@@ -5746,7 +5746,7 @@ tripwire.pasteSignatures = function() {
 	}
 
 	function hasScannedID(signature) {
-		return !!(signature && /^[a-z]{3}\d{3}$/i.test(signature.signatureID || ""));
+		return !!(signature && /^[a-z]{3}(?:-?\d{3})?$/i.test(signature.signatureID || ""));
 	}
 
 	// A mapper source does not have to come from the latest clipboard paste.
@@ -5755,10 +5755,17 @@ tripwire.pasteSignatures = function() {
 	function selectedMapping() {
 		var selected = [];
 		var seenWormholes = {};
-		$("#sigTable tbody tr.selected").each(function() {
+		var rows = $("#sigTable tbody tr.selected");
+		if (rows.length < 1 || rows.length > 2) return null;
+		rows.each(function() {
 			var signature = tripwire.client.signatures[$(this).data("id")];
 			var wormhole = signature && tripwire.signaturePayload.wormholeForSignature(signature.id);
-			if (!signature || signature.type !== "wormhole" || !wormhole || wormhole.type === "GATE") return;
+			if (!signature || signature.systemID != viewingSystemID) return;
+			if (signature.type === "unknown" && !wormhole) {
+				selected.push({local: signature});
+				return;
+			}
+			if (signature.type !== "wormhole" || !wormhole || wormhole.type === "GATE") return;
 			if (seenWormholes[String(wormhole.id)]) return;
 			seenWormholes[String(wormhole.id)] = true;
 			var other = signature.id == wormhole.initialID
@@ -5767,19 +5774,24 @@ tripwire.pasteSignatures = function() {
 			if (other) selected.push({wormhole: wormhole, local: signature, other: other});
 		});
 
-		if (selected.length < 1 || selected.length > 2) return null;
-		var sources = $.grep(selected, function(item) { return hasScannedID(item.local); });
+		if (selected.length !== rows.length) return null;
+		// A regular unknown row is always absorbed into the wormhole. Its ID
+		// may still be blank, or both rows may already have scanned IDs.
+		var sources = $.grep(selected, function(item) { return !item.wormhole; });
+		if (!sources.length) {
+			sources = $.grep(selected, function(item) { return hasScannedID(item.local); });
+		}
 		if (sources.length !== 1) return null;
 
 		var source = sources[0];
 		var excluded = {};
-		excluded[String(source.wormhole.id)] = true;
+		if (source.wormhole) excluded[String(source.wormhole.id)] = true;
 		var candidates;
 		if (selected.length === 2) {
 			var target = selected[0] === source ? selected[1] : selected[0];
 			// With two rows selected the unidentified connection is the target;
 			// this makes Ctrl-click + Map a one-choice operation.
-			if (hasScannedID(target.local)) return null;
+			if (!target.wormhole || (source.wormhole && hasScannedID(target.local))) return null;
 			candidates = [target];
 		} else {
 			candidates = mappingCandidates({}, excluded);
@@ -5789,7 +5801,7 @@ tripwire.pasteSignatures = function() {
 		return {
 			pending: [{
 				signatureID: source.local.signatureID,
-				created: {wormhole: source.wormhole},
+				created: source.wormhole ? {wormhole: source.wormhole} : {signature: source.local},
 				removedUndo: tripwire.signaturePayload.undoEntryFor(source.local.id)
 			}],
 			candidates: candidates,
@@ -5801,7 +5813,7 @@ tripwire.pasteSignatures = function() {
 
 	function mapWormhole(payload, undo, pending, candidate) {
 		var local = $.extend({}, candidate.local, {
-			signatureID: pending.signatureID,
+			signatureID: hasScannedID(pending) ? pending.signatureID : candidate.local.signatureID,
 			type: "wormhole"
 		});
 		payload.signatures.update.push({
@@ -5817,7 +5829,7 @@ tripwire.pasteSignatures = function() {
 		// The paste has already created this connection. Replacing it with the
 		// selected existing connection keeps paste immediate without leaving a
 		// duplicate behind when the optional Map action is used.
-		payload.signatures.remove.push(pending.created.wormhole);
+		payload.signatures.remove.push(pending.created.wormhole || pending.created.signature.id);
 		undo.push(tripwire.signaturePayload.undoEntryFor(candidate.local.id));
 	}
 
@@ -5886,15 +5898,16 @@ tripwire.pasteSignatures = function() {
 		pendingMapping = null;
 		$("#map-pasted-wormholes")
 			.removeClass("is-pending")
-			.attr("data-tooltip", "Map wormhole connections");
+			.attr("data-tooltip", "Merge selected signatures or map pasted wormholes");
 	}
 
 	function openMappingDialog() {
-		if (!pendingMapping) {
+		// Explicit row selections take precedence over an earlier paste.
+		if ($("#sigTable tbody tr.selected").length) {
 			pendingMapping = selectedMapping();
 		}
 		if (!pendingMapping) {
-			Notify.trigger("Select one identified wormhole, or select it together with the unknown connection it belongs to.", "blue", 5000, null, {
+			Notify.trigger("Select an unknown signature and its wormhole, or an identified wormhole and its unknown connection.", "blue", 5000, null, {
 				animation: false,
 				fade: 0
 			});
@@ -5907,12 +5920,12 @@ tripwire.pasteSignatures = function() {
 		var systemID = pendingMapping.systemID;
 		var systemName = tripwire.systems[systemID] ? tripwire.systems[systemID].name : "this system";
 		dialog.find(".paste-map-intro").text(pendingMapping.fromSelection
-			? "Map the selected signature to its existing connection in " + systemName + ". The duplicate connection will be removed."
+			? "Map the selected signature to its existing connection in " + systemName + ". The source row will be removed."
 			: "The wormholes were imported. Map any signatures that belong to existing connections in " + systemName + "."
 		);
 		dialog.find(".paste-map-columns span:first").text(pendingMapping.fromSelection ? "Selected signature" : "Pasted signature");
 		dialog.find(".paste-map-hint").text(pendingMapping.fromSelection
-			? "Applying this match keeps the existing mapped connection and removes the duplicate."
+			? "Applying this match keeps the wormhole’s destination, state and history and removes the source row."
 			: "Leave a signature set to “Keep new connection” if it is not one of the connections already on the map."
 		);
 

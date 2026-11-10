@@ -189,9 +189,9 @@ $system = $_REQUEST['system'] ?? '';
 						<span class="bar-label">Paste scan</span><kbd>&#8984;V</kbd>
 					</i>
 					<span class="bar-sep"></span>
-					<i id="map-pasted-wormholes" class="bar-btn" role="button" tabindex="0" data-tooltip="Map wormhole connections" aria-label="Map wormhole connections">
+					<i id="map-pasted-wormholes" class="bar-btn" role="button" tabindex="0" data-tooltip="Merge selected signatures or map pasted wormholes" aria-label="Merge signatures">
 						<svg class="bar-map-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 5-2 8 3 5-2v13l-5 2-8-3-5 2Z"/><path d="M8 4v13M16 7v13"/></svg>
-						<span class="bar-label">Map</span>
+						<span class="bar-label">Merge</span>
 					</i>
 					<i id="edit-signature" data-icon="edit" class="bar-btn disabled" data-tooltip="Edit the selected signature"><span class="bar-label">Edit</span></i>
 					<i id="delete-signature" data-icon="trash" class="bar-btn disabled" data-tooltip="Delete the selected signatures"><span class="bar-label">Delete</span></i>
