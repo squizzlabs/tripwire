@@ -340,6 +340,7 @@ var options = new function() {
 	var voiceHintTimer = null;
 	var voiceHintStartedAt = null;
 	var voiceHintExpired = false;
+	var voiceHintVisible = false;
 
 	this.userID = init.userID;
 	this.character = {id: init.characterID, name: init.characterName};
@@ -440,15 +441,38 @@ var options = new function() {
 	this.positionVoiceHint = function() {
 		var hint = $("#voice-startup-hint");
 		if (!hint.is(":visible")) return;
-		// Escape the panel's overflow clipping so the callout can sit above it.
+		// Place the callout below the header control, outside overflow clipping.
 		hint.appendTo("body").position({
-			my: "right bottom", at: "right top-8",
+			my: "right top", at: "right bottom+8",
 			of: $("#toggle-jspace-voice"), collision: "fit"
 		});
 	};
 
 	this.updateVoiceStatus = function() {
 		var message = this.voiceStartupMessage();
+		if (message && !voiceHintVisible) {
+			// Keep a rolling history across reloads, separate from synced preferences.
+			try {
+				var now = Date.now();
+				var key = "tripwire_voice_hint_views";
+				var history = JSON.parse(localStorage.getItem(key) || "[]");
+				history = Array.isArray(history) ? history.filter(function(time) {
+					return typeof time === "number" && Number.isFinite(time) && time > now - 24 * 60 * 60 * 1000;
+				}) : [];
+				if (history.length >= 3) {
+					voiceHintExpired = true;
+					message = "";
+				} else {
+					history.push(now);
+					localStorage.setItem(key, JSON.stringify(history));
+				}
+			} catch (error) {
+				// Without persistent history we cannot enforce the display limit.
+				voiceHintExpired = true;
+				message = "";
+			}
+		}
+		voiceHintVisible = !!message;
 		if (message && voiceHintTimer === null) {
 			var self = this;
 			voiceHintStartedAt = Date.now();
@@ -464,9 +488,11 @@ var options = new function() {
 			.css("width", (remaining / voiceHintDuration * 100) + "%");
 		if (remaining) progress.animate({width: "0%"}, remaining, "linear");
 		this.positionVoiceHint();
-		$("#toggle-jspace-voice").toggleClass("voice-needs-interaction", !!message)
+		$("#toggle-jspace-voice").toggleClass("voice-needs-interaction", voiceRestorePending)
 			.toggleClass("active", this.voice.enabled === true)
-			.attr("aria-pressed", String(this.voice.enabled === true));
+			.attr("aria-pressed", String(this.voice.enabled === true))
+			.attr("aria-label", voiceRestorePending ? "Voice waiting for interaction" : (this.voice.enabled ? "Turn voice announcements off" : "Turn voice announcements on"))
+			.attr("data-tooltip", voiceRestorePending ? "Voice is waiting. Click to resume jump announcements." : (this.voice.enabled ? "Voice on. Click to mute jump announcements." : "Voice off. Click to enable jump announcements."));
 	};
 
 	this.restoreVoiceAfterGesture = function(event) {
@@ -9118,7 +9144,7 @@ tripwire.panelResize = (function() {
 tripwire.panels = (function() {
     var PANELS = [
         {id: "infoWidget",       title: "System",     defaultVisible: true},
-        {id: "signaturesWidget", title: "Signatures", defaultVisible: true},
+        {id: "signaturesWidget", title: "Sigs",       defaultVisible: true},
         {id: "notesWidget",      title: "Notes",      defaultVisible: true},
         {id: "chainWidget",      title: "Chain",      defaultVisible: true}
     ];

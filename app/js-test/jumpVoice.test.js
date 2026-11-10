@@ -201,7 +201,7 @@ describe('Voice playback preferences', function() {
 });
 
 describe('Voice activation waits for interaction', function() {
-    function loadOptions(saved, fromLocalStorage, schedule = () => 1) {
+    function loadOptions(saved, fromLocalStorage, schedule = () => 1, historyStore = new Map(), now = Date.now()) {
         const element = new Proxy(function() {}, {get: () => element, apply: () => element});
         const jquery = () => element;
         jquery.map = values => values;
@@ -209,7 +209,12 @@ describe('Voice activation waits for interaction', function() {
         jquery.extend = Object.assign;
         const sandbox = {
             setTimeout: schedule, $: jquery, init: {userID: 1, corporationID: 2},
-            localStorage: {getItem: () => fromLocalStorage ? JSON.stringify({grid: {}, ...saved}) : null},
+            Date: {now: () => now},
+            localStorage: {
+                getItem: key => key === 'tripwire_options'
+                    ? (fromLocalStorage ? JSON.stringify({grid: {}, ...saved}) : null) : historyStore.get(key),
+                setItem: (key, value) => historyStore.set(key, value)
+            },
             window: {speechSynthesis: {cancel() {}}, SpeechSynthesisUtterance: function() {}}, tripwire: null, guidance: null, chain: {redraw() {}}, viewingSystemID: 1
         };
         vm.createContext(sandbox);
@@ -301,6 +306,36 @@ describe('Voice activation waits for interaction', function() {
         reloaded.setVoiceEnabled(false);
         assert.equal(reloaded.voiceStartupMessage(), '');
     });
+    it('limits displays across reloads to three in a rolling 24 hours', function() {
+        const storage = new Map();
+        const start = 1000000000;
+        const day = 24 * 60 * 60 * 1000;
+        const load = time => loadOptions({voice: {enabled: true}}, false, () => 1, storage, time);
+        for (let i = 0; i < 3; i++) {
+            const options = load(start + i * 1000);
+            assert.match(options.voiceStartupMessage(), /Voice is waiting/);
+            options.updateVoiceStatus();
+        }
+        const blocked = load(start + day - 1);
+        assert.equal(blocked.voiceStartupMessage(), '');
+        assert.equal(blocked.restoreVoiceAfterGesture({type: 'click', isTrusted: true}), true);
+        assert.match(load(start + day).voiceStartupMessage(), /Voice is waiting/);
+        assert.equal(load(start + day).voiceStartupMessage(), '');
+        assert.match(load(start + day + 1000).voiceStartupMessage(), /Voice is waiting/);
+    });
+    it('does not count hidden hints and counts each reappearance', function() {
+        const storage = new Map();
+        loadOptions({voice: {hideStartupHint: true}}, false, () => 1, storage);
+        assert.equal(storage.size, 0);
+        const options = loadOptions({}, false, () => 1, storage);
+        for (let i = 0; i < 3; i++) {
+            options.setVoiceEnabled(true);
+            options.setVoiceEnabled(false);
+        }
+        assert.equal(options.voiceStartupMessage(), '');
+        assert.equal(JSON.parse(storage.get('tripwire_voice_hint_views')).length, 3);
+    });
+
     it('restores on paste only once', function() {
         const options = loadOptions({voice: {enabled: true}});
         assert.equal(options.restoreVoiceAfterGesture({type: 'paste', isTrusted: true}), true);

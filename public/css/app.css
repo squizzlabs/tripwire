@@ -4349,7 +4349,7 @@ pre,
 
 	#notesWidget > .controls > .bar-right { display: none; }
 	#signaturesWidget > .controls > .bar-right { display: flex; }
-	#signaturesWidget > .controls > .bar-right > :not(.voice-control) { display: none; }
+	#signaturesWidget > .controls > .bar-right > * { display: none; }
 
 	#topbar > .align-right > #settings,
 	#topbar > .align-right > i#settings { margin-left: auto; }
@@ -7777,11 +7777,32 @@ h4.chip,
     font-variant-numeric: tabular-nums;
 }
 
-/* The startup callout is positioned above Voice, outside panel clipping. */
+/* Voice lives with the global header controls; its callout opens below it. */
 .voice-control { position: relative; display: inline-flex; }
-.controls #toggle-jspace-voice.voice-needs-interaction {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px var(--primary);
+#toggle-jspace-voice { position: relative; }
+#toggle-jspace-voice svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+#toggle-jspace-voice .voice-sound,
+#toggle-jspace-voice.active .voice-muted,
+#toggle-jspace-voice .voice-waiting-dot { display: none; }
+#toggle-jspace-voice.active .voice-sound { display: inline; }
+#topbar .hdr-tools #toggle-jspace-voice.active { color: var(--primary); border-color: var(--primary); }
+#toggle-jspace-voice.voice-needs-interaction .voice-waiting-dot {
+    display: block;
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--primary);
 }
 #voice-startup-hint {
     position: absolute;

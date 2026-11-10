@@ -128,6 +128,7 @@ $system = $_REQUEST['system'] ?? '';
 
 			<span class="hdr-tools">
 				<span class="hdr-tool-buttons">
+					<span class="voice-control"><button id="toggle-jspace-voice" type="button" class="themebtn" aria-pressed="false" aria-describedby="voice-startup-hint" aria-label="Voice announcements for newly mapped J-space systems" data-tooltip="Announce class, last three digits, and statics when you jump into a newly mapped J-space system"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4Z"/><path class="voice-sound" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="voice-muted" d="m16 9 6 6m0-6-6 6"/></svg><span class="voice-waiting-dot" aria-hidden="true"></span></button><span id="voice-startup-hint" role="status" hidden><span class="voice-startup-message"></span><span class="voice-startup-progress" aria-hidden="true"><span></span></span></span></span>
 					<button id="theme-toggle" class="themebtn" type="button" aria-label="Switch to light" title="Switch to light">&#9788;</button>
 					<i id="settings" data-icon="settings" class="options" data-tooltip="Settings"></i>
 				</span>
@@ -183,7 +184,7 @@ $system = $_REQUEST['system'] ?? '';
 			<li id="signaturesWidget" class="gridWidget" data-row="1" data-col="8" data-sizex="7" data-sizey="6" data-min-sizex="5" data-min-sizey="2" style="width: 410px; height: 350px;">
 				<div class="controls">
 					<i id="signature-count" class="bar-count" data-tooltip="Signatures in this system">0</i>
-					<i id="add-signature" data-icon="plus" class="bar-btn bar-primary" data-tooltip="Add a signature by hand"><span class="bar-label">Add</span></i>
+					<i id="add-signature" data-icon="plus" class="bar-btn bar-primary bar-icon" aria-label="Add signature" data-tooltip="Add a signature by hand"></i>
 					<i id="paste-signatures" class="bar-btn" data-tooltip="Paste probe scanner results. Ctrl-V anywhere on the page does the same.">
 						<svg class="bar-clipboard-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5M9 9h6M9 13h6M9 17h4"/></svg>
 						<span class="bar-label">Paste scan</span><kbd>&#8984;V</kbd>
@@ -199,7 +200,6 @@ $system = $_REQUEST['system'] ?? '';
 						<i id="undo" data-icon="undo" class="bar-btn bar-icon disabled" data-tooltip="Undo (Ctrl-Z)"></i>
 						<i id="redo" data-icon="redo" class="bar-btn bar-icon disabled" data-tooltip="Redo (Ctrl-Y)"></i>
 						<span class="bar-sep"></span>
-						<span class="voice-control"><button id="toggle-jspace-voice" type="button" class="bar-btn bar-toggle" aria-pressed="false" aria-describedby="voice-startup-hint" aria-label="Voice announcements for newly mapped J-space systems" data-tooltip="Announce class, last three digits, and statics when you jump into a newly mapped J-space system">Voice</button><span id="voice-startup-hint" role="status" hidden><span class="voice-startup-message"></span><span class="voice-startup-progress" aria-hidden="true"><span></span></span></span></span>
 						<i id="toggle-automapper" class="bar-btn bar-icon bar-toggle disabled" data-icon="auto" data-tooltip="Auto-mapper"></i>
 						<i class="tutorial bar-btn bar-icon" data-tooltip="Show tutorial for this section">?</i>
 					</div>
@@ -837,7 +837,7 @@ $system = $_REQUEST['system'] ?? '';
 
 			<section class="settings-pane" data-pane="voice" role="tabpanel" hidden>
 				<div class="field"><label class="field-label" for="voice-enabled">Jump announcements <small>Only for newly mapped J-space systems; if previously on, resumes after a click, paste, or key press</small></label><input id="voice-enabled" type="checkbox" /></div>
-				<div class="field"><label class="field-label" for="voice-hide-startup-hint">Hide startup message <small>Hide the message and countdown above the Voice button</small></label><input id="voice-hide-startup-hint" type="checkbox" /></div>
+				<div class="field"><label class="field-label" for="voice-hide-startup-hint">Hide startup message <small>Hide the message and countdown below the speaker button</small></label><input id="voice-hide-startup-hint" type="checkbox" /></div>
 				<div class="field field-block"><label class="field-label" for="voice-choice">Voice <small>Available voices depend on your browser and device</small></label><select id="voice-choice"><option value="">Browser default</option></select></div>
 				<div class="field"><label class="field-label" for="voice-volume">Volume</label><span><input id="voice-volume" type="range" min="0" max="100" step="1" /><output for="voice-volume"></output></span></div>
 				<div class="field"><label class="field-label" for="voice-rate">Speed</label><span><input id="voice-rate" type="range" min="0.5" max="2" step="0.05" /><output for="voice-rate"></output></span></div>
