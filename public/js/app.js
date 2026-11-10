@@ -392,8 +392,9 @@ var options = new function() {
 			}
 		}
 
-		// Remember the preference, but wait for a fresh gesture before playing speech.
-		voiceRestorePending = this.voice.enabled === true;
+		// Only restore an explicitly saved opt-in; new users stay muted.
+		var savedOptions = data || localOptions;
+		voiceRestorePending = !!(savedOptions && savedOptions.voice && savedOptions.voice.enabled === true);
 		this.voice.enabled = false;
 		this.apply();
 		if(tripwire) { set_tracking_text(); }

@@ -235,6 +235,22 @@ describe('Voice activation waits for interaction', function() {
             assert.equal(options.voice.enabled, true, 'saving must not turn off this session');
         });
     });
+    [false, true].forEach(fromLocalStorage => {
+        [{}, {voice: {}}, {voice: {enabled: false}}].forEach(saved => {
+            it('keeps voice off without a saved opt-in from ' + (fromLocalStorage ? 'local storage' : 'the server') + ': ' + JSON.stringify(saved), function() {
+                const options = loadOptions(saved, fromLocalStorage);
+                assert.equal(options.voice.enabled, false);
+                for (const type of ['click', 'paste', 'keydown']) {
+                    assert.equal(options.restoreVoiceAfterGesture({type, isTrusted: true}), false);
+                }
+                assert.equal(options.get().voice.enabled, false);
+                options.setVoiceEnabled(true);
+                const reloaded = loadOptions(JSON.parse(JSON.stringify(options.get())), fromLocalStorage);
+                assert.equal(reloaded.restoreVoiceAfterGesture({type: 'click', isTrusted: true}), true);
+                assert.equal(reloaded.voice.enabled, true);
+            });
+        });
+    });
     it('shows the appropriate startup hint and clears it after a key press', function() {
         const pending = loadOptions({voice: {enabled: true}});
         assert.match(pending.voiceStartupMessage(), /Voice is waiting.*press a key/);
