@@ -1,6 +1,7 @@
 const assert = require('assert');
 const vm = require('vm');
 const {readSource} = require('./helpers/source');
+const bookmarkSettings = require('../../public/js/bookmark-settings');
 
 describe('Bookmark signature paste', function() {
     let context;
@@ -10,8 +11,8 @@ describe('Bookmark signature paste', function() {
         $.inArray = (value, values) => values.indexOf(value);
         $.map = (values, fn) => Object.values(values).map(fn).filter(v => v != null);
         $.each = (values, fn) => Object.entries(values).forEach(([k, v]) => fn(k, v));
-        context = vm.createContext({$, document: {}, bookmarkDestinations: require('../../public/js/bookmark-destinations'), appData: {}, viewingSystemID: 31000001,
-            options: {signatures: {pasteLife: 72}},
+        context = vm.createContext({$, document: {}, bookmarkSettings, bookmarkDestinations: require('../../public/js/bookmark-destinations'), appData: {}, viewingSystemID: 31000001,
+            options: {bookmarks: {...bookmarkSettings.preset('training'), enabled: true}, signatures: {pasteLife: 72}},
             tripwire: {systems: {30000142: {name: 'Jita', security: 0.9, factionID: 500001}}, client: {signatures: {}, wormholes: {}},
                 refresh: (mode, payload, success, complete) => {context.payload = payload; complete();}}
         });
@@ -60,7 +61,7 @@ describe('Bookmark signature paste', function() {
         const result = paste('C2 TYI 432');
         assert.equal(result.add.length, 0);
         assert.equal(result.update[0].signatures[1].systemID, 4);
-        assert.equal(result.update[0].signatures[1].bookmark, '432');
+        assert.equal(result.update[0].signatures[1].bookmark, 'bm1:@j432');
         assert.equal(result.update[0].wormhole.mass, 'critical');
         assert.equal(result.update[0].wormhole.parent, 'secondary');
     });
@@ -79,7 +80,7 @@ describe('Bookmark signature paste', function() {
         context.tripwire.client.wormholes = {3: {id: 3, initialID: 1, secondaryID: 2, parent: 'initial'}};
         const result = paste('HS ABC SQUID');
         assert.equal(result.update[0].signatures[0].systemID, 30000142);
-        assert.equal(result.update[0].signatures[0].bookmark, 'SQUID');
+        assert.equal(result.update[0].signatures[0].bookmark, 'bm1:@f500001');
         assert.equal(result.update[0].signatures[1].id, 2);
     });
     it('expands a bookmark-only prefix when a scan supplies the full ID', function() {
@@ -102,12 +103,12 @@ describe('Bookmark signature paste', function() {
         context.tripwire.systems[30000144] = {name: 'Perimeter', security: 0.9, factionID: 500001};
         const added = paste('HS ESM SQUID').add[0].signatures[1];
         assert.equal(added.name, undefined);
-        assert.equal(added.bookmark, 'SQUID');
+        assert.equal(added.bookmark, 'bm1:@f500001');
         context.tripwire.client.signatures = {1: {id: 1, systemID: 31000001, signatureID: 'ESM123', type: 'wormhole'}, 2: {id: 2, systemID: 30000142, type: 'wormhole', name: 'SQUID'}};
         context.tripwire.client.wormholes = {3: {id: 3, initialID: 1, secondaryID: 2}};
         const updated = paste('HS ESM SQUID').update[0].signatures[1];
         assert.equal(updated.name, null);
-        assert.equal(updated.bookmark, 'SQUID');
+        assert.equal(updated.bookmark, 'bm1:@f500001');
         assert.equal(updated.systemID, 30000142);
         context.tripwire.client.signatures[2].name = 'Trade hub';
         assert.equal(paste('HS ESM SQUID').update[0].signatures[1].name, 'Trade hub');
@@ -218,7 +219,7 @@ describe('Bookmark signature paste', function() {
                 assert.equal(entry.wormhole.lifeHours, hours);
                 assert.equal(entry.wormhole.mass, mass);
                 assert.equal(entry.signatures[1].systemID, '30000142');
-                assert.equal(entry.signatures[1].bookmark, 'Jita');
+                assert.equal(entry.signatures[1].bookmark, 'bm1:Jita');
                 assert.equal(entry.signatures[0].lifeLeft, '2026-11-' + (hours === 4 ? '11 00' : '10 21') + ':00:00');
                 assert.equal(entry.signatures[0].lifeLeft, entry.signatures[1].lifeLeft);
             });
@@ -259,7 +260,7 @@ describe('Bookmark signature paste', function() {
         const entry = paste('C3 ??? 658 *\tMC Deputy Training / Wormholes\t2026.11.10 21:34').add[0];
         assert.equal(entry.signatures[0].signatureID, '???');
         assert.equal(entry.signatures[1].systemID, '31000002');
-        assert.equal(entry.signatures[1].bookmark, '658');
+        assert.equal(entry.signatures[1].bookmark, 'bm1:@j658');
         assert.equal(entry.signatures[1].name, undefined);
         context.tripwire.client.signatures = {1: {id: 1, systemID: 31000001, signatureID: null, type: 'wormhole'}, 2: {id: 2, systemID: 31000002, type: 'wormhole'}};
         context.tripwire.client.wormholes = {3: {id: 3, initialID: 1, secondaryID: 2}};
@@ -368,7 +369,7 @@ describe('Bookmark signature paste', function() {
         assert.equal(entry.signatures[1].lifeLeft, '2026-11-11 01:45:00');
         assert.equal(entry.signatures[1].bookmark, undefined);
         const highsec = result.update.find(entry => entry.wormhole.id === 6);
-        assert.equal(highsec.signatures[1].bookmark, 'FRANCE');
+        assert.equal(highsec.signatures[1].bookmark, 'bm1:@f500004');
         assert.equal(highsec.wormhole.life, 'stable');
         assert.equal(highsec.wormhole.mass, 'stable');
     });
@@ -417,6 +418,48 @@ describe('Bookmark signature paste', function() {
         assert.equal(result.add.length, 0);
         assert.equal(result.update.length, 1);
         assert.equal(result.update[0].id, 2);
+    });
+    it('leaves scanner-result pasting available with bookmark imports disabled', function() {
+        context.options.bookmarks.enabled = false;
+        assert.equal(context.tripwire.parseBookmark('HS ABC Jita'), null);
+        assert.equal(paste('HS ABC Jita'), undefined);
+        assert.equal(paste('ABC-123\tCosmic Signature\tGas Site\tReservoir\t100.0%\t1.00 AU').add[0].type, 'Gas');
+    });
+    it('uses custom codes, faction aliases and life/mass markers for this account', function() {
+        context.options.bookmarks = {...bookmarkSettings.preset('standard'), enabled: true,
+            prefixes: 'HIGH=HS\nGAS=GS', factions: 'BLUE=CALDARI', markers: 'EOL=LIFE4\nCRIT=MASS10',
+            campMarkers: 'CAMP', ignoreMarkers: '#'};
+        const entry = paste('high ABC blue eol crit #').add[0];
+        assert.equal(entry.signatures[1].systemID, '30000142');
+        assert.equal(entry.signatures[1].bookmark, 'bm1:@f500001');
+        assert.equal(entry.wormhole.lifeHours, 4);
+        assert.equal(entry.wormhole.mass, 'critical');
+        assert.equal(context.tripwire.parseBookmark('HS ABC Jita'), null);
+        assert.equal(paste('GAS DEF CAMP').add[0].name, undefined);
+    });
+    it('allows site overrides and disables built-in inference and unprefixed bookmarks', function() {
+        context.options.bookmarks.inferSites = false;
+        context.options.bookmarks.unprefixed = false;
+        context.options.bookmarks.fallback = 'unknown';
+        context.options.bookmarks.sites = 'My Site=Relic';
+        assert.equal(paste('Z ABC-123 My Site').add[0].type, 'Relic');
+        assert.equal(paste('Z DEF-123 Unsecured Perimeter Transponder Farm').add[0].type, 'unknown');
+        assert.equal(context.tripwire.parseBookmark('ABC-123 My Site'), null);
+    });
+    it('can disable automatic reuse of mapped connections', function() {
+        mappedHighsec(false);
+        context.options.bookmarks.reuseConnections = false;
+        const result = paste('HS NHF ???');
+        assert.equal(result.add.length, 1);
+        assert.equal(result.update.length, 0);
+    });
+    it('keeps legacy generic connections matched when reimported with canonical hints', function() {
+        context.tripwire.systems = {};
+        context.tripwire.client.signatures = {1: {id: 1, systemID: 31000001, signatureID: '???', type: 'wormhole'}, 2: {id: 2, systemID: 2, type: 'wormhole', bookmark: 'SQUID'}};
+        context.tripwire.client.wormholes = {3: {id: 3, initialID: 1, secondaryID: 2}};
+        const result = paste('HS ABC SQUID');
+        assert.equal(result.add.length, 0);
+        assert.equal(result.update[0].wormhole.id, 3);
     });
     it('continues to parse scanner results', function() {
         const result = paste('HOT-250\tCosmic Signature\tWormhole\tUnstable Wormhole\t100.0%\t55 km');

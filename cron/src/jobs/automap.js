@@ -42,7 +42,7 @@ function includesType(value, targetTypes) {
 }
 
 export function candidateMatches(candidate, targetSystem, wormholeTypes) {
-  if (!bookmarkDestinations.hintsMatch(candidate.targetBookmark || candidate.targetName, targetSystem)) return false;
+  if (!bookmarkDestinations.hintsMatch(candidate.targetBookmark, targetSystem)) return false;
   const targetTypes = genericTypes(targetSystem);
   const targetClass = Number(targetSystem.wormholeClass) || null;
   if (candidate.targetSystemID === null) {

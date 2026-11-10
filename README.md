@@ -44,6 +44,10 @@ What the refit changes, in one screen:
 - **Signatures**: see the [Bookmark Reference](docs/bookmark-reference.md) for bookmark formats and examples; paste a scan anywhere (Ctrl-V, or the Paste-scan button),
   re-paste to update, type an id as `ABC-123`, click Life or Mass on a row to
   change it in place, undo. Columns line up. On phones a row is two lines.
+  Configure per-account bookmark imports under **Settings → Signatures**. They
+  default to on with standard codes only. Choose
+  **Training conventions** for the examples below, or customize codes, aliases,
+  markers, and site-name rules. Scanner-result pasting always remains available.
   Custom EVE bookmarks can also be pasted as `TYPE ABC DESTINATION` (folder
   and timestamp columns are ignored). Types: `HS`, `LS`, `NS`, `C1`–`C6`
   and other supported numbered classes, `C?`, `DR` (Drifter), `TR`/`PC` (Pochven), and

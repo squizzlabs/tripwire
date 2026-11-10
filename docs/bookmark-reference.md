@@ -4,6 +4,45 @@ Tripwire can import signatures and wormhole connections from bookmarks copied ou
 
 Bookmark codes, signature letters, destination matching, and recognized site names are **case-insensitive**. Folder and timestamp columns are ignored. Only the bookmark title is used.
 
+## Choose your bookmark conventions
+
+Open **Settings → Signatures → Bookmark imports**. Rules are saved to your
+Tripwire account; they do not change another user's import settings. Signatures
+and connections you import are still shared with your active map.
+
+Bookmark imports start **on with standard codes only**. Normal scanner-result
+pasting continues to work. To change conventions, choose a preset, review the
+rules, and click **Save**. You can also turn bookmark imports off entirely:
+
+- **Standard codes** enables bookmark imports with the destination/site codes
+  below, recognized site names, J-number suffixes, and life/mass markers. It has
+  no custom faction aliases, camp markers, or ignored home markers.
+- **Training conventions** restores the conventions used in this reference,
+  including SQUID/RUST/FRANCE/CHINA, `---`/`-*-`, and `*`.
+
+**The examples below use Training conventions.** You can customize either preset
+under **Edit bookmark rules**. Selecting a preset fills the form; Cancel leaves
+your saved settings unchanged.
+
+| Setting | How to customize it |
+|---|---|
+| Bookmark codes | One `YOUR-CODE=TYPE` per line. For example, `GAS=GS` or `HIGH=HS`. Remove a line to stop recognizing that code. |
+| Faction aliases | One `ALIAS=FACTION` per line. Factions are CALDARI, MINMATAR, GALLENTE, AMARR. For example, `CAL=CALDARI`. Leave empty for none. |
+| Life and mass markers | One `MARKER=STATE` per line. States are LIFE4, LIFE1, MASS50, MASS10. For example, `EOL=LIFE4` or `CRIT=MASS10`. Markers go after the signature ID, separated by spaces, in either order. |
+| Camp markers | Comma-separated markers for site bookmarks. Leave empty to disable them. |
+| Ignored wormhole markers | Comma-separated markers to remove from destination text. Leave empty to disable them. |
+| Extra site names | One `EXACT SITE NAME=CATEGORY` per line. Categories are Combat, Data, Relic, Gas, Ore, Other. These rules take priority over standard name recognition. |
+
+You can also turn off unprefixed bookmarks, standard site-name recognition,
+three-digit J-number suffixes, or automatic matching of existing wormhole
+connections. Choose **Other** or **Unknown** for unrecognized site names.
+
+Blank rule lists stay blank. Matching remains case-insensitive. Unsupported
+values and duplicate aliases are reported when you Save; the dialog stays open
+so you can correct them. Changing settings affects future pastes, not previously
+imported connections. The auto-mapper retains the meaning of saved faction and
+J-number hints even when users have different aliases.
+
 ## Quick examples
 
 | Bookmark title | Meaning |

@@ -352,6 +352,7 @@ var options = new function() {
 	this.masks = {active: init.corporationID + ".2"};
 	this.chain = {gridlines: true, aura: true, lineWeight: 1.0, scrollWithoutCtrl: false, active: 0, tabs: [], collapsed: [], "node-reference": "type", zoom: 1.0, sigNameLocation: 'name', routingLimit: 15, routeSecurity: 'shortest', routeIgnore: { enabled: false, systems: [ 'Tama', 'Rancer' ] }, renderer: 'radial', nodeSpacing: { x: 2.0, y: 2.0 }, nodeSpacingByRenderer: {orgChart: {x: 1.4, y: 1.4}, orgChartTop: {x: 2.0, y: 2.0}, orgChartSide: {x: 2.0, y: 2.0}, radial: {x: 2.0, y: 2.0}} };
 	this.signatures = {editType: "unknown", copySeparator: ",", pasteLife: 72, rowPadding: 6, alignment: {sigID: "leftAlign", sigType: "leftAlign", sigAge: "leftAlign", leadsTo: "leftAlign", sigLife: "rightAlign", sigMass: "rightAlign"}};
+	this.bookmarks = bookmarkSettings.preset("standard");
 	this.buttons = {follow: false, chainWidget: {viewing: false, favorites: false, sortChildren: false}, signaturesWidget: {autoMapper: false}};
 
 	this.saveDelay = function(delay) {
@@ -391,6 +392,12 @@ var options = new function() {
 				}
 			}
 		}
+
+        // Bookmark conventions belong to the authenticated account, including
+        // when an older account has no server-side preferences yet.
+        var bookmarkSource = data || (localOptions && localOptions.userID == init.userID ? localOptions : null);
+        this.bookmarks = bookmarkSettings.normalize(bookmarkSource && bookmarkSource.bookmarks);
+        this.userID = init.userID;
 
 		// Only restore an explicitly saved opt-in; new users stay muted.
 		var savedOptions = data || localOptions;
@@ -3599,7 +3606,7 @@ var chain = new function() {
 			const system = systemAnalysis.analyse(systemID);
 			var systemType = "<span class='type-label " + system.systemTypeClass + "'>" + system.systemTypeName + system.systemTypeModifiers.join('') + "</span>";
 			
-			systemName = _.escape(bookmarkDestinations.displayName(systemName));
+			systemName = _.escape(systemName);
 			const systemNameText = 
 				options.chain.sigNameLocation == 'name' ? (systemName ? systemName : system.name ? system.name : '&nbsp;') :
 				options.chain.sigNameLocation == 'name_prefix' ?
@@ -4668,7 +4675,7 @@ function wormholesForJump(from, to, wormholes, signatures) {
         if ( ( signatures[wormhole.initialID] !== undefined ) && ( signatures[wormhole.secondaryID] !== undefined ) ) {
             // Find wormholes that have no set Leads To system, and their initial system is from the wormhole we just jumped from
             if (signatures[wormhole.initialID].systemID == from && !appData.systems[signatures[wormhole.secondaryID].systemID]) {
-                if (!bookmarkDestinations.hintsMatch(signatures[wormhole.secondaryID].bookmark || signatures[wormhole.secondaryID].name, appData.systems[to] || {}, appData.systems)) return false;
+                if (!bookmarkDestinations.hintsMatch(signatures[wormhole.secondaryID].bookmark, appData.systems[to] || {}, appData.systems)) return false;
 				const holeTargetTypeName = appData.genericSystemTypes[signatures[wormhole.secondaryID].systemID];
 				const holeClasses = systemAnalysis.classForTypeName(holeTargetTypeName);
 				if(holeTargetTypeName === toType) {
@@ -5483,6 +5490,33 @@ tripwire.updateReturnStatus = function() {
 ;
 // #endregion
 
+// #region bookmark-preferences-ui
+var bookmarkPreferenceFields = ['enabled', 'unprefixed', 'inferSites', 'suffix', 'reuseConnections', 'fallback', 'prefixes', 'factions', 'markers', 'campMarkers', 'ignoreMarkers', 'sites'];
+function writeBookmarkSettings(value) {
+    var settings = bookmarkSettings.normalize(value);
+    bookmarkPreferenceFields.forEach(function(key) {
+        var field = $("#bookmark-" + key);
+        if (typeof settings[key] === 'boolean') field.prop('checked', settings[key]);
+        else field.val(settings[key]);
+    });
+    $("#bookmark-settings-error").text('');
+}
+function readBookmarkSettings() {
+    var result = {}, defaults = bookmarkSettings.preset('standard');
+    bookmarkPreferenceFields.forEach(function(key) {
+        var field = $("#bookmark-" + key);
+        result[key] = typeof defaults[key] === 'boolean' ? field.prop('checked') : field.val();
+    });
+    bookmarkSettings.compile(result); // Reject invalid or duplicate rules before saving any settings.
+    return result;
+}
+$("body").on('click', '[data-bookmark-preset]', function() {
+    var preset = bookmarkSettings.preset($(this).attr('data-bookmark-preset'));
+    preset.enabled = true;
+    writeBookmarkSettings(preset);
+});
+// #endregion
+
 // #region tripwire/bookmarks
 // Classify names only when a known naming convention supplies the site type.
 // References: https://wiki.eveuniversity.org/List_of_data_and_relic_sites
@@ -5512,46 +5546,58 @@ tripwire.bookmarkSiteType = function(name) {
 };
 
 // Bookmark folders and timestamps are deliberately excluded from signature data.
+tripwire.isLegacyBookmarkName = function(name) {
+    var rules = bookmarkSettings.compile(options.bookmarks);
+    return rules.config.enabled && (!!(name || '').split(/\s+/).find(function(token) { return rules.factions[token.toUpperCase()]; }) ||
+        (rules.config.suffix && /^\d{3}$/.test((name || '').trim())));
+};
 tripwire.parseBookmark = function(row) {
+    var rules;
+    try { rules = bookmarkSettings.compile(options.bookmarks); } catch (_) { return null; }
+    if (!rules.config.enabled) return null;
     var title = row.split("\t")[0].trim();
-    // Unprefixed bookmarks use a full signature ID followed by the site name.
-    // Requiring a name keeps ordinary tab-separated scanner rows on their own path.
-    if (/^[A-Z]{3}-\d{3}\s+\S/i.test(title)) title = "Z " + title;
-    var match = /^(Z|GS|DC|RC|HS|LS|NS|TR|PC|DR|C\d+|C\?)\s+([A-Z]{3}|\?\?\?)(?:-?(\d{3}))?(?:\s+(.*))?$/i.exec(title);
+    var bare = rules.config.unprefixed && /^([A-Z]{3})-(\d{3})\s+(\S.*)$/i.exec(title);
+    var match = bare ? [null, null, bare[1], bare[2], bare[3]] : /^(\S+)\s+([A-Z]{3}|\?\?\?)(?:-?(\d{3}))?(?:\s+(.*))?$/i.exec(title);
     if (!match) return null;
-    var code = match[1].toUpperCase();
+    var code = bare ? "Z" : rules.prefixes[match[1].toUpperCase()];
+    if (!code) return null;
     var text = (match[4] || "").trim();
     var scanner = {id: [match[2].toUpperCase(), match[3] || ""], bookmark: true};
     if (code === "Z") {
         scanner.name = text || undefined;
-        var siteType = tripwire.bookmarkSiteType(text);
+        var custom = rules.sites[text.replace(/\s+/g, " ").toUpperCase()];
+        var siteType = custom ? custom.charAt(0) + custom.slice(1).toLowerCase() :
+            (rules.config.inferSites ? tripwire.bookmarkSiteType(text) : null);
         if (siteType) scanner.type = siteType;
-        else scanner.fallbackType = "Other";
+        else scanner.fallbackType = rules.config.fallback;
     } else if ({GS: 1, DC: 1, RC: 1}[code]) {
         scanner.type = {GS: "Gas", DC: "Data", RC: "Relic"}[code];
-        // These bookmarks mark a camp for this signature, not a different site.
-        if (text && !/^(?:[?-]+|-\*-)$/.test(text)) scanner.name = text;
+        if (text && !/^[?]+$/.test(text) && rules.campMarkers.indexOf(text.toUpperCase()) === -1) scanner.name = text;
     } else {
         scanner.type = "Wormhole";
         scanner.destinationCode = code;
-        // EVE/browser clipboard text can contain an escaped less-than sign.
-        // Decode only that character; bookmark text is never interpreted as HTML.
-        text = text.replace(/&(?:lt|#0*60|#x0*3c);/ig, "<")
-            .replace(/\*/g, " ").replace(/<\s*(1|4)\s*h\b/ig, function(_, hours) {
-            scanner.lifeHours = Math.min(scanner.lifeHours || 4, Number(hours));
-            return " ";
-        }).replace(/<\s*(10|50)\s*%/g, function(_, percent) {
-            if (percent === "10" || !scanner.mass) scanner.mass = percent === "10" ? "critical" : "destab";
-            return " ";
-        }).replace(/\s+/g, " ").trim();
+        text = text.replace(/&(?:lt|#0*60|#x0*3c);/ig, "<");
+        rules.ignoreMarkers.forEach(function(marker) {
+            text = text.replace(new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), " ");
+        });
+        Object.keys(rules.markers).sort(function(a, b) { return b.length - a.length; }).forEach(function(marker) {
+            var expression = marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            text = text.replace(new RegExp("(^|\\s)" + expression + "(?=\\s|$)", "gi"), function() {
+                var value = rules.markers[marker];
+                if (value === 'LIFE1' || value === 'LIFE4') scanner.lifeHours = Math.min(scanner.lifeHours || 4, Number(value.slice(4)));
+                else if (value === 'MASS10' || !scanner.mass) scanner.mass = value === 'MASS10' ? 'critical' : 'destab';
+                return " ";
+            });
+        });
+        text = text.replace(/\s+/g, " ").trim();
         var label = {HS: "High-Sec", LS: "Low-Sec", NS: "Null-Sec", TR: "Triglavian", PC: "Triglavian", DR: "Drifter"}[code];
         if (code === "C?") label = null;
         else if (!label) label = "Class-" + code.slice(1);
         scanner.destinationID = label ? appData.genericSystemTypes.indexOf(label) : null;
         if (scanner.destinationID === -1) return null;
         if (text && !/^[?-]+$/.test(text)) {
-            scanner.destinationHint = text;
-            var destination = bookmarkDestinations.resolve(text, code, tripwire.systems, appData.regions || {});
+            scanner.destinationHint = bookmarkSettings.canonicalHint(text, rules);
+            var destination = bookmarkDestinations.resolve(scanner.destinationHint, code, tripwire.systems, appData.regions || {});
             if (destination !== null) scanner.destinationID = destination;
         }
     }
@@ -5693,7 +5739,7 @@ tripwire.pasteSignatures = function() {
             }
             if (other.systemID != scan.destinationID) return false;
             return Number(scan.destinationID) >= 10000000 ||
-                (other.bookmark || other.name || "").toLowerCase() === (scan.destinationHint || "").toLowerCase();
+                bookmarkDestinations.equivalentHints(other.bookmark, scan.destinationHint);
         });
     }
 
@@ -6037,7 +6083,7 @@ tripwire.pasteSignatures = function() {
         var claims = {}, matchesByKey = {};
         Object.keys(merged).forEach(function(key) {
             var scan = merged[key];
-            if (!scan.bookmark || scan.type !== "Wormhole") return;
+            if (!scan.bookmark || scan.type !== "Wormhole" || !bookmarkSettings.normalize(options.bookmarks).reuseConnections) return;
             var matches = connections.filter(function(connection) {
                 var id = connection.local.signatureID;
                 return (scan.id[0] === "???" || !id || /^\?+$/.test(id)) && unknownBookmarkMatches(scan, connection.local);
@@ -6118,7 +6164,7 @@ tripwire.pasteSignatures = function() {
                                     "signatureID": otherSignature.signatureID || null,
                                     "systemID": otherSignature.systemID >= 10000000 ? otherSignature.systemID : (scanner.destinationID != null ? scanner.destinationID : (otherSignature.systemID == null ? null : otherSignature.systemID)),
                                     "type": "wormhole",
-                                    "name": scanner.bookmark ? bookmarkDestinations.displayName(otherSignature.name) : otherSignature.name,
+                                    "name": scanner.bookmark && tripwire.isLegacyBookmarkName(otherSignature.name) ? null : otherSignature.name,
                                     "bookmark": scanner.destinationHint || otherSignature.bookmark
                                 }
                             ]
@@ -11269,6 +11315,15 @@ $(".options").click(function(e) {
 		dialogClass: "dialog-options-frame",
 		buttons: {
 			Save: function() {
+                var bookmarks;
+                try { bookmarks = readBookmarkSettings(); }
+                catch (error) {
+                    $("#optionsAccordion .settings-tabs [data-tab=signatures]").trigger('click');
+                    $("#bookmark-rule-details").prop('open', true);
+                    $("#bookmark-settings-error").text(error.message).focus();
+                    return;
+                }
+                options.bookmarks = bookmarks;
 				$("#dialog-options").parent().find(".ui-dialog-buttonpane button:contains('Save')").attr("disabled", true).addClass("ui-state-disabled");
 				
 				options.chain.sigNameLocation = $("#dialog-options #chainSigNameLocation").val();
@@ -11321,6 +11376,7 @@ $(".options").click(function(e) {
 		},
 		open: function() {
 			optionsDialogSaved = false;
+            writeBookmarkSettings(options.bookmarks);
 			$("#voice-enabled").prop("checked", options.voice.enabled === true);
 			$("#voice-hide-startup-hint").prop("checked", options.voice.hideStartupHint === true);
 			$("#voice-volume").val(voiceNumber(options.voice.volume, 0.6, 0, 1) * 100);

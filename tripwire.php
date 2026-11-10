@@ -794,6 +794,30 @@ $system = $_REQUEST['system'] ?? '';
 				<div class="field"><span class="field-label">Row padding <small>0 is compact; 6 is the original spacing</small></span>
 					<span class="slider-wrap"><div id="signature-row-padding-slider"></div><label for="signature-row-padding-slider" class="slider-value"></label></span>
 				</div>
+                <h4 class="field-group">Bookmark imports</h4>
+                <p>Your rules apply to your pastes only. Imported signatures are shared with your active map.</p>
+                <div class="field"><label class="field-label" for="bookmark-enabled">Enable bookmark imports</label><input id="bookmark-enabled" type="checkbox" checked /></div>
+                <div class="field field-block">
+                    <span class="field-label">Start with a preset <small>Changes take effect when you Save.</small></span>
+                    <span><button type="button" data-bookmark-preset="standard">Standard codes</button> <button type="button" data-bookmark-preset="training">Training conventions</button></span>
+                    <small>Training adds SQUID / RUST / FRANCE / CHINA, camp markers and the * home marker.</small>
+                </div>
+                <details id="bookmark-rule-details">
+                    <summary>Edit bookmark rules</summary>
+                    <div class="field"><label class="field-label" for="bookmark-unprefixed">Accept full-ID bookmarks without a code</label><input type="checkbox" id="bookmark-unprefixed" /></div>
+                    <div class="field"><label class="field-label" for="bookmark-inferSites">Recognize standard site names</label><input type="checkbox" id="bookmark-inferSites" /></div>
+                    <div class="field"><label class="field-label" for="bookmark-suffix">Use three-digit J-number suffixes</label><input type="checkbox" id="bookmark-suffix" /></div>
+                    <div class="field"><label class="field-label" for="bookmark-reuseConnections">Match existing wormhole connections</label><input type="checkbox" id="bookmark-reuseConnections" /></div>
+                    <div class="field"><label class="field-label" for="bookmark-fallback">Unrecognized site category</label><select id="bookmark-fallback"><option value="Other">Other</option><option value="unknown">Unknown</option></select></div>
+                    <div class="field field-block"><label class="field-label" for="bookmark-prefixes">Bookmark codes <small>One YOUR-CODE=TYPE per line. Types: HS, LS, NS, C1–C6, C13–C18, C?, DR, TR, PC, GS, DC, RC, Z. Example: GAS=GS. Remove a line to disable that code.</small></label><textarea id="bookmark-prefixes" rows="6" spellcheck="false"></textarea></div>
+                    <div class="field field-block"><label class="field-label" for="bookmark-factions">Faction aliases <small>One ALIAS=FACTION per line. Factions: CALDARI, MINMATAR, GALLENTE, AMARR. Example: SQUID=CALDARI. Leave empty for none.</small></label><textarea id="bookmark-factions" rows="4" spellcheck="false"></textarea></div>
+                    <div class="field field-block"><label class="field-label" for="bookmark-markers">Life and mass markers <small>One MARKER=STATE per line. States: LIFE4, LIFE1, MASS50, MASS10. Examples: EOL=LIFE4 and CRIT=MASS10. Put markers after the signature ID, separated by spaces.</small></label><textarea id="bookmark-markers" rows="4" spellcheck="false"></textarea></div>
+                    <div class="field field-block"><label class="field-label" for="bookmark-campMarkers">Camp markers <small>Comma-separated, for site bookmarks. Example: ---, -*-. Leave empty for none.</small></label><input id="bookmark-campMarkers" type="text" /></div>
+                    <div class="field field-block"><label class="field-label" for="bookmark-ignoreMarkers">Ignored wormhole markers <small>Comma-separated. Example: *. Leave empty for none.</small></label><input id="bookmark-ignoreMarkers" type="text" /></div>
+                    <div class="field field-block"><label class="field-label" for="bookmark-sites">Extra site names <small>One EXACT SITE NAME=CATEGORY per line. Categories: Combat, Data, Relic, Gas, Ore, Other. These take priority over standard site-name recognition.</small></label><textarea id="bookmark-sites" rows="3" spellcheck="false"></textarea></div>
+                </details>
+                <p id="bookmark-settings-error" role="alert" tabindex="-1"></p>
+                <p><a href="https://github.com/squizzlabs/tripwire/blob/main/docs/bookmark-reference.md" target="_blank" rel="noopener">Bookmark Reference</a></p>
 			</section>
 
 			<section class="settings-pane" data-pane="display" role="tabpanel" hidden>
@@ -1271,6 +1295,7 @@ $system = $_REQUEST['system'] ?? '';
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/moment.min.js?v=<?= VERSION ?>"></script>
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/intro.min.js?v=<?= VERSION ?>"></script>
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/combine.js?v=<?= assetVersion('js/combine.js') ?>"></script>
+	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/bookmark-settings.js?v=<?= assetVersion('js/bookmark-settings.js') ?>"></script>
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/bookmark-destinations.js?v=<?= assetVersion('js/bookmark-destinations.js') ?>"></script>
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/app.js?v=<?= assetVersion('js/app.js') ?>"></script>
 	<!-- JS Includes -->

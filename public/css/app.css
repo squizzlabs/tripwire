@@ -7822,3 +7822,11 @@ h4.chip,
 .voice-part-actions { display: inline-flex; gap: 4px; flex-shrink: 0; }
 .voice-part-actions button { min-width: 30px; }
 .voice-part-actions button[aria-disabled="true"] { opacity: .35; cursor: default; }
+
+/* Per-account bookmark rules in the Signatures settings pane. */
+#bookmark-rule-details textarea,
+#bookmark-rule-details input[type="text"] { width: 100%; box-sizing: border-box; }
+#bookmark-rule-details textarea { resize: vertical; min-height: 4rem; border-color: var(--border); }
+#bookmark-rule-details summary { cursor: pointer; padding: var(--space-2) 0; }
+#bookmark-settings-error:empty { display: none; }
+#bookmark-settings-error { color: var(--destructive, #f88); }

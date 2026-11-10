@@ -1,6 +1,7 @@
 const assert = require('assert');
 const vm = require('vm');
 const {readSource} = require('./helpers/source');
+const bookmarkSettings = require('../../public/js/bookmark-settings');
 
 describe('Paste cleanup for bookmarks and scanner results', function() {
     let context, handlers, button, visible;
@@ -17,8 +18,9 @@ describe('Paste cleanup for bookmarks and scanner results', function() {
         $.inArray = (value, values) => values.indexOf(value);
         $.map = (values, fn) => Object.values(values).map(fn).filter(v => v != null);
         button.toggle = value => {visible = value; return button;};
-        context = vm.createContext({$, document: {}, viewingSystemID: 10,
+        context = vm.createContext({$, document: {}, bookmarkSettings, viewingSystemID: 10,
             sessionStorage: {setItem() {}}, appData: {},
+            options: {bookmarks: {...bookmarkSettings.preset('training'), enabled: true}},
             bookmarkDestinations: require('../../public/js/bookmark-destinations'),
             Notify: {trigger() {return {wrapper: {find: selector => selector === '#fullPaste' ? button : widget}, destroy() {}};}},
             tripwire: {systems: {}, signatures: {undo: {}}, client: {signatures: {}, wormholes: {}},

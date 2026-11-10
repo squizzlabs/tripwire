@@ -214,6 +214,7 @@ describe('Voice activation waits for interaction', function() {
         };
         vm.createContext(sandbox);
         if (!fromLocalStorage) vm.runInContext('init.options = ' + JSON.stringify(saved), sandbox);
+        sandbox.bookmarkSettings = require('../../public/js/bookmark-settings');
         vm.runInContext(readSource('options'), sandbox);
         return sandbox.options;
     }

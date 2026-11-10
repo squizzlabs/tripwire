@@ -195,11 +195,11 @@ test('automapping asks the user instead of guessing among multiple candidates', 
 test('bookmark destination hints narrow server automap candidates', async () => {
   const { candidateMatches } = await import('../src/jobs/automap.js');
   const c3 = { name: 'J113432', wormholeClass: 3 };
-  assert.equal(candidateMatches({ targetSystemID: 5, targetName: '432' }, c3, {}), true);
-  assert.equal(candidateMatches({ targetSystemID: 5, targetName: '433' }, c3, {}), false);
+  assert.equal(candidateMatches({ targetSystemID: 5, targetBookmark: '432' }, c3, {}), true);
+  assert.equal(candidateMatches({ targetSystemID: 5, targetBookmark: '433' }, c3, {}), false);
   const highsec = { name: 'Jita', security: 0.9, factionID: 500001 };
   assert.equal(candidateMatches({ targetSystemID: 2, targetBookmark: 'sQuId', targetName: 'Trade hub' }, highsec, {}), true);
-  assert.equal(candidateMatches({ targetSystemID: 2, targetName: 'rUsT' }, highsec, {}), false);
+  assert.equal(candidateMatches({ targetSystemID: 2, targetBookmark: 'rUsT' }, highsec, {}), false);
 });
 
 
@@ -209,4 +209,13 @@ test('Drifter bookmark class matches only Drifter jump destinations', async () =
     assert.equal(candidateMatches({ targetSystemID: 19 }, { wormholeClass }, {}), true);
   }
   assert.equal(candidateMatches({ targetSystemID: 19 }, { wormholeClass: 3 }, {}), false);
+});
+
+
+test('canonical bookmark hints do not depend on account aliases or custom display names', async () => {
+  const { candidateMatches } = await import('../src/jobs/automap.js');
+  const caldari = {name: 'Jita', security: 0.9, factionID: 500001};
+  assert.equal(candidateMatches({targetSystemID: 2, targetBookmark: 'bm1:@f500004'}, caldari, {}), false);
+  assert.equal(candidateMatches({targetSystemID: 2, targetBookmark: 'bm1:@f500001'}, caldari, {}), true);
+  assert.equal(candidateMatches({targetSystemID: 2, targetName: 'RUST'}, caldari, {}), true);
 });

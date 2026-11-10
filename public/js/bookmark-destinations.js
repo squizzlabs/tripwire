@@ -1,7 +1,13 @@
 /* Shared by clipboard ingestion and both auto-mappers. */
 (function(root) {
     var factions = {SQUID: 500001, RUST: 500002, FRANCE: 500004, CHINA: 500003};
-    function tokens(text) { return (text || '').toUpperCase().trim().split(/\s+/).filter(Boolean); }
+    function tokens(text) { return (text || '').replace(/^bm1:/, '').toUpperCase().trim().split(/\s+/).filter(Boolean); }
+    function factionFor(token, text) {
+        return /^bm1:/.test(text || '') ? (/^@F50000[1-4]$/.test(token) ? Number(token.slice(2)) : null) : factions[token];
+    }
+    function suffixFor(token, text) {
+        return /^bm1:/.test(text || '') ? (/^@J\d{3}$/.test(token) ? token.slice(2) : null) : (/^\d{3}$/.test(token) ? token : null);
+    }
     var regionCache = new WeakMap();
     function spaceFaction(system, systems) {
         var faction = Number(system.factionID);
@@ -23,8 +29,9 @@
     }
     function hintsMatch(text, system, systems) {
         return tokens(text).every(function(token) {
-            if (factions[token]) return spaceFaction(system, systems) === factions[token];
-            if (/^\d{3}$/.test(token)) return /^J\d{6}$/i.test(system.name || '') && system.name.slice(-3) === token;
+            var faction = factionFor(token, text), suffix = suffixFor(token, text);
+            if (faction) return spaceFaction(system, systems) === faction;
+            if (suffix) return /^J\d{6}$/i.test(system.name || '') && system.name.slice(-3) === suffix;
             return true;
         });
     }
@@ -42,8 +49,9 @@
         var name = (system.name || '').toUpperCase();
         var region = ((regions[system.regionID] || {}).name || '').toUpperCase();
         return tokens(text).every(function(token) {
-            return factions[token] || /^\d{3}$/.test(token) || /^[?-]+$/.test(token) ||
-                name.indexOf(token) !== -1 || region.indexOf(token) !== -1;
+            var literal = token.replace(/^@@/, '@');
+            return factionFor(token, text) || suffixFor(token, text) || /^[?-]+$/.test(token) ||
+                name.indexOf(literal) !== -1 || region.indexOf(literal) !== -1;
         });
     }
     function resolve(text, code, systems, regions) {
@@ -54,11 +62,20 @@
         });
         return candidates.length === 1 ? candidates[0] : null;
     }
+    function equivalentHints(a, b) {
+        function normalized(text) {
+            return tokens(text).map(function(token) {
+                var faction = factionFor(token, text), suffix = suffixFor(token, text);
+                return faction ? '@f' + faction : suffix ? '@j' + suffix : token.replace(/^@@/, '@');
+            }).sort().join(' ');
+        }
+        return normalized(a) === normalized(b);
+    }
     function displayName(name) {
         // Older bookmark imports put destination hints in the custom-name field.
         return tokens(name).some(function(token) { return factions[token]; }) || /^\d{3}$/.test((name || '').trim()) ? null : name;
     }
-    var api = {matches: matches, displayName: displayName, resolve: resolve, hintsMatch: hintsMatch, spaceFaction: spaceFaction};
+    var api = {equivalentHints: equivalentHints, matches: matches, displayName: displayName, resolve: resolve, hintsMatch: hintsMatch, spaceFaction: spaceFaction};
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.bookmarkDestinations = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
