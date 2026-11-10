@@ -4347,8 +4347,9 @@ pre,
 	#signaturesWidget #paste-signatures,
 	#signaturesWidget .bar-sep { display: none !important; }
 
-	#signaturesWidget > .controls > .bar-right,
 	#notesWidget > .controls > .bar-right { display: none; }
+	#signaturesWidget > .controls > .bar-right { display: flex; }
+	#signaturesWidget > .controls > .bar-right > :not(.voice-control) { display: none; }
 
 	#topbar > .align-right > #settings,
 	#topbar > .align-right > i#settings { margin-left: auto; }
@@ -4762,6 +4763,7 @@ h4.chip,
 
 .settings-tabs {
 	display: flex;
+	overflow-x: auto;
 	gap: var(--space-1);
 	margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) var(--space-4);
 	padding: 0 var(--space-4);
@@ -7764,3 +7766,59 @@ h4.chip,
 .type-label.drifter { --type-label-fill: var(--data-loot-red); }
 
 .type-label.multi-static { --type-label-fill: var(--muted-foreground); }
+
+/* Voice controls keep long device voice names within the settings panel. */
+#voice-choice { width: 100%; min-width: 0; }
+.settings-pane[data-pane="voice"] input[type="range"] { width: 8rem; max-width: 100%; }
+.settings-pane[data-pane="voice"] output {
+    display: inline-block;
+    min-width: 3rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* The startup callout is positioned above Voice, outside panel clipping. */
+.voice-control { position: relative; display: inline-flex; }
+.controls #toggle-jspace-voice.voice-needs-interaction {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary);
+}
+#voice-startup-hint {
+    position: absolute;
+    z-index: 1000;
+    width: 250px;
+    max-width: 65vw;
+    padding: 10px 12px;
+    border: 1px solid var(--primary);
+    border-radius: var(--radius-sm);
+    background: var(--card);
+    color: var(--foreground);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .35);
+    font-size: var(--fs-sm);
+    line-height: 1.4;
+    white-space: normal;
+    pointer-events: none;
+}
+#voice-startup-hint[hidden] { display: none; }
+
+.voice-startup-progress {
+    display: block;
+    height: 3px;
+    margin-top: 8px;
+    border-radius: 2px;
+    background: var(--border);
+    overflow: hidden;
+}
+.voice-startup-progress > span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--primary);
+}
+
+#voice-parts { margin: 0; padding: 0; list-style: none; }
+#voice-parts li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 0; }
+#voice-parts label { display: flex; align-items: center; gap: 6px; }
+.voice-part-actions { display: inline-flex; gap: 4px; flex-shrink: 0; }
+.voice-part-actions button { min-width: 30px; }
+.voice-part-actions button[aria-disabled="true"] { opacity: .35; cursor: default; }

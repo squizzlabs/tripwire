@@ -335,10 +335,16 @@ var options = new function() {
 	var localOverrides = ["grid"];
 	var localOptions = JSON.parse(localStorage.getItem("tripwire_options"));
 	var saveTimer;
+	var voiceRestorePending = false;
+	var voiceHintDuration = 5000;
+	var voiceHintTimer = null;
+	var voiceHintStartedAt = null;
+	var voiceHintExpired = false;
 
 	this.userID = init.userID;
 	this.character = {id: init.characterID, name: init.characterName};
 	this.background = null;
+	this.voice = {enabled: false, hideStartupHint: false, voiceURI: "", volume: 0.6, rate: 1.25, pitch: 1, parts: {class: true, digits: true, statics: true}, order: ["class", "digits", "statics"]};
 	this.uiscale = 1.0;
 	this.favorites = [];
 	this.grid = {};
@@ -386,6 +392,9 @@ var options = new function() {
 			}
 		}
 
+		// Remember the preference, but wait for a fresh gesture before playing speech.
+		voiceRestorePending = this.voice.enabled === true;
+		this.voice.enabled = false;
 		this.apply();
 		if(tripwire) { set_tracking_text(); }
 	};
@@ -400,7 +409,63 @@ var options = new function() {
 			}
 		}
 
+		// Saving another setting before interaction must preserve the voice preference.
+		data.voice = Object.assign({}, this.voice, {enabled: this.voice.enabled || voiceRestorePending});
 		return data;
+	};
+
+	this.setVoiceEnabled = function(enabled) {
+		voiceRestorePending = false;
+		this.voice.enabled = enabled === true;
+		this.updateVoiceStatus();
+	};
+
+	this.voiceStartupMessage = function() {
+		if (voiceHintExpired || this.voice.hideStartupHint === true) return "";
+		if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return "Voice is unavailable in this browser.";
+		if (this.voice.enabled) return "";
+		return voiceRestorePending
+			? "Voice is waiting. Click Voice, click anywhere, paste, or press a key to turn it back on."
+			: "Voice is off. Click Voice to enable announcements.";
+	};
+
+	this.positionVoiceHint = function() {
+		var hint = $("#voice-startup-hint");
+		if (!hint.is(":visible")) return;
+		// Escape the panel's overflow clipping so the callout can sit above it.
+		hint.appendTo("body").position({
+			my: "right bottom", at: "right top-8",
+			of: $("#toggle-jspace-voice"), collision: "fit"
+		});
+	};
+
+	this.updateVoiceStatus = function() {
+		var message = this.voiceStartupMessage();
+		if (message && voiceHintTimer === null) {
+			var self = this;
+			voiceHintStartedAt = Date.now();
+			voiceHintTimer = setTimeout(function() {
+				voiceHintExpired = true;
+				self.updateVoiceStatus();
+			}, voiceHintDuration);
+		}
+		$("#voice-startup-hint .voice-startup-message").text(message);
+		$("#voice-startup-hint").prop("hidden", !message);
+		var remaining = message ? Math.max(0, voiceHintDuration - (Date.now() - voiceHintStartedAt)) : 0;
+		var progress = $("#voice-startup-hint .voice-startup-progress > span").stop(true)
+			.css("width", (remaining / voiceHintDuration * 100) + "%");
+		if (remaining) progress.animate({width: "0%"}, remaining, "linear");
+		this.positionVoiceHint();
+		$("#toggle-jspace-voice").toggleClass("voice-needs-interaction", !!message)
+			.toggleClass("active", this.voice.enabled === true)
+			.attr("aria-pressed", String(this.voice.enabled === true));
+	};
+
+	this.restoreVoiceAfterGesture = function(event) {
+		if (!voiceRestorePending || !event.isTrusted || !["click", "paste", "keydown"].includes(event.type)) return false;
+		if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return false;
+		this.setVoiceEnabled(true);
+		return true;
 	};
 
 	// Sets this from passed object
@@ -418,6 +483,7 @@ var options = new function() {
 	};
 
 	this.reset = function() {
+		voiceRestorePending = false;
 		for (var x in this) {
 			if (typeof(this[x]) != "function") {
 				this[x] = JSON.parse(JSON.stringify(this.reset.defaults[x]));
@@ -465,6 +531,13 @@ var options = new function() {
 		if (this.buttons.chainWidget.evescout) $("#eve-scout").addClass("active");
 		if ($.inArray(parseInt(viewingSystemID), this.favorites) !== -1) $("#system-favorite").attr("data-icon", "star").addClass("active");
 		if (this.buttons.signaturesWidget.autoMapper) $("#toggle-automapper").addClass("active");
+
+		// Voice announcements are explicitly opt-in.
+		this.updateVoiceStatus();
+		if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+			$("#toggle-jspace-voice").prop("disabled", true).attr("data-tooltip", "Voice is not supported by this browser");
+		}
+		if (!this.voice.enabled && window.speechSynthesis) window.speechSynthesis.cancel();
 
 		// UI Scale
 		if (this.uiscale) {
@@ -1091,6 +1164,30 @@ $("#toggle-automapper").click(function(e) {
 	options.buttons.signaturesWidget.autoMapper = $(this).hasClass("active");
 	options.save();
 });
+
+$("#toggle-jspace-voice").click(function() {
+	options.setVoiceEnabled(!options.voice.enabled);
+	$(this).toggleClass("active", options.voice.enabled).attr("aria-pressed", String(options.voice.enabled));
+	if (!options.voice.enabled) tripwire.jumpVoice.reset();
+	if (!options.voice.enabled && window.speechSynthesis) window.speechSynthesis.cancel();
+	options.save();
+});
+
+// Capture real interaction even when another handler stops propagation.
+// The voice controls themselves handle the user's explicit choice.
+["click", "paste", "keydown"].forEach(function(type) {
+	document.addEventListener(type, function(event) {
+		if (event.target.closest && event.target.closest("#toggle-jspace-voice, #voice-enabled, label[for=voice-enabled]")) return;
+		if (options.restoreVoiceAfterGesture(event)) {
+			$("#toggle-jspace-voice").addClass("active").attr("aria-pressed", "true");
+			$("#voice-enabled").prop("checked", true);
+		}
+	}, true);
+});
+
+$(function() { options.positionVoiceHint(); });
+$(window).on("load.voiceHint resize.voiceHint", function() { options.positionVoiceHint(); });
+document.addEventListener("scroll", function() { options.positionVoiceHint(); }, true);
 
 $("#user").click(function(e) {
 	e.preventDefault();
@@ -5051,6 +5148,127 @@ tripwire.esi();
 ;
 // #endregion
 
+// #region tripwire/jumpVoice
+function voicePartOrder(settings) {
+    var defaults = ["class", "digits", "statics"];
+    var saved = settings && Array.isArray(settings.order) ? settings.order : [];
+    return saved.concat(defaults).filter(function(part, index, all) {
+        return defaults.includes(part) && all.indexOf(part) === index;
+    });
+}
+
+function jspaceVoiceText(system, wormholeTypes, settings) {
+    if (!system || system.regionID < 11000000 || system.regionID >= 12000000
+        || !/^J\d{6}$/.test(system.name) || !system.class) return null;
+    var digits = system.name.slice(-3).split("").join(" ");
+    var statics = (system.statics || []).map(function(type) {
+        var hole = wormholeTypes[type];
+        var destination = hole && hole.leadsTo;
+        if (Array.isArray(destination)) destination = destination.join(" or ");
+        return destination ? destination.replace(/High-Sec/g, "highsec").replace(/Low-Sec/g, "lowsec")
+            .replace(/Null-Sec/g, "nullsec").replace(/Class-/g, "class ") : "unknown";
+    });
+    var phrases = {
+        class: "Class " + system.class + ".",
+        digits: digits + ".",
+        statics: statics.length ? "Statics: " + statics.join(", ") + "." : "Statics unknown."
+    };
+    return voicePartOrder(settings).filter(function(part) {
+        return !settings || !settings.parts || settings.parts[part] !== false;
+    }).map(function(part) { return phrases[part]; }).join(" ");
+}
+
+function createJumpVoiceObserver(speak) {
+    var previous = null, mapped = new Set(), pending = null, context = null;
+    var recentlyMapped = new Map();
+    return {
+        reset: function() { previous = null; pending = null; context = null; mapped = new Set(); recentlyMapped.clear(); },
+        observe: function(character, mask, signatures, wormholes, systems, types, enabled, now, voiceSettings) {
+            var key = String(mask) + ":" + (character && character.characterID);
+            var current = character && Number(character.systemID) || null;
+            var nextMapped = new Set();
+            var connections = [];
+            Object.values(wormholes || {}).forEach(function(hole) {
+                if (hole.type === "GATE") return;
+                var a = signatures && signatures[hole.initialID];
+                var b = signatures && signatures[hole.secondaryID];
+                if (a && b) {
+                    var pair = [Number(a.systemID), Number(b.systemID)];
+                    pair.forEach(function(id) { if (systems[id]) nextMapped.add(id); });
+                    connections.push(pair);
+                }
+            });
+            if (context !== key || !enabled || !current) {
+                previous = current; mapped = nextMapped; pending = null; context = key;
+                recentlyMapped.clear();
+                return;
+            }
+            // Mapping is committed before the pilot's location. Keep newly mapped
+            // neighbors briefly so a poll between those writes cannot swallow a jump.
+            recentlyMapped.forEach(function(entry, id) {
+                if (now > entry.expires || !nextMapped.has(id)) recentlyMapped.delete(id);
+            });
+            connections.forEach(function(pair) {
+                if (!pair.includes(previous)) return;
+                pair.forEach(function(id) {
+                    if (id !== previous && !mapped.has(id) && systems[id]) {
+                        recentlyMapped.set(id, {from: previous, expires: now + 30000});
+                    }
+                });
+            });
+            if (previous && current !== previous) {
+                var recent = recentlyMapped.get(current);
+                var newlyMapped = !mapped.has(current) || (recent && recent.from === previous);
+                pending = newlyMapped && jspaceVoiceText(systems[current], types)
+                    ? {from: previous, to: current, expires: now + 30000} : null;
+                // A jump consumes these candidates, including when all voice parts are off.
+                recentlyMapped.clear();
+            }
+            if (pending && (pending.to !== current || now > pending.expires)) pending = null;
+            if (pending && connections.some(function(pair) {
+                return pair.includes(pending.from) && pair.includes(pending.to);
+            })) {
+                var text = jspaceVoiceText(systems[current], types, voiceSettings);
+                pending = null;
+                if (text) speak(text);
+            }
+            previous = current;
+            mapped = nextMapped;
+        }
+    };
+}
+
+function voiceNumber(value, fallback, min, max) {
+    var number = value === null || value === "" || value === undefined ? fallback : Number(value);
+    return Number.isFinite(number) ? Math.max(min, Math.min(max, number)) : fallback;
+}
+
+function playJspaceVoice(text, settings) {
+    if (!text || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+    settings = settings || {};
+    try {
+        var utterance = new window.SpeechSynthesisUtterance(text);
+        var voice = window.speechSynthesis.getVoices().find(function(item) {
+            return item.voiceURI === settings.voiceURI;
+        });
+        utterance.lang = voice ? voice.lang : "en-US";
+        if (voice) utterance.voice = voice;
+        utterance.volume = voiceNumber(settings.volume, 0.6, 0, 1);
+        utterance.rate = voiceNumber(settings.rate, 1.25, 0.5, 2);
+        utterance.pitch = voiceNumber(settings.pitch, 1, 0, 2);
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+        return utterance;
+    } catch (error) {
+        console.warn("Unable to play J-space voice announcement", error);
+    }
+}
+
+tripwire.jumpVoice = createJumpVoiceObserver(function(text) {
+    playJspaceVoice(text, options.voice);
+});
+// #endregion
+
 // #region tripwire/eve
 function trackedSystemID(character, systems) {
     if (!character || character.systemID === null || character.systemID === undefined) return null;
@@ -6455,6 +6673,9 @@ tripwire.sync = function(mode, data, successCallback, alwaysCallback) {
             }
 
             if (data.esi) {
+                tripwire.jumpVoice.observe(data.esi[options.tracking.active], options.masks.active,
+                    data.signatures || tripwire.client.signatures, data.wormholes || tripwire.client.wormholes,
+                    tripwire.systems, appData.wormholes, options.voice.enabled === true, Date.now(), options.voice);
                 tripwire.esi.parse(data.esi);
             }
 
@@ -10953,6 +11174,72 @@ function decorateOptionsDialogActions() {
 		.show();
 }
 
+function readVoiceSettings() {
+    var parts = {}, order = [];
+    $("#voice-parts [data-voice-part]").each(function() {
+        var part = $(this).attr("data-voice-part");
+        order.push(part);
+        parts[part] = $(this).find("input").prop("checked");
+    });
+    return {
+        parts: parts,
+        order: order,
+        enabled: $("#voice-enabled").prop("checked"),
+        hideStartupHint: $("#voice-hide-startup-hint").prop("checked"),
+        voiceURI: $("#voice-choice").val() || "",
+        volume: Number($("#voice-volume").val()) / 100,
+        rate: Number($("#voice-rate").val()),
+        pitch: Number($("#voice-pitch").val())
+    };
+}
+
+function renderVoiceParts(settings) {
+    var labels = {class: "System class", digits: "Last three J-code digits", statics: "Static destinations"};
+    var list = $("#voice-parts").empty();
+    voicePartOrder(settings).forEach(function(part) {
+        var row = $("<li>").attr("data-voice-part", part);
+        $("<label>").append($("<input>", {type: "checkbox"}).prop("checked", !settings.parts || settings.parts[part] !== false))
+            .append(document.createTextNode(" " + labels[part])).appendTo(row);
+        var controls = $("<span>").addClass("voice-part-actions");
+        ["up", "down"].forEach(function(direction) {
+            $("<button>", {type: "button", text: direction === "up" ? "↑" : "↓"})
+                .attr({"data-voice-move": direction, "aria-label": "Move " + labels[part] + " " + direction})
+                .appendTo(controls);
+        });
+        row.append(controls).appendTo(list);
+    });
+    updateVoicePartControls();
+}
+
+function updateVoicePartControls() {
+    var rows = $("#voice-parts [data-voice-part]");
+    rows.each(function(index) {
+        $(this).find("[data-voice-move=up]").attr("aria-disabled", String(index === 0));
+        $(this).find("[data-voice-move=down]").attr("aria-disabled", String(index === rows.length - 1));
+    });
+}
+
+function populateVoiceChoices(selected) {
+    var supported = !!(window.speechSynthesis && window.SpeechSynthesisUtterance);
+    var select = $("#voice-choice").empty().append($("<option>").val("").text("Browser default"));
+    var voices = supported ? window.speechSynthesis.getVoices() : [];
+    voices.forEach(function(voice) {
+        select.append($("<option>").val(voice.voiceURI).text(voice.name + " (" + voice.lang + ")"));
+    });
+    if (selected && !voices.some(function(voice) { return voice.voiceURI === selected; })) {
+        select.append($("<option>").val(selected).text("Saved voice unavailable — browser default"));
+    }
+    select.val(selected || "");
+    $("[data-pane=voice] input, [data-pane=voice] select, [data-pane=voice] button").prop("disabled", !supported);
+    $("#voice-status").text(supported ? "" : "Voice is not supported by this browser.");
+}
+
+function updateVoiceLabels() {
+    $("output[for=voice-volume]").text($("#voice-volume").val() + "%");
+    $("output[for=voice-rate]").text($("#voice-rate").val() + "×");
+    $("output[for=voice-pitch]").text($("#voice-pitch").val());
+}
+
 $(".options").click(function(e) {
 	e.preventDefault();
 
@@ -11003,6 +11290,9 @@ $(".options").click(function(e) {
 
 				options.uiscale = $("#dialog-options #uiscale-slider").slider("value");
 
+				options.voice = readVoiceSettings();
+				options.setVoiceEnabled(options.voice.enabled);
+				if (!options.voice.enabled) tripwire.jumpVoice.reset();
 				options.apply();
 				options.save(); // Performs AJAX
 
@@ -11017,6 +11307,14 @@ $(".options").click(function(e) {
 		},
 		open: function() {
 			optionsDialogSaved = false;
+			$("#voice-enabled").prop("checked", options.voice.enabled === true);
+			$("#voice-hide-startup-hint").prop("checked", options.voice.hideStartupHint === true);
+			$("#voice-volume").val(voiceNumber(options.voice.volume, 0.6, 0, 1) * 100);
+			$("#voice-rate").val(voiceNumber(options.voice.rate, 1.25, 0.5, 2));
+			$("#voice-pitch").val(voiceNumber(options.voice.pitch, 1, 0, 2));
+			renderVoiceParts(options.voice);
+			populateVoiceChoices(options.voice.voiceURI);
+			updateVoiceLabels();
 			fitOptionsDialogToViewport();
 			decorateOptionsDialogActions();
 
@@ -11064,6 +11362,37 @@ $(".options").click(function(e) {
 		},
 		create: function() {
 			decorateOptionsDialogActions();
+			$("#voice-volume, #voice-rate, #voice-pitch").on("input change", updateVoiceLabels);
+			$("#voice-parts").on("click", "[data-voice-move]", function() {
+				if ($(this).attr("aria-disabled") === "true") return;
+				var row = $(this).closest("[data-voice-part]");
+				if ($(this).attr("data-voice-move") === "up") row.insertBefore(row.prev());
+				else row.insertAfter(row.next());
+				updateVoicePartControls();
+				$(this).trigger("focus");
+			});
+			$("#voice-preview").on("click", function() {
+				var settings = readVoiceSettings();
+				var text = jspaceVoiceText({name: "J123007", regionID: 11000001, class: 2, statics: ["B274", "O477"]},
+					{B274: {leadsTo: "High-Sec"}, O477: {leadsTo: "Class-3"}}, settings);
+				if (!text) {
+					if (window.speechSynthesis) window.speechSynthesis.cancel();
+					$("#voice-status").text("Select at least one announcement part to preview.");
+					return;
+				}
+				var utterance = playJspaceVoice(text, settings);
+				$("#voice-status").text(utterance ? "" : "Unable to play voice preview.");
+				if (utterance) utterance.onerror = function(event) {
+					if (event.error !== "interrupted" && event.error !== "canceled") $("#voice-status").text("Unable to play voice preview. Try another voice.");
+				};
+			});
+			$("#voice-stop").on("click", function() {
+				if (window.speechSynthesis) window.speechSynthesis.cancel();
+			});
+			if (window.speechSynthesis) window.speechSynthesis.addEventListener("voiceschanged", function() {
+				populateVoiceChoices($("#voice-choice").val());
+			});
+
 
 			$(window).off("resize.tripwireOptions").on("resize.tripwireOptions", function() {
 				if ($("#dialog-options").dialog("isOpen")) fitOptionsDialogToViewport();

@@ -199,6 +199,7 @@ $system = $_REQUEST['system'] ?? '';
 						<i id="undo" data-icon="undo" class="bar-btn bar-icon disabled" data-tooltip="Undo (Ctrl-Z)"></i>
 						<i id="redo" data-icon="redo" class="bar-btn bar-icon disabled" data-tooltip="Redo (Ctrl-Y)"></i>
 						<span class="bar-sep"></span>
+						<span class="voice-control"><button id="toggle-jspace-voice" type="button" class="bar-btn bar-toggle" aria-pressed="false" aria-describedby="voice-startup-hint" aria-label="Voice announcements for newly mapped J-space systems" data-tooltip="Announce class, last three digits, and statics when you jump into a newly mapped J-space system">Voice</button><span id="voice-startup-hint" role="status" hidden><span class="voice-startup-message"></span><span class="voice-startup-progress" aria-hidden="true"><span></span></span></span></span>
 						<i id="toggle-automapper" class="bar-btn bar-icon bar-toggle disabled" data-icon="auto" data-tooltip="Auto-mapper"></i>
 						<i class="tutorial bar-btn bar-icon" data-tooltip="Show tutorial for this section">?</i>
 					</div>
@@ -679,6 +680,7 @@ $system = $_REQUEST['system'] ?? '';
 				<button type="button" role="tab" data-tab="map" aria-selected="false">Map</button>
 				<button type="button" role="tab" data-tab="signatures" aria-selected="false">Signatures</button>
 				<button type="button" role="tab" data-tab="display" aria-selected="false">Display</button>
+				<button type="button" role="tab" data-tab="voice" aria-selected="false">Voice</button>
 				<button type="button" role="tab" data-tab="stats" aria-selected="false">Statistics</button>
 			</nav>
 
@@ -807,6 +809,22 @@ $system = $_REQUEST['system'] ?? '';
 				<div class="field"><span class="field-label">Interface scale</span>
 					<span class="slider-wrap"><div id="uiscale-slider"></div><label for="uiscale-slider" class="slider-value"></label></span>
 				</div>
+			</section>
+
+			<section class="settings-pane" data-pane="voice" role="tabpanel" hidden>
+				<div class="field"><label class="field-label" for="voice-enabled">Jump announcements <small>Only for newly mapped J-space systems; if previously on, resumes after a click, paste, or key press</small></label><input id="voice-enabled" type="checkbox" /></div>
+				<div class="field"><label class="field-label" for="voice-hide-startup-hint">Hide startup message <small>Hide the message and countdown above the Voice button</small></label><input id="voice-hide-startup-hint" type="checkbox" /></div>
+				<div class="field field-block"><label class="field-label" for="voice-choice">Voice <small>Available voices depend on your browser and device</small></label><select id="voice-choice"><option value="">Browser default</option></select></div>
+				<div class="field"><label class="field-label" for="voice-volume">Volume</label><span><input id="voice-volume" type="range" min="0" max="100" step="1" /><output for="voice-volume"></output></span></div>
+				<div class="field"><label class="field-label" for="voice-rate">Speed</label><span><input id="voice-rate" type="range" min="0.5" max="2" step="0.05" /><output for="voice-rate"></output></span></div>
+				<div class="field"><label class="field-label" for="voice-pitch">Pitch</label><span><input id="voice-pitch" type="range" min="0" max="2" step="0.1" /><output for="voice-pitch"></output></span></div>
+				<div class="field field-block">
+					<span class="field-label" id="voice-parts-label">Announcement parts <small>Check what to say. Use the arrows to change the speaking order. Uncheck all for silence.</small></span>
+					<ol id="voice-parts" aria-labelledby="voice-parts-label"></ol>
+				</div>
+				<p id="voice-status" role="status"></p>
+				<div class="field-actions"><button id="voice-preview" type="button">Preview voice</button><button id="voice-stop" type="button">Stop preview</button></div>
+				<p>Preview uses these settings without enabling announcements. Save to apply your changes.</p>
 			</section>
 
 			<section class="settings-pane" data-pane="stats" role="tabpanel" hidden>
