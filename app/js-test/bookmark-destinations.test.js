@@ -19,6 +19,13 @@ describe('Bookmark destination conventions', function() {
         assert.equal(resolve('J113432', 'DR'), null);
         assert.equal(resolve('???', 'DR'), null);
     });
+    it('allows a standalone home star without weakening suffix or class matching', function() {
+        assert.equal(resolve('bm1:@j245 *', 'C3'), null, 'the suffix alone is ambiguous across all C3 systems');
+        assert.equal(destinations.matches('bm1:@j245 *', 'C3', data.systems[31001237], data.regions), true);
+        assert.equal(destinations.matches('bm1:@j246 *', 'C3', data.systems[31001237], data.regions), false);
+        assert.equal(destinations.matches('bm1:@j245 *', 'C2', data.systems[31001237], data.regions), false);
+        assert.equal(destinations.matches('bm1:@j245 WRONG *', 'C3', data.systems[31001237], data.regions), false);
+    });
     it('resolves faction aliases and partial names in either order and case', function() {
         assert.equal(data.systems[resolve('rUsT fReDaGoD', 'hs')].name, 'Fredagod');
         assert.equal(data.systems[resolve('unel FRANCE', 'HS')].name, 'Unel');

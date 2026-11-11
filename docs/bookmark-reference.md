@@ -143,6 +143,8 @@ Life markers set a countdown from import time; the bookmark's timestamp column i
 
 `*` is ignored in wormhole bookmark destination text. It does not change Tripwire's home system or create a custom system name.
 
+Destination matching also tolerates a standalone `*` with Standard codes, so a home marker does not prevent reuse of an existing mapped connection. The destination class and J-number suffix must still match.
+
 ```text
 C3 ??? 658 *
 ```

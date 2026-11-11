@@ -50,7 +50,9 @@
         var region = ((regions[system.regionID] || {}).name || '').toUpperCase();
         return tokens(text).every(function(token) {
             var literal = token.replace(/^@@/, '@');
-            return factionFor(token, text) || suffixFor(token, text) || /^[?-]+$/.test(token) ||
+            // A standalone home star is decoration, even when the importing
+            // account has not enabled the training preset's ignored markers.
+            return factionFor(token, text) || suffixFor(token, text) || token === '*' || /^[?-]+$/.test(token) ||
                 name.indexOf(literal) !== -1 || region.indexOf(literal) !== -1;
         });
     }

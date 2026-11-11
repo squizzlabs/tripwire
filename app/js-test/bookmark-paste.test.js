@@ -268,6 +268,36 @@ describe('Bookmark signature paste', function() {
         assert.equal(repeated.add.length, 0);
         assert.equal(repeated.update[0].signatures[0].id, 1);
     });
+    it('reuses the mapped C3 return hole for an unknown-ID C3 bookmark', function() {
+        context.tripwire.systems[31001237] = {name: 'J131245', class: 3};
+        context.tripwire.client.signatures = {
+            1: {id: 1, systemID: 31000001, signatureID: '???', type: 'wormhole'},
+            2: {id: 2, systemID: 31001237, type: 'wormhole'}
+        };
+        context.tripwire.client.wormholes = {3: {id: 3, initialID: 1, secondaryID: 2}};
+        const result = paste('C3 ??? ???\nDC XWB ???\nRC NKK ???');
+        assert.equal(result.add.length, 2);
+        assert.equal(result.update.length, 1);
+        assert.equal(result.update[0].wormhole.id, 3);
+        assert.equal(result.update[0].signatures[1].systemID, 31001237);
+    });
+    for (const preset of ['standard', 'training']) {
+        it('merges the reported 245 home bookmark using ' + preset + ' rules', function() {
+            context.options.bookmarks = bookmarkSettings.preset(preset);
+            context.tripwire.systems[31001237] = {name: 'J131245', class: 3};
+            context.tripwire.systems[31001232] = {name: 'J231245', class: 3};
+            context.tripwire.client.signatures = {
+                1: {id: 1, systemID: 31000001, signatureID: '???', type: 'wormhole'},
+                2: {id: 2, systemID: 31001237, type: 'wormhole'}
+            };
+            context.tripwire.client.wormholes = {3: {id: 3, initialID: 1, secondaryID: 2}};
+            const result = paste('C3 ??? 245 *\tMC Deputy Training / Wormholes\t2026.11.12 16:38\nDC XWB ---\tMC Deputy Training / Wormholes\t2026.11.12 16:43\nRC NKK ---\tMC Deputy Training / Wormholes\t2026.11.12 16:41');
+            assert.equal(result.add.length, 2);
+            assert.equal(result.update.length, 1);
+            assert.equal(result.update[0].wormhole.id, 3);
+            assert.equal(result.update[0].signatures[1].systemID, 31001237);
+        });
+    }
     it('does not merge unknown IDs for different destinations or overwrite another unknown hole', function() {
         context.tripwire.systems = {31000002: {name: 'J123658', class: 3}, 31000003: {name: 'J123659', class: 3}};
         context.tripwire.client.signatures = {1: {id: 1, systemID: 31000001, signatureID: '???', type: 'wormhole'}, 2: {id: 2, systemID: 31000003, type: 'wormhole'}};

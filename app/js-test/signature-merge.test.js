@@ -71,10 +71,42 @@ describe('Merge signatures without pasting', function() {
         signatures[1].signatureID = 'ABC';
         assert.equal(context.tripwire.selectMerge().pending[0].signatureID, 'ABC');
     });
+    for (const order of [[1, 2], [2, 1]]) {
+        for (const reversed of [false, true]) {
+            it('merges two unknown wormholes, keeping the mapped destination: ' + order + ', reverse=' + reversed, function() {
+                const {context, signatures, hole} = setup(order, reversed);
+                signatures[1].signatureID = '???';
+                signatures[1].type = 'wormhole';
+                signatures[3].systemID = 31001237;
+                signatures[5] = {id: 5, systemID: 5, type: 'wormhole'};
+                const generic = {id: 6, initialID: 1, secondaryID: 5};
+                context.tripwire.client.wormholes[6] = generic;
+                context.tripwire.signaturePayload.wormholeForSignature = id => id === 1 || id === 5 ? generic : hole;
+                const state = context.tripwire.selectMerge();
+                assert.ok(state);
+                const payload = {signatures: {update: [], remove: []}};
+                context.tripwire.applyMerge(payload, [], state.pending[0], state.candidates[0]);
+                assert.strictEqual(payload.signatures.remove[0], generic);
+                assert.strictEqual(payload.signatures.update[0].wormhole, hole);
+                assert.equal(payload.signatures.update[0].signatures[reversed ? 0 : 1].systemID, 31001237);
+            });
+        }
+    }
     it('rejects extra selections and unrelated site types', function() {
         assert.equal(setup([1, 2, 3]).context.tripwire.selectMerge(), null);
         const {context, signatures} = setup([1, 2]);
         signatures[1].type = 'gas';
+        assert.equal(context.tripwire.selectMerge(), null);
+    });
+    it('does not choose which mapped destination to discard when both IDs are unknown', function() {
+        const {context, signatures, hole} = setup([1, 2]);
+        signatures[1].signatureID = '???';
+        signatures[1].type = 'wormhole';
+        signatures[3].systemID = 31001237;
+        signatures[5] = {id: 5, systemID: 31000002, type: 'wormhole'};
+        const second = {id: 6, initialID: 1, secondaryID: 5};
+        context.tripwire.client.wormholes[6] = second;
+        context.tripwire.signaturePayload.wormholeForSignature = id => id === 1 || id === 5 ? second : hole;
         assert.equal(context.tripwire.selectMerge(), null);
     });
 });

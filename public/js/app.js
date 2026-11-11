@@ -5853,6 +5853,14 @@ tripwire.pasteSignatures = function() {
 		if (!sources.length) {
 			sources = $.grep(selected, function(item) { return hasScannedID(item.local); });
 		}
+		// Two unknown IDs can still describe the same connection. Keep the
+		// mapped system and absorb the generic destination from the paste.
+		if (!sources.length && selected.length === 2) {
+			var mapped = $.grep(selected, function(item) { return Number(item.other.systemID) >= 10000000; });
+			if (mapped.length === 1) {
+				sources = $.grep(selected, function(item) { return item !== mapped[0]; });
+			}
+		}
 		if (sources.length !== 1) return null;
 
 		var source = sources[0];
