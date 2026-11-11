@@ -6117,6 +6117,38 @@ tripwire.pasteSignatures = function() {
             matchesByKey[key] = matches;
             matches.forEach(function(connection) { claims[connection.hole.id] = (claims[connection.hole.id] || 0) + 1; });
         });
+        // A jump leaves an unidentified return connection. Rank the whole paste
+        // before assigning it, so clipboard order cannot beat a better match.
+        var unidentified = connections.filter(function(connection) { return !hasScannedID(connection.local); });
+        if (unidentified.length === 1 && bookmarkSettings.normalize(options.bookmarks).reuseConnections) {
+            var target = unidentified[0];
+            var ranked = Object.keys(merged).map(function(key) {
+                var scan = merged[key];
+                if (scan.id[0] === "???" || (scan.type && scan.type !== "Wormhole")) return null;
+                // Existing identified rows belong to their own signatures.
+                if (Object.values(signatures).some(function(sig) {
+                    if (sig.systemID != viewingSystemID || !hasScannedID(sig)) return false;
+                    var id = sig.signatureID.toUpperCase().replace("-", "");
+                    return id === scan.id.join("") || (id.length === 3 && id === scan.id[0]);
+                })) return null;
+                var score = scan.type === "Wormhole" ? 2 : 1;
+                if (scan.bookmark) {
+                    if (scan.type !== "Wormhole" || !unknownBookmarkMatches(scan, target.local)) return null;
+                    score = Number(scan.destinationID) >= 10000000 ? 5 : (scan.destinationHint ? 4 : 3);
+                }
+                return {key: key, score: score};
+            }).filter(Boolean).sort(function(a, b) { return b.score - a.score; });
+            if (ranked.length && (ranked.length === 1 || ranked[0].score > ranked[1].score)) {
+                Object.keys(matchesByKey).forEach(function(key) {
+                    matchesByKey[key] = matchesByKey[key].filter(function(connection) { return connection !== target; });
+                });
+                matchesByKey[ranked[0].key] = [target];
+                claims[target.hole.id] = 1;
+                // An unclassified scanner result identifies the known wormhole;
+                // it must retain the connection rather than become a plain row.
+                merged[ranked[0].key].type = "Wormhole";
+            }
+        }
         for (var i in merged) {
             var scanner = merged[i];
 

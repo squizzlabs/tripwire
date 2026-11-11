@@ -465,4 +465,71 @@ describe('Bookmark signature paste', function() {
         const result = paste('HOT-250\tCosmic Signature\tWormhole\tUnstable Wormhole\t100.0%\t55 km');
         assert.equal(result.add[0].signatures[0].signatureID, 'HOT250');
     });
+    for (const reverse of [false, true]) {
+        it('identifies the lone mapped return hole from scanner results, reverse=' + reverse, function() {
+            mappedHighsec(reverse);
+            const result = paste('HOT-250\tCosmic Signature\tWormhole\tUnstable Wormhole\t100.0%\t55 km\nGAS-123\tCosmic Signature\tGas Site\tReservoir\t100.0%\t1 AU');
+            assert.equal(result.add.length, 1);
+            assert.equal(result.update.length, 1);
+            const entry = result.update[0];
+            assert.equal(entry.wormhole.id, 3);
+            assert.equal(entry.wormhole.mass, 'destab');
+            assert.equal(entry.wormhole.life, 'critical');
+            assert.equal(entry.signatures[reverse ? 1 : 0].signatureID, 'HOT250');
+            assert.equal(entry.signatures[reverse ? 0 : 1].systemID, 30000010);
+        });
+    }
+    it('uses a sole unclassified scanner result for the known wormhole', function() {
+        mappedHighsec(false);
+        const result = paste('HOT-250\tCosmic Signature\t\t\t0.0%\t1 AU');
+        assert.equal(result.add.length, 0);
+        assert.equal(result.update[0].signatures[0].signatureID, 'HOT250');
+        assert.equal(result.update[0].signatures[0].type, 'wormhole');
+    });
+    for (const reverse of [false, true]) {
+        it('prefers an exact destination over a class match regardless of paste order, reverse=' + reverse, function() {
+            mappedHighsec(false);
+            const rows = ['HS ABC ???', 'HS DEF Botane'];
+            const result = paste((reverse ? rows.reverse() : rows).join('\n'));
+            assert.equal(result.add.length, 1);
+            assert.equal(result.update.length, 1);
+            assert.equal(result.update[0].signatures[0].signatureID, 'DEF');
+        });
+    }
+    it('leaves equally likely scanner wormholes unresolved', function() {
+        mappedHighsec(false);
+        const result = paste('ABC-123\tCosmic Signature\tWormhole\nDEF-456\tCosmic Signature\tWormhole');
+        assert.equal(result.add.length, 2);
+        assert.equal(result.update.length, 0);
+    });
+    it('prefers a classified wormhole over an unclassified scanner result', function() {
+        mappedHighsec(false);
+        const result = paste('ABC-123\tCosmic Signature\t\t\t0.0%\nDEF-456\tCosmic Signature\tWormhole');
+        assert.equal(result.add.length, 1);
+        assert.equal(result.update[0].signatures[0].signatureID, 'DEF456');
+    });
+    it('does not steal an identified scanner wormhole', function() {
+        mappedHighsec(false);
+        context.tripwire.client.signatures[4] = {id: 4, systemID: 31000001, signatureID: 'ABC123', type: 'wormhole'};
+        const result = paste('ABC-123\tCosmic Signature\tWormhole\nDEF-456\tCosmic Signature\tWormhole');
+        assert.equal(result.add.length, 0);
+        assert.equal(result.update.length, 1);
+        assert.equal(result.update[0].signatures[0].signatureID, 'DEF456');
+    });
+    it('does not assign a scanner result when multiple unknown connections exist', function() {
+        mappedHighsec(false);
+        context.tripwire.client.signatures[4] = {id: 4, systemID: 31000001, signatureID: '???', type: 'wormhole'};
+        context.tripwire.client.signatures[5] = {id: 5, systemID: 30000142, type: 'wormhole'};
+        context.tripwire.client.wormholes[6] = {id: 6, initialID: 4, secondaryID: 5};
+        const result = paste('ABC-123\tCosmic Signature\tWormhole');
+        assert.equal(result.add.length, 1);
+        assert.equal(result.update.length, 0);
+    });
+    it('respects disabled connection reuse for scanner results', function() {
+        mappedHighsec(false);
+        context.options.bookmarks.reuseConnections = false;
+        const result = paste('ABC-123\tCosmic Signature\tWormhole');
+        assert.equal(result.add.length, 1);
+        assert.equal(result.update.length, 0);
+    });
 });
