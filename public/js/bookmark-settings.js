@@ -5,7 +5,7 @@
     var categories = ['Combat', 'Data', 'Relic', 'Gas', 'Ore', 'Other'];
     function preset(name) {
         return {
-            enabled: true, unprefixed: true, inferSites: true, suffix: true, reuseConnections: true,
+            enabled: true, unprefixed: true, inferSites: true, suffix: true, autoMergeWormholes: false,
             fallback: 'Other', prefixes: codes.map(function(code) { return code + '=' + code; }).join('\n'),
             factions: name === 'training' ? 'SQUID=CALDARI\nRUST=MINMATAR\nFRANCE=GALLENTE\nCHINA=AMARR' : '',
             markers: '<4H=LIFE4\n<1H=LIFE1\n<50%=MASS50\n<10%=MASS10',
@@ -14,6 +14,8 @@
         };
     }
     function normalize(value) {
+        // Do not inherit legacy reuseConnections: it used to default on.
+        // Automatic merging requires opting in with the new setting.
         var result = preset('standard');
         Object.keys(result).forEach(function(key) {
             if (value && typeof value[key] === typeof result[key]) result[key] = value[key];

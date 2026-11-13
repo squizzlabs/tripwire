@@ -34,8 +34,12 @@ your saved settings unchanged.
 | Extra site names | One `EXACT SITE NAME=CATEGORY` per line. Categories are Combat, Data, Relic, Gas, Ore, Other. These rules take priority over standard name recognition. |
 
 You can also turn off unprefixed bookmarks, standard site-name recognition,
-three-digit J-number suffixes, or automatic matching of existing wormhole
-connections. Choose **Other** or **Unknown** for unrecognized site names.
+or three-digit J-number suffixes. **Automatically merge pasted wormholes** is
+off by default in both presets. Enable it to match pasted signatures and bookmarks
+to existing wormhole connections. Manual merging remains available when it is off.
+The previous default-on connection matching preference is not carried forward;
+existing accounts must explicitly enable this option.
+Choose **Other** or **Unknown** for unrecognized site names.
 
 Blank rule lists stay blank. Matching remains case-insensitive. Unsupported
 values and duplicate aliases are reported when you Save; the dialog stays open

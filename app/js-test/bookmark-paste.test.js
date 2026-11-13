@@ -12,7 +12,7 @@ describe('Bookmark signature paste', function() {
         $.map = (values, fn) => Object.values(values).map(fn).filter(v => v != null);
         $.each = (values, fn) => Object.entries(values).forEach(([k, v]) => fn(k, v));
         context = vm.createContext({$, document: {}, bookmarkSettings, bookmarkDestinations: require('../../public/js/bookmark-destinations'), appData: {}, viewingSystemID: 31000001,
-            options: {bookmarks: {...bookmarkSettings.preset('training'), enabled: true}, signatures: {pasteLife: 72}},
+            options: {bookmarks: {...bookmarkSettings.preset('training'), enabled: true, autoMergeWormholes: true}, signatures: {pasteLife: 72}},
             tripwire: {systems: {30000142: {name: 'Jita', security: 0.9, factionID: 500001}}, client: {signatures: {}, wormholes: {}},
                 refresh: (mode, payload, success, complete) => {context.payload = payload; complete();}}
         });
@@ -283,7 +283,7 @@ describe('Bookmark signature paste', function() {
     });
     for (const preset of ['standard', 'training']) {
         it('merges the reported 245 home bookmark using ' + preset + ' rules', function() {
-            context.options.bookmarks = bookmarkSettings.preset(preset);
+            context.options.bookmarks = {...bookmarkSettings.preset(preset), autoMergeWormholes: true};
             context.tripwire.systems[31001237] = {name: 'J131245', class: 3};
             context.tripwire.systems[31001232] = {name: 'J231245', class: 3};
             context.tripwire.client.signatures = {
@@ -478,7 +478,7 @@ describe('Bookmark signature paste', function() {
     });
     it('can disable automatic reuse of mapped connections', function() {
         mappedHighsec(false);
-        context.options.bookmarks.reuseConnections = false;
+        context.options.bookmarks.autoMergeWormholes = false;
         const result = paste('HS NHF ???');
         assert.equal(result.add.length, 1);
         assert.equal(result.update.length, 0);
@@ -557,7 +557,7 @@ describe('Bookmark signature paste', function() {
     });
     it('respects disabled connection reuse for scanner results', function() {
         mappedHighsec(false);
-        context.options.bookmarks.reuseConnections = false;
+        context.options.bookmarks.autoMergeWormholes = false;
         const result = paste('ABC-123\tCosmic Signature\tWormhole');
         assert.equal(result.add.length, 1);
         assert.equal(result.update.length, 0);

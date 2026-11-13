@@ -24,6 +24,26 @@ describe('Per-account bookmark preferences', function() {
         assert.equal(Object.keys(restored.markers).length, 0);
         assert.equal(restored.config.suffix, false);
     });
+    it('defaults automatic connection merging off and preserves saved choices', function() {
+        for (const preset of ['standard', 'training']) {
+            assert.equal(settings.preset(preset).autoMergeWormholes, false);
+        }
+        assert.equal(load({bookmarks: {}}, null).bookmarks.autoMergeWormholes, false);
+        for (const autoMergeWormholes of [false, true]) {
+            const options = load({bookmarks: {autoMergeWormholes}}, null);
+            assert.equal(options.bookmarks.autoMergeWormholes, autoMergeWormholes);
+            assert.equal(options.get().bookmarks.autoMergeWormholes, autoMergeWormholes);
+        }
+    });
+    it('does not inherit the old default-on setting from the server or local cache', function() {
+        const legacy = {bookmarks: {reuseConnections: true}};
+        for (const options of [load(legacy, null), load(null, {userID: 1, ...legacy})]) {
+            assert.equal(options.bookmarks.autoMergeWormholes, false);
+            assert.equal(options.get().bookmarks.autoMergeWormholes, false);
+            assert.equal(options.get().bookmarks.reuseConnections, undefined);
+        }
+        assert.equal(load({bookmarks: {reuseConnections: true, autoMergeWormholes: true}}, null).bookmarks.autoMergeWormholes, true);
+    });
     it('validates rules and rejects duplicate case-insensitive names', function() {
         for (const config of [{prefixes: 'H=HS\nh=LS'}, {prefixes: 'H=C99'},
             {factions: 'A=Pirates'}, {markers: 'EOL=LIFE9'}, {sites: 'Place=unknown'},

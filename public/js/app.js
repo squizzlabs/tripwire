@@ -5517,7 +5517,7 @@ tripwire.updateReturnStatus = function() {
 // #endregion
 
 // #region bookmark-preferences-ui
-var bookmarkPreferenceFields = ['enabled', 'unprefixed', 'inferSites', 'suffix', 'reuseConnections', 'fallback', 'prefixes', 'factions', 'markers', 'campMarkers', 'ignoreMarkers', 'sites'];
+var bookmarkPreferenceFields = ['enabled', 'unprefixed', 'inferSites', 'suffix', 'autoMergeWormholes', 'fallback', 'prefixes', 'factions', 'markers', 'campMarkers', 'ignoreMarkers', 'sites'];
 function writeBookmarkSettings(value) {
     var settings = bookmarkSettings.normalize(value);
     bookmarkPreferenceFields.forEach(function(key) {
@@ -6117,7 +6117,7 @@ tripwire.pasteSignatures = function() {
         var claims = {}, matchesByKey = {};
         Object.keys(merged).forEach(function(key) {
             var scan = merged[key];
-            if (!scan.bookmark || scan.type !== "Wormhole" || !bookmarkSettings.normalize(options.bookmarks).reuseConnections) return;
+            if (!scan.bookmark || scan.type !== "Wormhole" || !bookmarkSettings.normalize(options.bookmarks).autoMergeWormholes) return;
             var matches = connections.filter(function(connection) {
                 var id = connection.local.signatureID;
                 return (scan.id[0] === "???" || !id || /^\?+$/.test(id)) && unknownBookmarkMatches(scan, connection.local);
@@ -6128,7 +6128,7 @@ tripwire.pasteSignatures = function() {
         // A jump leaves an unidentified return connection. Rank the whole paste
         // before assigning it, so clipboard order cannot beat a better match.
         var unidentified = connections.filter(function(connection) { return !hasScannedID(connection.local); });
-        if (unidentified.length === 1 && bookmarkSettings.normalize(options.bookmarks).reuseConnections) {
+        if (unidentified.length === 1 && bookmarkSettings.normalize(options.bookmarks).autoMergeWormholes) {
             var target = unidentified[0];
             var ranked = Object.keys(merged).map(function(key) {
                 var scan = merged[key];
