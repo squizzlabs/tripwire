@@ -134,7 +134,7 @@ $system = $_REQUEST['system'] ?? '';
 
 			<span class="hdr-tools">
 				<span class="hdr-tool-buttons">
-					<span class="voice-control"><button id="toggle-jspace-voice" type="button" class="themebtn" aria-pressed="false" aria-describedby="voice-startup-hint" aria-label="Voice announcements for newly mapped J-space systems" data-tooltip="Announce class, last three digits, and statics when you jump into a newly mapped J-space system"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4Z"/><path class="voice-sound" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="voice-muted" d="m16 9 6 6m0-6-6 6"/></svg><span class="voice-waiting-dot" aria-hidden="true"></span></button><span id="voice-startup-hint" role="status" hidden><span class="voice-startup-message"></span><span class="voice-startup-progress" aria-hidden="true"><span></span></span></span></span>
+					<span class="voice-control"><button id="toggle-jspace-voice" type="button" class="themebtn" aria-pressed="false" aria-describedby="voice-startup-hint" aria-label="Voice announcements for J-space jumps" data-tooltip="Announce enabled parts on New or All J-space jumps, as chosen in Voice settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4Z"/><path class="voice-sound" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="voice-muted" d="m16 9 6 6m0-6-6 6"/></svg><span class="voice-waiting-dot" aria-hidden="true"></span></button><span id="voice-startup-hint" role="status" hidden><span class="voice-startup-message"></span><span class="voice-startup-progress" aria-hidden="true"><span></span></span></span></span>
 					<button id="theme-toggle" class="themebtn" type="button" aria-label="Switch to light" title="Switch to light">&#9788;</button>
 					<i id="settings" data-icon="settings" class="options" data-tooltip="Settings"></i>
 				</span>
@@ -916,7 +916,7 @@ $system = $_REQUEST['system'] ?? '';
 				<div class="field"><label class="field-label" for="voice-rate">Speed</label><span><input id="voice-rate" type="range" min="0.5" max="2" step="0.05" /><output for="voice-rate"></output></span></div>
 				<div class="field"><label class="field-label" for="voice-pitch">Pitch</label><span><input id="voice-pitch" type="range" min="0" max="2" step="0.1" /><output for="voice-pitch"></output></span></div>
 				<div class="field field-block">
-					<span class="field-label" id="voice-parts-label">Announcement parts <small>Check what to say. Use the arrows to change the speaking order. Uncheck all for silence.</small></span>
+					<span class="field-label" id="voice-parts-label">Announcement parts <small>Check what to say. New: newly mapped J-space jumps. All: every J-space jump. Use arrows to change the order. Uncheck all for silence.</small></span>
 					<ol id="voice-parts" aria-labelledby="voice-parts-label"></ol>
 				</div>
 				<p id="voice-status" role="status"></p>

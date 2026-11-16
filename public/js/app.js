@@ -345,7 +345,7 @@ var options = new function() {
 	this.userID = init.userID;
 	this.character = {id: init.characterID, name: init.characterName};
 	this.background = null;
-	this.voice = {enabled: false, hideStartupHint: false, voiceURI: "", volume: 0.6, rate: 1.25, pitch: 1, parts: {class: true, digits: true, statics: true}, order: ["class", "digits", "statics"]};
+	this.voice = {enabled: false, hideStartupHint: false, voiceURI: "", volume: 0.6, rate: 1.25, pitch: 1, parts: {class: true, digits: true, statics: true, kills: true}, order: ["class", "digits", "statics", "kills"], triggers: {}};
 	this.uiscale = 1.0;
 	this.favorites = [];
 	this.grid = {};
@@ -5185,14 +5185,14 @@ tripwire.esi();
 
 // #region tripwire/jumpVoice
 function voicePartOrder(settings) {
-    var defaults = ["class", "digits", "statics"];
+    var defaults = ["class", "digits", "statics", "kills"];
     var saved = settings && Array.isArray(settings.order) ? settings.order : [];
     return saved.concat(defaults).filter(function(part, index, all) {
         return defaults.includes(part) && all.indexOf(part) === index;
     });
 }
 
-function jspaceVoiceText(system, wormholeTypes, settings) {
+function jspaceVoiceText(system, wormholeTypes, settings, activity) {
     if (!system || system.regionID < 11000000 || system.regionID >= 12000000
         || !/^J\d{6}$/.test(system.name) || !system.class) return null;
     var digits = system.name.slice(-3).split("").join(" ");
@@ -5206,19 +5206,47 @@ function jspaceVoiceText(system, wormholeTypes, settings) {
     var phrases = {
         class: "Class " + system.class + ".",
         digits: digits + ".",
-        statics: statics.length ? "Statics: " + statics.join(", ") + "." : "Statics unknown."
+        statics: statics.length ? "Statics: " + statics.join(", ") + "." : "Statics unknown.",
+        kills: activity || ""
     };
     return voicePartOrder(settings).filter(function(part) {
         return !settings || !settings.parts || settings.parts[part] !== false;
-    }).map(function(part) { return phrases[part]; }).join(" ");
+    }).map(function(part) { return phrases[part]; }).filter(Boolean).join(" ");
 }
 
-function createJumpVoiceObserver(speak) {
+function jumpVoiceSettings(settings, newlyMapped, includeAll) {
+    var filtered = Object.assign({}, settings, {parts: {}});
+    voicePartOrder(settings).forEach(function(part) {
+        var all = settings && settings.triggers && settings.triggers[part] === "all";
+        filtered.parts[part] = (!settings || !settings.parts || settings.parts[part] !== false)
+            && !!(all ? includeAll : newlyMapped);
+    });
+    return filtered;
+}
+
+function createJumpVoiceObserver(speak, loadActivity) {
+    var generation = 0, latestSettings;
     var previous = null, mapped = new Set(), pending = null, context = null;
     var recentlyMapped = new Map();
+    function announce(systemID, systems, types, newlyMapped, includeAll) {
+        var settings = jumpVoiceSettings(latestSettings, newlyMapped, includeAll);
+        var text = jspaceVoiceText(systems[systemID], types, settings);
+        if (loadActivity && settings.parts.kills) {
+            var ticket = generation;
+            var deliver = function(activity) {
+                if (ticket !== generation) return;
+                var announcement = jspaceVoiceText(systems[systemID], types,
+                    jumpVoiceSettings(latestSettings, newlyMapped, includeAll), activity);
+                if (announcement) speak(announcement);
+            };
+            Promise.resolve().then(function() { return loadActivity(systemID); })
+                .then(deliver, function() { deliver("Recent killmail activity unavailable."); });
+        } else if (text) speak(text);
+    }
     return {
-        reset: function() { previous = null; pending = null; context = null; mapped = new Set(); recentlyMapped.clear(); },
+        reset: function() { generation++; previous = null; pending = null; context = null; mapped = new Set(); recentlyMapped.clear(); },
         observe: function(character, mask, signatures, wormholes, systems, types, enabled, now, voiceSettings) {
+            latestSettings = voiceSettings;
             var key = String(mask) + ":" + (character && character.characterID);
             var current = character && Number(character.systemID) || null;
             var nextMapped = new Set();
@@ -5234,6 +5262,7 @@ function createJumpVoiceObserver(speak) {
                 }
             });
             if (context !== key || !enabled || !current) {
+                generation++;
                 previous = current; mapped = nextMapped; pending = null; context = key;
                 recentlyMapped.clear();
                 return;
@@ -5252,20 +5281,27 @@ function createJumpVoiceObserver(speak) {
                 });
             });
             if (previous && current !== previous) {
+                generation++;
                 var recent = recentlyMapped.get(current);
                 var newlyMapped = !mapped.has(current) || (recent && recent.from === previous);
-                pending = newlyMapped && jspaceVoiceText(systems[current], types)
-                    ? {from: previous, to: current, expires: now + 30000} : null;
+                pending = jspaceVoiceText(systems[current], types)
+                    ? {from: previous, to: current, expires: now + 30000, newlyMapped: newlyMapped, allSpoken: false} : null;
                 // A jump consumes these candidates, including when all voice parts are off.
                 recentlyMapped.clear();
             }
             if (pending && (pending.to !== current || now > pending.expires)) pending = null;
-            if (pending && connections.some(function(pair) {
-                return pair.includes(pending.from) && pair.includes(pending.to);
-            })) {
-                var text = jspaceVoiceText(systems[current], types, voiceSettings);
-                pending = null;
-                if (text) speak(text);
+            if (pending) {
+                var connected = connections.some(function(pair) {
+                    return pair.includes(pending.from) && pair.includes(pending.to);
+                });
+                if (!pending.newlyMapped || connected) {
+                    announce(current, systems, types, pending.newlyMapped && connected, !pending.allSpoken);
+                    pending = null;
+                } else if (!pending.allSpoken) {
+                    // All-mode parts also work when automapping is off or still catching up.
+                    announce(current, systems, types, false, true);
+                    pending.allSpoken = true;
+                }
             }
             previous = current;
             mapped = nextMapped;
@@ -5299,9 +5335,47 @@ function playJspaceVoice(text, settings) {
     }
 }
 
+function recentKillmailVoiceText(kills, systemID, now) {
+    if (!Array.isArray(kills) || kills.some(function(kill) {
+        return !kill || !Number.isFinite(Date.parse(kill.killmail_time)) || !kill.solar_system_id || !Number.isSafeInteger(kill.killmail_id);
+    })) throw new Error("Invalid recent killmail response");
+    var cutoff = now - 2 * 60 * 60 * 1000;
+    var count = new Set(kills.filter(function(kill) {
+        var time = Date.parse(kill.killmail_time);
+        return Number(kill.solar_system_id) === Number(systemID) && time >= cutoff && time <= now;
+    }).map(function(kill) { return kill.killmail_id; })).size;
+    if (!count) return "No killmails reported in the last two hours.";
+    return (kills.length >= 200 ? "At least " : "") + count
+        + (count === 1 ? " killmail reported" : " killmails reported") + " in the last two hours.";
+}
+
+var recentVoiceKills = new Map();
+async function loadRecentKillmailVoice(systemID) {
+    var saved = recentVoiceKills.get(systemID);
+    // Follow zKillboard's one-hour client cache and recheck ages before speaking.
+    if (saved && Date.now() - saved.time < 60 * 60 * 1000) {
+        return recentKillmailVoiceText(saved.kills, systemID, Date.now());
+    }
+    var controller = new AbortController();
+    var timer = setTimeout(function() { controller.abort(); }, 5000);
+    try {
+        var response = await fetch("https://zkillboard.com/api/solarSystemID/" + systemID + "/pastSeconds/7200/", {
+            headers: {Accept: "application/json"}, signal: controller.signal
+        });
+        if (!response.ok) throw new Error("Recent killmail request failed: " + response.status);
+        var kills = await response.json();
+        var text = recentKillmailVoiceText(kills, systemID, Date.now());
+        recentVoiceKills.set(systemID, {kills: kills, time: Date.now()});
+        if (recentVoiceKills.size > 100) recentVoiceKills.delete(recentVoiceKills.keys().next().value);
+        return text;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
 tripwire.jumpVoice = createJumpVoiceObserver(function(text) {
-    playJspaceVoice(text, options.voice);
-});
+    if (options.voice.enabled) playJspaceVoice(text, options.voice);
+}, loadRecentKillmailVoice);
 // #endregion
 
 // #region tripwire/eve
@@ -11302,14 +11376,16 @@ function decorateOptionsDialogActions() {
 }
 
 function readVoiceSettings() {
-    var parts = {}, order = [];
+    var parts = {}, order = [], triggers = {};
     $("#voice-parts [data-voice-part]").each(function() {
         var part = $(this).attr("data-voice-part");
         order.push(part);
         parts[part] = $(this).find("input").prop("checked");
+        triggers[part] = $(this).find("[data-voice-trigger]").attr("data-voice-trigger");
     });
     return {
         parts: parts,
+        triggers: triggers,
         order: order,
         enabled: $("#voice-enabled").prop("checked"),
         hideStartupHint: $("#voice-hide-startup-hint").prop("checked"),
@@ -11321,7 +11397,7 @@ function readVoiceSettings() {
 }
 
 function renderVoiceParts(settings) {
-    var labels = {class: "System class", digits: "Last three J-code digits", statics: "Static destinations"};
+    var labels = {class: "System class", digits: "Last three J-code digits", statics: "Static destinations", kills: "Killmail activity (last two hours)"};
     var list = $("#voice-parts").empty();
     voicePartOrder(settings).forEach(function(part) {
         var row = $("<li>").attr("data-voice-part", part);
@@ -11333,6 +11409,12 @@ function renderVoiceParts(settings) {
                 .attr({"data-voice-move": direction, "aria-label": "Move " + labels[part] + " " + direction})
                 .appendTo(controls);
         });
+        var all = settings.triggers && settings.triggers[part] === "all";
+        $("<button>", {type: "button", text: all ? "All" : "New"})
+            .attr({"data-voice-trigger": all ? "all" : "new", "aria-pressed": String(!!all),
+                "aria-label": labels[part] + ": announce on all J-space jumps",
+                title: "New: newly mapped J-space jumps. All: every J-space jump."})
+            .appendTo(controls);
         row.append(controls).appendTo(list);
     });
     updateVoicePartControls();
@@ -11500,6 +11582,11 @@ $(".options").click(function(e) {
 		create: function() {
 			decorateOptionsDialogActions();
 			$("#voice-volume, #voice-rate, #voice-pitch").on("input change", updateVoiceLabels);
+            $("#voice-parts").on("click", "[data-voice-trigger]", function() {
+                var all = $(this).attr("data-voice-trigger") !== "all";
+                $(this).attr({"data-voice-trigger": all ? "all" : "new", "aria-pressed": String(all)})
+                    .text(all ? "All" : "New");
+            });
 			$("#voice-parts").on("click", "[data-voice-move]", function() {
 				if ($(this).attr("aria-disabled") === "true") return;
 				var row = $(this).closest("[data-voice-part]");
@@ -11511,7 +11598,7 @@ $(".options").click(function(e) {
 			$("#voice-preview").on("click", function() {
 				var settings = readVoiceSettings();
 				var text = jspaceVoiceText({name: "J123007", regionID: 11000001, class: 2, statics: ["B274", "O477"]},
-					{B274: {leadsTo: "High-Sec"}, O477: {leadsTo: "Class-3"}}, settings);
+					{B274: {leadsTo: "High-Sec"}, O477: {leadsTo: "Class-3"}}, settings, "3 killmails reported in the last two hours.");
 				if (!text) {
 					if (window.speechSynthesis) window.speechSynthesis.cancel();
 					$("#voice-status").text("Select at least one announcement part to preview.");

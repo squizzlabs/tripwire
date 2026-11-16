@@ -7842,6 +7842,8 @@ h4.chip,
 #voice-parts label { display: flex; align-items: center; gap: 6px; }
 .voice-part-actions { display: inline-flex; gap: 4px; flex-shrink: 0; }
 .voice-part-actions button { min-width: 30px; }
+.voice-part-actions button[data-voice-trigger] { min-width: 46px; }
+.voice-part-actions button[data-voice-trigger="all"] { font-weight: bold; border-color: currentColor; }
 .voice-part-actions button[aria-disabled="true"] { opacity: .35; cursor: default; }
 
 /* Per-account bookmark rules in the Signatures settings pane. */

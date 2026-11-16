@@ -286,10 +286,12 @@ describe('Voice activation waits for interaction', function() {
         assert.equal(timers.length, 1);
     });
     it('retains part selection and order across preference saves and loads', function() {
-        const options = loadOptions({voice: {enabled: true, parts: {class: false, digits: true, statics: true}, order: ['statics', 'digits', 'class']}});
+        const options = loadOptions({voice: {enabled: true, parts: {class: false, digits: true, statics: true}, triggers: {statics: 'all', digits: 'new'}, order: ['statics', 'digits', 'class']}});
         const reloaded = loadOptions(JSON.parse(JSON.stringify(options.get())));
         assert.equal(reloaded.voice.parts.class, false);
         assert.equal(reloaded.voice.parts.digits, true);
+        assert.equal(reloaded.voice.triggers.statics, 'all');
+        assert.equal(reloaded.voice.triggers.digits, 'new');
         assert.deepEqual(Array.from(reloaded.voice.order), ['statics', 'digits', 'class']);
         assert.equal(reloaded.voice.enabled, false);
     });
@@ -353,4 +355,149 @@ describe('Voice activation waits for interaction', function() {
         assert.equal(pending.get().voice.enabled, true);
     });
 
+});
+
+describe('Recent killmail voice activity', function() {
+    const now = Date.parse('2026-11-16T18:00:00Z');
+    const kill = (id, time, system = 2) => ({killmail_id: id, killmail_time: time, solar_system_id: system});
+    const flush = () => new Promise(resolve => setImmediate(resolve));
+    it('counts only unique killmails in this system within the last two hours', function() {
+        const recent = kill(1, '2026-11-16T17:00:00Z');
+        assert.equal(context.recentKillmailVoiceText([
+            recent, recent, kill(2, '2026-11-16T16:00:00Z'),
+            kill(3, '2026-11-16T15:59:59Z'), kill(4, '2026-11-16T18:00:01Z'),
+            kill(5, '2026-11-16T17:30:00Z', 3)
+        ], 2, now), '2 killmails reported in the last two hours.');
+        assert.equal(context.recentKillmailVoiceText([recent], 2, now), '1 killmail reported in the last two hours.');
+        assert.equal(context.recentKillmailVoiceText([], 2, now), 'No killmails reported in the last two hours.');
+        assert.throws(() => context.recentKillmailVoiceText([{killmail_id: 1}], 2, now));
+        assert.throws(() => context.recentKillmailVoiceText({error: 'Unavailable'}, 2, now));
+        assert.match(context.recentKillmailVoiceText(Array.from({length: 200}, (_, i) =>
+            kill(i + 1, '2026-11-16T17:00:00Z')), 2, now), /^At least 200/);
+    });
+    it('supports killmail-only speech, custom order, and disabling the part', function() {
+        const activity = '3 killmails reported in the last two hours.';
+        assert.equal(context.jspaceVoiceText(systems[2], types,
+            {parts: {class: false, digits: false, statics: false}}, activity), activity);
+        assert.match(context.jspaceVoiceText(systems[2], types, {order: ['kills']}, activity), /^3 killmails/);
+        assert.equal(context.jspaceVoiceText(systems[2], types, {parts: {kills: false}}, activity),
+            'Class 2. 0 0 7. Statics: highsec, class 3.');
+    });
+    for (const cancel of ['departure', 'disabled', 'reset', 'pilot', 'mask']) {
+        it('discards delayed activity after ' + cancel, async function() {
+            let complete;
+            const spoken = [];
+            const observer = context.createJumpVoiceObserver(text => spoken.push(text),
+                () => new Promise(resolve => { complete = resolve; }));
+            const observe = (id, enabled = true, pilot = 10, mask = '1.2') => observer.observe(
+                {systemID: id, characterID: pilot}, mask, signatures, holes, systems, types, enabled, 0);
+            observer.observe({systemID: 1, characterID: 10}, '1.2', signatures, {}, systems, types, true, 0);
+            observe(2);
+            await flush();
+            if (cancel === 'reset') observer.reset();
+            else observe(cancel === 'departure' ? 3 : 2, cancel !== 'disabled',
+                cancel === 'pilot' ? 20 : 10, cancel === 'mask' ? '2.2' : '1.2');
+            complete('1 killmail reported in the last two hours.');
+            await flush();
+            assert.deepEqual(spoken, []);
+        });
+    }
+    it('announces once and reports failures as unavailable rather than zero', async function() {
+        const spoken = [];
+        const observer = context.createJumpVoiceObserver(text => spoken.push(text), () => Promise.reject(new Error('Offline')));
+        observer.observe({systemID: 1, characterID: 10}, '1.2', signatures, {}, systems, types, true, 0);
+        for (let i = 0; i < 2; i++) observer.observe({systemID: 2, characterID: 10}, '1.2', signatures, holes, systems, types, true, i);
+        await flush();
+        assert.deepEqual(spoken, ['Class 2. 0 0 7. Statics: highsec, class 3. Recent killmail activity unavailable.']);
+    });
+    it('does not fetch when killmail speech is disabled', async function() {
+        const spoken = [];
+        const observer = context.createJumpVoiceObserver(text => spoken.push(text), () => assert.fail('Unexpected fetch'));
+        const prefs = {parts: {kills: false}};
+        observer.observe({systemID: 1, characterID: 10}, '1.2', signatures, {}, systems, types, true, 0, prefs);
+        observer.observe({systemID: 2, characterID: 10}, '1.2', signatures, holes, systems, types, true, 0, prefs);
+        await flush();
+        assert.deepEqual(spoken, ['Class 2. 0 0 7. Statics: highsec, class 3.']);
+    });
+    it('requests the two-hour window and ages cached kills out', async function() {
+        const sandbox = {tripwire: {}, AbortController, setTimeout, clearTimeout, Date: {now: () => now, parse: Date.parse}};
+        let calls = 0;
+        sandbox.fetch = async (url) => {
+            calls++;
+            assert.equal(url, 'https://zkillboard.com/api/solarSystemID/2/pastSeconds/7200/');
+            return {ok: true, json: async () => [kill(1, '2026-11-16T16:15:00Z')]};
+        };
+        vm.createContext(sandbox);
+        vm.runInContext(readSource('tripwire/jumpVoice'), sandbox);
+        assert.equal(await sandbox.loadRecentKillmailVoice(2), '1 killmail reported in the last two hours.');
+        sandbox.Date.now = () => now + 30 * 60 * 1000;
+        assert.equal(await sandbox.loadRecentKillmailVoice(2), 'No killmails reported in the last two hours.');
+        assert.equal(calls, 1);
+    });
+});
+
+describe('Per-part New / All jump triggers', function() {
+    const prefs = {parts: {kills: false}, triggers: {digits: 'all'}};
+    function setup(settings = prefs) {
+        const spoken = [];
+        const observer = context.createJumpVoiceObserver(text => spoken.push(text));
+        const observe = (id, map = holes, enabled = true, pilot = 10) => observer.observe(
+            {systemID: id, characterID: pilot}, '1.2', signatures, map, systems, types, enabled, 0, settings);
+        return {spoken, observer, observe};
+    }
+    it('defaults missing and invalid trigger preferences to New', function() {
+        for (const triggers of [undefined, {}, {digits: 'invalid'}]) {
+            const {spoken, observe} = setup({triggers});
+            observe(1);
+            observe(2);
+            assert.deepEqual(spoken, []);
+        }
+    });
+    it('reads all enabled parts on a new jump and only All parts on revisits', function() {
+        const {spoken, observe} = setup();
+        observe(1, {});
+        observe(2);
+        observe(1);
+        observe(2);
+        observe(2);
+        assert.deepEqual(spoken, ['Class 2. 0 0 7. Statics: highsec, class 3.', '0 0 7.']);
+    });
+    it('announces All parts without a map and adds New parts when mapping catches up', function() {
+        const {spoken, observe} = setup();
+        observe(1, {});
+        observe(2, {});
+        assert.deepEqual(spoken, ['0 0 7.']);
+        observe(2);
+        assert.deepEqual(spoken, ['0 0 7.', 'Class 2. Statics: highsec, class 3.']);
+        observe(2);
+        assert.equal(spoken.length, 2);
+    });
+    it('keeps disabled parts silent even when set to All', function() {
+        const {spoken, observe} = setup({parts: {class: false, digits: false, statics: false, kills: false},
+            triggers: {class: 'all', digits: 'all', statics: 'all', kills: 'all'}});
+        observe(1, {});
+        observe(2);
+        assert.deepEqual(spoken, []);
+    });
+    it('does not announce initial loading, pilot switches, or enabling voice', function() {
+        const {spoken, observe} = setup();
+        observe(2);
+        observe(1, holes, true, 20);
+        observe(2, holes, false, 20);
+        observe(2, holes, true, 20);
+        assert.deepEqual(spoken, []);
+    });
+    it('only fetches activity on revisits when killmails are set to All', async function() {
+        const spoken = [], requests = [];
+        const prefs = {parts: {class: false, digits: false, statics: false}, triggers: {kills: 'all'}};
+        const observer = context.createJumpVoiceObserver(text => spoken.push(text), async id => {
+            requests.push(id);
+            return '2 killmails reported in the last two hours.';
+        });
+        for (const id of [1, 2, 2]) observer.observe({systemID: id, characterID: 10}, '1.2',
+            signatures, holes, systems, types, true, 0, prefs);
+        await new Promise(resolve => setImmediate(resolve));
+        assert.deepEqual(requests, [2]);
+        assert.deepEqual(spoken, ['2 killmails reported in the last two hours.']);
+    });
 });
