@@ -13,6 +13,7 @@
     "scripts": {
         "test": "mocha \"app/js-test/**/*.test.js\"",
         "e2e": "playwright test",
+        "test:routes": "playwright test --config playwright.routes.config.js",
         "e2e:headed": "playwright test --headed"
     }
 }

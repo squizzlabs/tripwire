@@ -44,7 +44,18 @@ $system = $_REQUEST['system'] ?? '';
 	<div id="wrapper">
 	<div id="inner-wrapper">
 	<div id="topbar">
-		<span class="align-left hdr-left">
+		<span class="align-left hdr-brand">
+			<a id="logo" href="." title="<?= APP_NAME ?>">
+				<?= brand_logo_html() ?>
+			</a>
+            <!-- Workspace tabs -->
+    <nav id="workspace-tabs" role="tablist" aria-label="Workspace">
+        <button id="map-workspace-tab" type="button" role="tab" aria-selected="true" aria-controls="map-workspace">Map</button>
+        <button id="open-route-planner" type="button" role="tab" aria-selected="false" aria-controls="route-planner" tabindex="-1">Route</button>
+    </nav>
+    <!-- /Workspace tabs -->
+		</span>
+		<span class="align-center hdr-left">
 			<div class="hdr-sys">
 				<a id="hdr-system" href="#" title="Viewing"><?= htmlspecialchars($system, ENT_QUOTES, 'UTF-8') ?></a>
 				<i id="search" data-icon="search" data-tooltip="Search for a system"></i>
@@ -54,11 +65,6 @@ $system = $_REQUEST['system'] ?? '';
 				<span id="searchSpan"><form id="systemSearch" method="GET" action=".?"><input type="text" size="18" class="systemsAutocomplete" name="system" placeholder="Go to system" /></form></span>
 				<span id="APItimer" class="hidden"></span>
 			</h3>
-		</span>
-		<span class="align-center hdr-brand">
-			<a id="logo" href="." title="<?= APP_NAME ?>">
-				<?= brand_logo_html() ?>
-			</a>
 		</span>
 		<span class="align-right hdr-right">
 			<span id="login">
@@ -137,7 +143,9 @@ $system = $_REQUEST['system'] ?? '';
 		</span>
 	</div>
 
-	<div class="gridster">
+
+
+	<div id="map-workspace" class="gridster" role="tabpanel" aria-labelledby="map-workspace-tab" tabindex="0">
 		<ul>
 			<li id="infoWidget" class="gridWidget" data-row="1" data-col="1" data-sizex="7" data-sizey="6" data-min-sizex="5" data-min-sizey="4" style="width: 410px; height: 350px;">
 				<div class="controls">
@@ -281,7 +289,10 @@ $system = $_REQUEST['system'] ?? '';
 						<!-- <i class="tutorial" data-tooltip="Show tutorial for this section">?</i> -->
 					</div>
 				</div>
-				<div id="chainParent" class="content dragscroll">
+
+
+
+                <div id="chainParent" class="content dragscroll">
 					<div style="position: relative; display: table; width: 100%;">
 						<table id="chainGrid">
 							<tr class="top"><td></td></tr>
@@ -370,6 +381,68 @@ $system = $_REQUEST['system'] ?? '';
 			</li>
 		</ul>
 	</div>
+
+<!-- Route planner -->
+    <section id="route-planner" hidden role="tabpanel" aria-labelledby="open-route-planner" tabindex="0">
+        <div class="route-settings">
+            <h2>Route settings</h2>
+            <form id="route-form">
+			<datalist id="route-system-options"></datalist>
+			<div class="route-fields">
+				<div class="route-origin-choice">
+                    <span id="route-origin-label">Origin</span>
+                    <input id="route-origin-mode" type="hidden" value="current">
+                    <div class="route-origin-buttons" role="group" aria-labelledby="route-origin-label">
+                        <button type="button" data-origin-mode="current" aria-pressed="true">Current Location</button>
+                        <button type="button" data-origin-mode="viewed" aria-pressed="false">Viewed System</button>
+                        <button type="button" data-origin-mode="system" aria-pressed="false">Enter a system</button>
+                    </div>
+                </div>
+                <label id="route-origin-field" for="route-origin" hidden>System<input id="route-origin" type="text" list="route-system-options" autocomplete="off" disabled></label>
+                <p id="route-origin-description" class="route-detail"></p>
+            </div>
+            <div class="route-fields">
+				<label for="route-stop-input">Destination<input id="route-stop-input" type="text" list="route-system-options" autocomplete="off" placeholder="System name"></label>
+				<button id="route-add-stop" type="button">Add stop</button>
+			</div>
+			<label for="route-stops">Stops in travel order</label>
+			<textarea id="route-stops" rows="2" placeholder="One system per line; edit the order here"></textarea>
+			<div class="route-fields">
+				<label for="route-preference">Preference<select id="route-preference"><option value="shortest">Shortest</option><option value="highsec">Safest</option><option value="avoid-high">Less secure</option><option value="avoid-null">Avoid null-sec</option></select></label>
+				<label for="route-strictness">Security strictness<input id="route-strictness" type="number" min="0" max="100" value="50" disabled></label>
+			</div>
+			<label for="route-avoid">Avoid systems (comma separated)<input id="route-avoid" type="text" placeholder="Tama, Rancer"></label>
+			<div class="route-toggles">
+				<label><input id="route-wormholes" type="checkbox" checked> Use mapped wormholes</label>
+				<label><input id="route-thera" type="checkbox" checked> Use Thera (EVE-Scout)</label>
+				<label><input id="route-turnur" type="checkbox" checked> Use Turnur (EVE-Scout)</label>
+				<label><input id="route-avoid-eol" type="checkbox" checked> Exclude end-of-life holes</label>
+				<label><input id="route-avoid-critical" type="checkbox" checked> Exclude critical mass</label>
+			</div>
+			<p class="route-detail">Avoided systems can still be explicit stops. Less secure favors low-sec. Ship mass is shown where known; it is not used to filter routes.</p>
+		</form>
+
+            <h3>Route preview</h3>
+            <section class="route-planner-actions" aria-label="Assign route">
+                <div class="route-pilot-actions"><strong>Pilots</strong><button id="route-select-all" type="button">Select all</button><button id="route-select-none" type="button">Clear selection</button></div>
+                <div id="route-pilots" role="group" aria-label="Route recipients"></div>
+                <p class="route-detail">Select pilots to preview their routes. Assignment replaces their EVE waypoints with the next gate segment. Keep this tab open for automatic delivery.</p>
+                <button id="route-start" type="button" disabled>Assign route to selected pilots</button>
+                <p id="route-start-status" role="status"></p>
+            </section>
+            <div class="route-preview">
+                <p id="route-coverage" class="route-detail" role="status"></p>
+                <div id="route-result" aria-live="polite"></div>
+            </div>
+        </div>
+        <div class="route-output">
+            <h2>Assigned route</h2>
+            <p id="route-assigned-empty" class="route-detail">No routes assigned. Choose a destination, select pilots on the left, then assign the route.</p>
+            <section id="active-route" hidden aria-label="Assigned routes"></section>
+            <p class="route-detail">Stop tracking leaves that pilot’s EVE waypoints in place.</p>
+        </div>
+    </section>
+    <!-- /Route planner -->
 
 	<div id="statusbar">
 		<span id="serverStatus" class="pointer" data-tooltip="EVE server status and player count"><span class="bar-label">Tranquility</span><span class="bar-value">??,???</span></span>
@@ -1274,6 +1347,7 @@ $system = $_REQUEST['system'] ?? '';
 		})();
 
 	</script>
+
 
 	<!-- JS Includes -->
 	<script type="text/javascript" src="//<?= CDN_DOMAIN ?>/js/jquery-3.3.1.min.js?v=<?= VERSION ?>"></script>

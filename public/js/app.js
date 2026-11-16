@@ -1684,15 +1684,15 @@ $("#chainParent").contextmenu({
 				tripwire.esi.showInfo(id, options.tracking.active);
 				break;
 			case "setDest":
-				tripwire.esi.setDestination(id, options.tracking.active, true);
+				tripwire.routeNavigation.setDestination(id, options.tracking.active, true);
 				break;
 			case "addWay":
-				tripwire.esi.setDestination(id, options.tracking.active, false);
+				tripwire.routeNavigation.setDestination(id, options.tracking.active, false);
 				break;
 			case "setDestAll":
 			case "addWayAll":
 				for(const characterId in tripwire.esi.characters) {
-					tripwire.esi.setDestination(id, characterId, ui.cmd == "setDestAll");
+					tripwire.routeNavigation.setDestination(id, characterId, ui.cmd == "setDestAll");
 				}
 				break;
 			case "showMap":
@@ -5039,6 +5039,7 @@ tripwire.esi = function() {
             url: "esi.php",
             type: "POST",
             dataType: "JSON",
+            timeout: 15000,
             data: {mode: "waypoint", targetID: destinationID, characterID: characterID, clear: clear_waypoints, beginning: beginning, _csrf: init.csrfToken}
         });
         return xhr.always(function(){
@@ -12599,4 +12600,734 @@ $(document).on("click", "#overwrite", function() {
 	}); 
 });
 ;
+// #endregion
+
+// #region routePlanner
+// Splash's weighted graph search, using Tripwire's gate data and the live mask.
+// Keep full system IDs here; only the bundled gate map uses IDs minus 30000000.
+var routePlanner = (function() {
+    function timestamp(value) {
+        if (!value) return NaN;
+        return Date.parse(String(value).replace(' ', 'T').replace(/(T\d\d:\d\d:\d\d)(\.\d+)?$/, '$1$2Z'));
+    }
+
+    function buildGraph(systems, gates, wormholes, signatures, settings, now) {
+        settings = settings || {};
+        now = now == null ? Date.now() : now;
+        var graph = new Map();
+        Object.keys(systems).forEach(function(id) { graph.set(Number(id), []); });
+        function add(from, to, detail) {
+            if (graph.has(from) && graph.has(to) && from !== to) {
+                graph.get(from).push(Object.assign({from: from, to: to}, detail));
+            }
+        }
+        Object.keys(gates || {}).forEach(function(from) {
+            Object.keys(gates[from]).forEach(function(to) {
+                if (settings.gateAllowed && !settings.gateAllowed(Number(from), Number(to))) return;
+                add(Number(from) + 30000000, Number(to) + 30000000, {kind: 'gate'});
+            });
+        });
+        Object.values(settings.wormholes === false ? {} : (wormholes || {})).forEach(function(hole) {
+            var a = (signatures || {})[hole.initialID], b = (signatures || {})[hole.secondaryID];
+            if (!a || !b || !graph.has(Number(a.systemID)) || !graph.has(Number(b.systemID))) return;
+            var deadlines = [a, b].filter(function(sig) { return hole.life === 'critical' || Number(sig.lifeLength) !== 0; })
+                .map(function(sig) { return timestamp(sig.lifeLeft); }).filter(Number.isFinite);
+            var expires = deadlines.length ? Math.min.apply(null, deadlines) : null;
+            if (expires !== null && expires <= now) return;
+            if (settings.avoidEol && hole.life === 'critical') return;
+            if (settings.avoidCritical && hole.mass === 'critical') return;
+            [[a, b], [b, a]].forEach(function(pair) {
+                add(Number(pair[0].systemID), Number(pair[1].systemID), {
+                    kind: 'wormhole', id: hole.id, signature: pair[0].signatureID || '???',
+                    arrivalSignature: pair[1].signatureID || '???', type: hole.type || '???',
+                    life: hole.life, mass: hole.mass, expires: expires
+                });
+            });
+        });
+        // Public shortcuts are independent of mapped wormholes and the map tab's overlay.
+        (settings.scoutLinks || []).forEach(function(link) {
+            if (!link || link.completed !== true || link.signature_type !== 'wormhole') return;
+            var from = Number(link.out_system_id), to = Number(link.in_system_id);
+            if (!((from === 31000005 && settings.thera) || (from === 30002086 && settings.turnur))) return;
+            var expires = timestamp(link.expires_at);
+            if (!Number.isFinite(expires) || expires <= now) return;
+            var departure = String(link.out_signature || '').trim(), arrival = String(link.in_signature || '').trim();
+            if (!departure || !arrival) return;
+            var life = expires - now < 4 * 3600000 ? 'critical' : 'stable';
+            if (settings.avoidEol && life === 'critical') return;
+            var detail = {kind: 'wormhole', id: 'ES-' + link.id, source: 'EVE-Scout',
+                type: link.wh_type || '???', life: life, mass: 'unknown', expires: expires,
+                maxShipSize: link.max_ship_size || 'Unknown'};
+            add(from, to, Object.assign({}, detail, {signature: departure, arrivalSignature: arrival}));
+            add(to, from, Object.assign({}, detail, {signature: arrival, arrivalSignature: departure}));
+        });
+        return graph;
+    }
+
+    function edgeCost(security, settings) {
+        if (!settings.preference || settings.preference === 'shortest') return 1;
+        var strictness = Number(settings.strictness == null ? 50 : settings.strictness);
+        var penalty = Math.exp(0.15 * Math.max(0, Math.min(100, strictness)));
+        if (settings.preference === 'highsec') return security <= 0 ? 2 * penalty : security < 0.45 ? penalty : 0.9;
+        if (settings.preference === 'avoid-high') return security <= 0 ? 2 * penalty : security < 0.45 ? 0.9 : penalty;
+        if (settings.preference === 'avoid-null') return security <= 0 ? penalty : 0.9;
+        return 1;
+    }
+
+    function Heap() { this.items = []; }
+    Heap.prototype.push = function(value) {
+        var i = this.items.length;
+        this.items.push(value);
+        while (i > 0) {
+            var parent = Math.floor((i - 1) / 2);
+            if (this.items[parent].cost <= value.cost) break;
+            this.items[i] = this.items[parent];
+            i = parent;
+        }
+        this.items[i] = value;
+    };
+    Heap.prototype.pop = function() {
+        var first = this.items[0], last = this.items.pop(), i = 0;
+        if (!this.items.length) return first;
+        while (2 * i + 1 < this.items.length) {
+            var child = 2 * i + 1;
+            if (child + 1 < this.items.length && this.items[child + 1].cost < this.items[child].cost) child++;
+            if (last.cost <= this.items[child].cost) break;
+            this.items[i] = this.items[child];
+            i = child;
+        }
+        this.items[i] = last;
+        return first;
+    };
+
+    function leg(graph, systems, start, end, settings) {
+        var avoided = new Set((settings.avoid || []).map(Number));
+        avoided.delete(start);
+        avoided.delete(end);
+        var queue = new Heap(), costs = new Map([[start, 0]]), previous = new Map();
+        queue.push({id: start, cost: 0});
+        while (queue.items.length) {
+            var current = queue.pop();
+            if (current.cost !== costs.get(current.id)) continue;
+            // Finish only when the cheapest candidate is settled, not first discovered.
+            if (current.id === end) {
+                var edges = [], cursor = end;
+                while (previous.has(cursor)) {
+                    var edge = previous.get(cursor);
+                    edges.push(edge);
+                    cursor = edge.from;
+                }
+                return edges.reverse();
+            }
+            (graph.get(current.id) || []).forEach(function(edge) {
+                if (avoided.has(edge.to)) return;
+                var cost = current.cost + edgeCost(Number(systems[edge.to].security), settings);
+                if (cost >= (costs.has(edge.to) ? costs.get(edge.to) : Infinity)) return;
+                costs.set(edge.to, cost);
+                previous.set(edge.to, edge);
+                queue.push({id: edge.to, cost: cost});
+            });
+        }
+        throw new Error('No known route from ' + systems[start].name + ' to ' + systems[end].name + ' with these options.');
+    }
+
+    function calculate(graph, systems, stops, settings) {
+        settings = settings || {};
+        stops = stops.map(Number);
+        if (stops.length < 2) throw new Error('Choose an origin and at least one destination.');
+        stops.forEach(function(id) { if (!systems[id] || !graph.has(id)) throw new Error('Choose a known solar system.'); });
+        var edges = [];
+        for (var i = 1; i < stops.length; i++) edges = edges.concat(leg(graph, systems, stops[i - 1], stops[i], settings));
+        return {systems: [stops[0]].concat(edges.map(function(edge) { return edge.to; })), edges: edges};
+    }
+    function coverage(graph) {
+        var links = {gates: new Set(), mapped: new Set(), thera: new Set(), turnur: new Set()};
+        graph.forEach(function(edges) {
+            edges.forEach(function(edge) {
+                if (edge.kind === 'gate') links.gates.add([edge.from, edge.to].sort().join(':'));
+                else if (!edge.source) links.mapped.add(String(edge.id));
+                else links[edge.from === 31000005 || edge.to === 31000005 ? 'thera' : 'turnur'].add(String(edge.id));
+            });
+        });
+        return {gates: links.gates.size, mapped: links.mapped.size, thera: links.thera.size, turnur: links.turnur.size};
+    }
+    return {buildGraph: buildGraph, calculate: calculate, coverage: coverage};
+})();
+// #endregion
+
+// #region routeTracker
+var routeTracker = (function() {
+    function create(result, pilot, mask, stops, settings) {
+        return {version: 1, pilotID: String(pilot.characterID), pilotName: pilot.characterName,
+            mask: String(mask), systems: result.systems.slice(), edges: result.edges.map(function(e) { return Object.assign({}, e); }),
+            stops: stops.slice(), settings: JSON.parse(JSON.stringify(settings)), index: 0,
+            lastLocation: Number(pilot.systemID), deliveredUntil: -1, paused: false, error: ''};
+    }
+    function observe(route, location) {
+        location = Number(location);
+        if (route.systems[route.index] === location) return true;
+        if (route.lastLocation === location) return false;
+        route.lastLocation = location;
+        // Pick the first future occurrence, so loops cannot skip intended stops.
+        var next = route.systems.indexOf(location, route.index + 1);
+        if (next < 0) return false;
+        route.index = next;
+        return true;
+    }
+    function segment(route) {
+        var end = route.index;
+        while (end < route.edges.length && route.edges[end].kind === 'gate') end++;
+        return {end: end, waypoints: route.systems.slice(route.index + 1, end + 1), wormhole: route.edges[end] || null};
+    }
+    function validate(route, graph) {
+        for (var i = route.index; i < route.edges.length; i++) {
+            var edge = route.edges[i];
+            var current = (graph.get(edge.from) || []).find(function(candidate) {
+                return candidate.to === edge.to && candidate.kind === edge.kind &&
+                    (edge.kind === 'gate' || String(candidate.id) === String(edge.id));
+            });
+            if (!current) return 'A remaining connection expired, disappeared, or no longer matches your route options. Replan before continuing.';
+            route.edges[i] = Object.assign({}, current);
+        }
+        return '';
+    }
+    function ready(pilot, now) {
+        if (!pilot || pilot.online != true || !Number(pilot.systemID)) return false;
+        var observed = Date.parse(String(pilot.locationObservedAt || '').replace(' ', 'T').replace(/(T\d\d:\d\d:\d\d)(\.\d+)?$/, '$1$2Z'));
+        return Number.isFinite(observed) && now - observed >= -30000 && now - observed < 120000;
+    }
+    // Serial delivery; cancellation is checked before every ESI call. Only a fully
+    // accepted segment is marked delivered, so Retry can safely replace a partial queue.
+    async function deliver(route, segment, send, isCurrent) {
+        for (var i = 0; i < segment.waypoints.length; i++) {
+            if (!isCurrent()) return false;
+            await send(segment.waypoints[i], route.pilotID, i === 0);
+        }
+        if (!isCurrent()) return false;
+        route.deliveredUntil = segment.end;
+        return true;
+    }
+    return {create: create, observe: observe, segment: segment, validate: validate, ready: ready, deliver: deliver};
+})();
+// #endregion
+
+// #region routePlannerUI
+(function() {
+    var panel = $('#route-planner'), lastMarkup = '', previewTimer;
+    var scoutLinks = [], scoutLoadedAt = 0, scoutAttemptAt = 0, scoutLoading = false, scoutError = '';
+    var preview = null, assignments = {}, selectedPilots = new Set(), selectionTouched = false, pickerMarkup = '';
+    var plannedPilotID = null, plannerInitialized = false;
+    var navigationQueuesBusy = new Set(), deliveriesByPilot = new Map();
+    var navigationDrafts = {}, appliedDraft = {}, navigationQueues = {}, lastDraftPilot = null;
+    var storageKey = 'tripwire.activeRoute.' + (typeof init !== 'undefined' ? init.userID : options.userID);
+    try { navigationDrafts = JSON.parse(sessionStorage.getItem(storageKey + '.destinations')) || {}; } catch (error) {}
+    function stateFor(route) { return {route: route, sending: false, epoch: 0, promise: Promise.resolve(), message: ''}; }
+    try {
+        var saved = JSON.parse(sessionStorage.getItem(storageKey));
+        var restoredRoutes = saved && saved.version === 2 ? saved.routes : saved ? [saved] : [];
+        (Array.isArray(restoredRoutes) ? restoredRoutes : []).forEach(function(route) {
+            if (!route || route.version !== 1 || !/^\d+$/.test(String(route.pilotID)) || !Array.isArray(route.edges) ||
+                !Array.isArray(route.systems) || !Array.isArray(route.stops) || !route.settings ||
+                !route.edges.every(function(edge) { return edge && (edge.kind === 'gate' || edge.kind === 'wormhole'); }) ||
+                route.systems.length !== route.edges.length + 1 || !Number.isInteger(route.index) || route.index < 0 || route.index >= route.systems.length) return;
+            route.paused = true;
+            route.error = 'Route restored. Resume to check your location and continue waypoint delivery.';
+            assignments[route.pilotID] = stateFor(route);
+        });
+    } catch (error) { /* Ignore unavailable storage or an invalid saved route. */ }
+    function saveRoute() {
+        try { sessionStorage.setItem(storageKey, JSON.stringify({version: 2, routes: Object.values(assignments).map(function(state) { return state.route; })})); }
+        catch (error) { /* Tracking still works for this page lifetime. */ }
+    }
+    function sortedPilots() {
+        return Object.values(tripwire.esi.characters).slice().sort(function(a, b) {
+            return String(a.characterName).localeCompare(String(b.characterName), undefined, {sensitivity: 'base'}) || Number(a.characterID) - Number(b.characterID);
+        });
+    }
+    function recipients() { return sortedPilots().filter(function(pilot) { return selectedPilots.has(String(pilot.characterID)); }); }
+    function renderPilots() {
+        if (!selectionTouched) {
+            selectedPilots.clear();
+            var pilot = tripwire.esi.characters[options.tracking.active];
+            if (pilot && routeTracker.ready(pilot, Date.now())) selectedPilots.add(String(pilot.characterID));
+        }
+        var html = sortedPilots().map(function(pilot) {
+            var id = String(pilot.characterID), ready = routeTracker.ready(pilot, Date.now());
+            if (!/^\d+$/.test(id)) return '';
+            return '<button type="button" class="route-pilot" data-pilot-id="' + id + '" aria-pressed="' + selectedPilots.has(id) + '"' +
+                (ready || selectedPilots.has(id) ? '' : ' disabled') + '><img src="https://images.evetech.net/characters/' + id + '/portrait?size=64" alt="" width="48" height="48">' +
+                '<span>' + _.escape(pilot.characterName) + '</span><small>' + (ready ? _.escape(tripwire.systems[pilot.systemID] && tripwire.systems[pilot.systemID].name || 'Unknown location') : 'Offline / location unavailable') + '</small></button>';
+        }).join('');
+        if (html !== pickerMarkup) { $('#route-pilots').html(html || '<p>No tracked pilots. Add a pilot from the account menu.</p>'); pickerMarkup = html; }
+        var count = recipients().length;
+        $('#route-start').text('Assign route to ' + count + (count === 1 ? ' pilot' : ' pilots'));
+    }
+    $('#route-pilots').on('click', '[data-pilot-id]', function() {
+        var id = String($(this).data('pilot-id'));
+        selectionTouched = true;
+        selectedPilots.has(id) ? selectedPilots.delete(id) : selectedPilots.add(id);
+        plannedPilotID = null;
+        renderPilots(); updateOrigin(); render();
+    });
+    $('#route-select-all').on('click', function() {
+        selectionTouched = true;
+        selectedPilots = new Set(sortedPilots().filter(function(pilot) { return routeTracker.ready(pilot, Date.now()); }).map(function(pilot) { return String(pilot.characterID); }));
+        plannedPilotID = null; renderPilots(); updateOrigin(); render();
+    });
+    $('#route-select-none').on('click', function() {
+        selectionTouched = true; selectedPilots.clear(); plannedPilotID = null; renderPilots(); updateOrigin(); render();
+    });
+    function selectedPilot() { return tripwire.esi.characters[options.tracking.active]; }
+    function routePilot() { return recipients()[0] || (plannedPilotID ? tripwire.esi.characters[plannedPilotID] : selectedPilot()); }
+    function resolveOrigin() {
+        var mode = $('#route-origin-mode').val();
+        if (mode === 'current') {
+            var pilot = routePilot();
+            if (!routeTracker.ready(pilot, Date.now()) || !tripwire.systems[pilot.systemID]) {
+                throw new Error('Current Location needs an online tracked pilot with a fresh location. Select a pilot, use Viewed System, or enter a system.');
+            }
+            return Number(pilot.systemID);
+        }
+        if (mode === 'viewed') return Number(viewingSystemID);
+        return resolve($('#route-origin').val());
+    }
+    function updateOrigin() {
+        var mode = $('#route-origin-mode').val(), custom = mode === 'system';
+        $('[data-origin-mode]', panel).each(function() {
+            $(this).attr('aria-pressed', $(this).data('origin-mode') === mode ? 'true' : 'false');
+        });
+        $('#route-origin-field').prop('hidden', !custom);
+        $('#route-origin').prop('disabled', !custom).prop('required', custom);
+        var text = '';
+        try {
+            if (!custom) {
+                var id = resolveOrigin();
+                text = (mode === 'current' ? (routePilot().characterName || 'Selected pilot') + ': ' : 'Viewing: ') + tripwire.systems[id].name;
+            }
+        } catch (error) { text = error.message; }
+        if (mode === 'current' && recipients().length > 1) text = 'Each selected pilot starts from their own current location.';
+        $('#route-origin-description').text(text);
+    }
+    $('#route-origin-mode').on('change', updateOrigin);
+    panel.on('click', '[data-origin-mode]', function() {
+        var mode = $(this).data('origin-mode');
+        $('#route-origin-mode').val(mode).trigger('change');
+        if (mode === 'system') $('#route-origin').trigger('focus');
+    });
+    function applyNavigationDraft() {
+        var pilotID = String(plannedPilotID || options.tracking.active || '');
+        var draft = navigationDrafts[pilotID];
+        var alreadyApplied = lastDraftPilot === pilotID && draft && appliedDraft[pilotID] === draft.revision;
+        lastDraftPilot = pilotID;
+        if (!draft || !Array.isArray(draft.stops) || !draft.stops.length ||
+            !draft.stops.every(function(id) { return tripwire.systems[id]; }) || alreadyApplied) return;
+        $('#route-stops').val(draft.stops.slice(0, -1).map(function(id) { return tripwire.systems[id].name; }).join('\n'));
+        $('#route-stop-input').val(tripwire.systems[draft.stops[draft.stops.length - 1]].name);
+        appliedDraft[pilotID] = draft.revision;
+        $('#route-start-status').text('Destination carried over from the map context menu.');
+    }
+    // Only explicit map-navigation actions enter this path. The tracker's
+    // intermediate waypoint deliveries must never replace the user's destination.
+    tripwire.routeNavigation = {
+        setDestination: function(id, pilotID, clear) {
+            id = Number(id);
+            pilotID = String(pilotID);
+            if (!tripwire.systems[id]) return Promise.resolve();
+            var pending = (deliveriesByPilot.get(pilotID) || Promise.resolve()).catch(function() {});
+            var state = assignments[pilotID];
+            if (state) {
+                state.epoch++;
+                state.route.paused = true;
+                state.route.error = 'Navigation changed from the map. Open Routes to plan the new destination.';
+                saveRoute(); showTracker();
+                // Let an already-issued ESI request finish before replacing its queue.
+                pending = state.promise.catch(function() {});
+            }
+            navigationQueuesBusy.add(pilotID);
+            var queued = navigationQueues[pilotID] || Promise.resolve();
+            navigationQueues[pilotID] = Promise.all([pending, queued]).then(function() {
+                return tripwire.esi.setDestination(id, pilotID, clear, false);
+            }).then(function(result) {
+                if (result && (result.error || result.result === false)) throw new Error('ESI rejected the destination.');
+                var previous = navigationDrafts[pilotID];
+                var stops = !clear && previous && Array.isArray(previous.stops) ? previous.stops.concat([id]) : [id];
+                navigationDrafts[pilotID] = {stops: stops, revision: (previous && Number(previous.revision) || 0) + 1};
+                try { sessionStorage.setItem(storageKey + '.destinations', JSON.stringify(navigationDrafts)); } catch (error) {}
+                if (!panel.prop('hidden')) {
+                    applyNavigationDraft(); updateOrigin(); render();
+                }
+            }).catch(function() {
+                var message = 'Could not set the EVE destination. The planner destination was not changed.';
+                $('#route-start-status').text(message);
+                if (typeof Notify !== 'undefined') Notify.trigger(message, 'red');
+            });
+            var operation = navigationQueues[pilotID];
+            operation.finally(function() { if (navigationQueues[pilotID] === operation) navigationQueuesBusy.delete(pilotID); });
+            return operation;
+        }
+    };
+    function gateAllowed(from, to) {
+        return guidance.jumpCostModifiers.reduce(function(cost, modifier) { return modifier(from, to, cost); }, 1) > 0;
+    }
+    function currentGraph(settings) {
+        return routePlanner.buildGraph(tripwire.systems, tripwire.map.shortest,
+            tripwire.client.wormholes, tripwire.client.signatures,
+            Object.assign({}, settings, {scoutLinks: scoutLinks, gateAllowed: gateAllowed}));
+    }
+    function scoutReady(settings) {
+        if (!(settings.thera || settings.turnur)) return '';
+        loadScout();
+        return scoutLoading ? 'Loading EVE-Scout shortcuts…' : scoutError;
+    }
+    function describeHole(edge) {
+        var mass = {stable: 'Stable', destab: '<50%', critical: '<10%'}[edge.mass] || 'Unknown';
+        return 'Warp to ' + edge.signature + ' → ' + tripwire.systems[edge.to].name +
+            ' · ' + (edge.type || 'Unknown type') + ' · Life: ' + (edge.life === 'critical' ? 'End of life' : 'Stable') + ' · Mass: ' + mass +
+            (edge.maxShipSize ? ' · Max ship size: ' + edge.maxShipSize : '') +
+            (edge.expires ? ' · Expires ' + new Date(edge.expires).toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, ' UTC') : '');
+    }
+    // Splash's security palette and transit/stop marker convention.
+    function routeTimeline(route, start, expanded) {
+        var colors = ['#8d3264', '#722020', '#bc1117', '#ce440f', '#DC6D07', '#f3fd82', '#71e554', '#60d9a3', '#4ecef8', '#3a9aeb', '#2c74e0'];
+        var stopIndices = new Set(), cursor = 0;
+        (route.stops || []).forEach(function(id) {
+            while (cursor < route.systems.length && Number(route.systems[cursor]) !== Number(id)) cursor++;
+            if (cursor < route.systems.length) stopIndices.add(cursor++);
+        });
+        var parts = [], group = [];
+        function flush() {
+            if (group.length) parts.push('<div class="' + (expanded ? 'route-system-details' : 'route-jump-track') + '">' + group.join('') + '</div>');
+            group = [];
+        }
+        route.systems.forEach(function(id, index) {
+            if (index < start) return;
+            var system = systemAnalysis.analyse(id), security = Number(system.security);
+            var rounded = Math.round((security + Number.EPSILON) * 10);
+            if (rounded === 0 && security > 0) rounded = 1;
+            var color = colors[rounded] || colors[0];
+            var label = system.class ? system.systemTypeName : Number.isFinite(security) ? security.toFixed(1) : '?';
+            var region = (tripwire.regions || {})[system.regionID];
+            var detail = system.class ? [system.effect, (system.statics || []).join(', ')].filter(Boolean).join(' · ') : region ? region.name : '';
+            var title = system.name + ' · ' + label + (stopIndices.has(index) ? ' · Route stop' : '') + (detail ? ' · ' + detail : '');
+            var marker = '<span class="route-jump-marker ' + (stopIndices.has(index) ? 'is-stop' : 'is-transit') + '" style="--jump-color:' + color + '" title="' + _.escape(title) + '" role="img" aria-label="' + _.escape(title) + '"></span>';
+            group.push(expanded ? '<div class="route-system-row">' + marker + '<strong>' + link(id) + '</strong><span style="color:' + color + '">' + _.escape(label) + '</span><span class="route-detail">' + _.escape(detail) + '</span></div>' : marker);
+            var edge = route.edges[index];
+            if (edge && edge.kind === 'wormhole') {
+                flush();
+                var holeType = tripwire.wormholes[edge.type];
+                var jumpMass = holeType && holeType.jump ? ' · Max jump mass: ' + Number(holeType.jump).toLocaleString() + ' kg' : '';
+                parts.push('<div class="route-hole-instruction"><span aria-hidden="true">◉</span><div><strong>At ' + _.escape(system.name) + ': Warp to ' + _.escape(edge.signature || 'unknown signature') + ' → ' + link(edge.to) + '</strong><div class="route-detail">' + _.escape(describeHole(edge).split(' · ').slice(1).join(' · ')) + ' · Return signature: ' + _.escape(edge.arrivalSignature || 'unknown') + (edge.source ? ' · ' + _.escape(edge.source) : '') + jumpMass + '</div></div></div>');
+            }
+        });
+        flush();
+        return parts.join('');
+    }
+    function showTracker() {
+        var states = Object.values(assignments).sort(function(a, b) { return String(a.route.pilotName).localeCompare(String(b.route.pilotName), undefined, {sensitivity: 'base'}); });
+        $('#active-route').prop('hidden', !states.length);
+        $('#route-assigned-empty').prop('hidden', !!states.length);
+        $('#active-route .route-assignment').each(function() { if (!assignments[$(this).attr('data-assigned-pilot')]) $(this).remove(); });
+        states.forEach(function(state, index) {
+            var route = state.route, segment = routeTracker.segment(route), remaining = route.edges.length - route.index;
+            var card = $('#active-route .route-assignment').filter(function() { return $(this).attr('data-assigned-pilot') === route.pilotID; });
+            if (!card.length) {
+                card = $('<article class="route-assignment"><div class="route-summary" aria-live="polite"></div><div class="route-tracker-actions">' +
+                    '<button type="button" data-route-action="pause">Pause</button><button type="button" data-route-action="retry">Resume / retry</button>' +
+                    '<button type="button" data-route-action="replan">Replan from pilot</button><button type="button" data-route-action="stop">Stop tracking</button>' +
+                    '</div><div class="route-compact"></div><details><summary>Remaining route · system details</summary><div class="route-steps"></div></details></article>').attr('data-assigned-pilot', route.pilotID).appendTo('#active-route');
+            }
+            var text = '<strong>' + _.escape(route.pilotName || route.pilotID) + ' → ' + _.escape(tripwire.systems[route.systems[route.systems.length - 1]].name) + '</strong> · ' + remaining + (remaining === 1 ? ' jump remaining' : ' jumps remaining');
+            text += '<p>' + _.escape(state.message || route.error || (remaining === 0 ? 'Complete' : route.paused ? 'Paused' : state.sending ? 'Sending gate waypoints…' : segment.waypoints.length ? 'Follow EVE waypoints to ' + tripwire.systems[route.systems[segment.end]].name : describeHole(segment.wormhole))) + '</p>';
+            if (remaining && segment.wormhole && segment.waypoints.length) text += '<p>Next wormhole: ' + _.escape(describeHole(segment.wormhole)) + '</p>';
+            if (card.find('.route-summary').html() !== text) card.find('.route-summary').html(text);
+            var compact = routeTimeline(route, route.index, false), steps = routeTimeline(route, route.index, true);
+            if (card.find('.route-compact').html() !== compact) card.find('.route-compact').html(compact);
+            if (card.find('.route-steps').html() !== steps) card.find('.route-steps').html(steps);
+            card.find('[data-route-action="pause"]').prop('disabled', route.paused || !remaining);
+            card.find('[data-route-action="retry"]').prop('disabled', state.sending || !remaining);
+            var position = $('#active-route').children().eq(index);
+            if (position[0] !== card[0]) { if (position.length) card.insertBefore(position); else card.appendTo('#active-route'); }
+        });
+    }
+    function updateTracker() { Object.values(assignments).forEach(function(state) { updateAssignedRoute(state); }); showTracker(); }
+    async function updateAssignedRoute(state) {
+        if (!state || !tripwire.systems || !tripwire.map) return;
+        var route = state.route, pilot = tripwire.esi.characters[route.pilotID];
+        if (!route.systems.every(function(id) { return tripwire.systems[id]; })) { delete assignments[route.pilotID]; saveRoute(); showTracker(); return; }
+        state.message = '';
+        if (route.paused || route.error) { showTracker(); return; }
+        if (String(options.masks.active) !== route.mask) {
+            route.paused = true; route.error = 'Active mask changed. Return to the route mask and resume, or replan.';
+            state.epoch++; saveRoute(); showTracker(); return;
+        }
+        if (!routeTracker.ready(pilot, Date.now())) { state.message = 'Waiting for an online pilot and a fresh location.'; showTracker(); return; }
+        if (!routeTracker.observe(route, pilot.systemID)) {
+            route.paused = true; route.error = 'Pilot is off route. Replan from the current location.';
+            state.epoch++; saveRoute(); showTracker(); return;
+        }
+        if (route.index === route.edges.length) { saveRoute(); state.message = 'Complete'; showTracker(); return; }
+        var usesPublic = route.edges.slice(route.index).some(function(edge) { return edge.source === 'EVE-Scout'; });
+        var feedStatus = usesPublic ? scoutReady(route.settings) : '';
+        if (feedStatus) { state.message = feedStatus; showTracker(); return; }
+        var invalid = routeTracker.validate(route, currentGraph(route.settings));
+        if (invalid) { route.error = invalid; route.paused = true; state.epoch++; saveRoute(); showTracker(); return; }
+        saveRoute();
+        var segment = routeTracker.segment(route);
+        if (state.sending || !segment.waypoints.length || route.deliveredUntil === segment.end) { showTracker(); return; }
+        state.sending = true;
+        var token = state.epoch, index = route.index;
+        function isCurrent() {
+            return assignments[route.pilotID] === state && state.epoch === token && !route.paused && route.index === index &&
+                String(options.masks.active) === route.mask &&
+                routeTracker.ready(tripwire.esi.characters[route.pilotID], Date.now()) &&
+                Number(tripwire.esi.characters[route.pilotID].systemID) === route.systems[index] &&
+                !routeTracker.validate(route, currentGraph(route.settings));
+        }
+        showTracker();
+        try {
+            state.promise = routeTracker.deliver(route, segment, function(id, pilotID, clear) {
+                if (tripwire.systems[id].class) throw new Error('Cannot send a wormhole system as an EVE waypoint.');
+                return Promise.resolve(tripwire.esi.setDestination(id, pilotID, clear, false)).then(function(result) {
+                    if (result && (result.error || result.result === false)) throw new Error('ESI rejected the waypoint.');
+                });
+            }, isCurrent);
+            deliveriesByPilot.set(route.pilotID, state.promise);
+            await state.promise;
+        } catch (error) {
+            if (assignments[route.pilotID] === state && state.epoch === token) {
+                route.error = 'Waypoint delivery failed; EVE may contain a partial segment. Resume / retry to replace it.';
+                route.paused = true;
+            }
+        } finally {
+            if (deliveriesByPilot.get(route.pilotID) === state.promise) deliveriesByPilot.delete(route.pilotID);
+            state.sending = false; saveRoute(); showTracker();
+        }
+    }
+    $('#route-start').on('click', function() {
+        render();
+        if (!preview || !preview.assignments || !preview.assignments.length || ((preview.settings.thera || preview.settings.turnur) && scoutLoading)) return;
+        if (preview.assignments.some(function(plan) { return Number(plan.pilot.systemID) !== plan.result.systems[0]; })) {
+            $('#route-start-status').text('Choose Current Location or move the selected pilots to the route origin before assigning.'); return;
+        }
+        if (preview.assignments.some(function(plan) { return deliveriesByPilot.has(String(plan.pilot.characterID)) || (assignments[plan.pilot.characterID] && assignments[plan.pilot.characterID].sending) || navigationQueuesBusy.has(String(plan.pilot.characterID)); })) {
+            $('#route-start-status').text('Wait for the selected pilots’ current waypoint requests to finish.'); return;
+        }
+        preview.assignments.forEach(function(plan) {
+            var id = String(plan.pilot.characterID);
+            if (assignments[id]) assignments[id].epoch++;
+            assignments[id] = stateFor(routeTracker.create(plan.result, plan.pilot, options.masks.active, plan.stops,
+                Object.assign({}, preview.settings, {scoutLinks: undefined, gateAllowed: undefined})));
+        });
+        saveRoute();
+        $('#route-start-status').text('Route assigned to ' + preview.assignments.length + ' selected pilot(s).');
+        updateTracker();
+    });
+    $('#active-route').on('click', '[data-route-action]', function() {
+        var id = $(this).closest('[data-assigned-pilot]').attr('data-assigned-pilot'), state = assignments[id];
+        if (!state) return;
+        var route = state.route, action = $(this).attr('data-route-action');
+        if (action === 'pause') { state.epoch++; route.paused = true; saveRoute(); showTracker(); return; }
+        if (action === 'stop') { state.epoch++; delete assignments[id]; saveRoute(); showTracker(); return; }
+        if (action === 'retry') {
+            if (state.sending || navigationQueuesBusy.has(id)) return;
+            state.epoch++; route.paused = false; route.error = ''; route.deliveredUntil = -1;
+            saveRoute(); updateTracker(); return;
+        }
+        var pilot = tripwire.esi.characters[id];
+        if (!routeTracker.ready(pilot, Date.now())) { state.message = 'Replanning needs an online pilot with a fresh location.'; showTracker(); return; }
+        state.epoch++; route.paused = true; saveRoute();
+        $('#open-route-planner').trigger('click');
+        plannedPilotID = id; selectionTouched = true; selectedPilots = new Set([id]); renderPilots();
+        $('#route-origin-mode').val('current').trigger('change');
+        // Remove only stops already observed in sequence, preserving repeated visits.
+        var cursor = 0, stopIndex = 1;
+        for (; stopIndex < route.stops.length; stopIndex++) {
+            cursor = route.systems.indexOf(route.stops[stopIndex], cursor + 1);
+            if (cursor < 0 || cursor > route.index) break;
+        }
+        $('#route-stops').val(route.stops.slice(stopIndex).map(function(id) { return tripwire.systems[id].name; }).join('\n'));
+        $('#route-stop-input').val('');
+        $('#route-preference').val(route.settings.preference).trigger('change');
+        $('#route-strictness').val(route.settings.strictness);
+        $('#route-avoid').val((route.settings.avoid || []).map(function(id) { return tripwire.systems[id].name; }).join(', '));
+        [['wormholes', 'wormholes'], ['thera', 'thera'], ['turnur', 'turnur'], ['avoid-eol', 'avoidEol'], ['avoid-critical', 'avoidCritical']].forEach(function(pair) {
+            $('#route-' + pair[0]).prop('checked', !!route.settings[pair[1]]);
+        });
+        render(); showTracker();
+    });
+
+    function loadScout() {
+        if (scoutLoading || Date.now() - scoutLoadedAt < 300000 || Date.now() - scoutAttemptAt < 60000) return;
+        scoutLoading = true;
+        scoutAttemptAt = Date.now();
+        scoutError = '';
+        var controller = new AbortController();
+        var timeout = setTimeout(function() { controller.abort(); }, 15000);
+        fetch('cached_third_party.php?key=eve-scout-signatures', {credentials: 'same-origin', signal: controller.signal})
+            .then(function(response) {
+                if (!response.ok) throw new Error('EVE-Scout shortcuts unavailable. Retry shortly or turn off the public shortcuts.');
+                return response.json();
+            }).then(function(data) {
+                if (!Array.isArray(data)) throw new Error('EVE-Scout returned an invalid signature list.');
+                scoutLinks = data;
+                scoutLoadedAt = Date.now();
+            }).catch(function(error) {
+                scoutLinks = [];
+                scoutLoadedAt = 0;
+                scoutError = error.message || 'EVE-Scout shortcuts unavailable.';
+            }).finally(function() { clearTimeout(timeout); scoutLoading = false; render(); });
+    }
+    function resolve(name) {
+        name = String(name || '').trim().toLowerCase();
+        var id = Object.keys(tripwire.systems || {}).find(function(id) {
+            return id === name || tripwire.systems[id].name.toLowerCase() === name;
+        });
+        if (!id) throw new Error('Unknown solar system: ' + (name || '(empty)'));
+        return Number(id);
+    }
+    function names(value) { return value.split(/[,\n]/).map(function(s) { return s.trim(); }).filter(Boolean); }
+    function link(id) {
+        return '<a href=".?system=' + encodeURIComponent(tripwire.systems[id].name) + '">' + _.escape(tripwire.systems[id].name) + '</a>';
+    }
+    function render() {
+        clearTimeout(previewTimer);
+        renderPilots();
+        preview = null;
+        $('#route-start').prop('disabled', true);
+        $('#route-coverage').empty();
+        var markup;
+        try {
+            var thera = $('#route-thera').prop('checked'), turnur = $('#route-turnur').prop('checked');
+            if (thera || turnur) {
+                loadScout();
+                // Show known routes even if a public feed is unavailable; make the
+                // incomplete coverage explicit and refresh when the request completes.
+            }
+            var settings = {
+                thera: thera, turnur: turnur, scoutLinks: scoutLinks,
+                preference: $('#route-preference').val(), strictness: Number($('#route-strictness').val()),
+                avoid: names($('#route-avoid').val()).map(resolve), wormholes: $('#route-wormholes').prop('checked'),
+                avoidEol: $('#route-avoid-eol').prop('checked'), avoidCritical: $('#route-avoid-critical').prop('checked'),
+                gateAllowed: function(from, to) {
+                    return guidance.jumpCostModifiers.reduce(function(cost, modifier) { return modifier(from, to, cost); }, 1) > 0;
+                }
+            };
+            var destinations = names($('#route-stops').val());
+            var destination = $('#route-stop-input').val().trim();
+            if (destination) destinations.push(destination);
+            var stops = [resolveOrigin()].concat(destinations.map(resolve));
+            var graph = routePlanner.buildGraph(tripwire.systems, tripwire.map.shortest,
+                tripwire.client.wormholes, tripwire.client.signatures, settings);
+            var coverage = routePlanner.coverage(graph);
+            var sourceText = coverage.gates + ' gate links · ' + coverage.mapped + ' mapped wormholes (active mask, all chain tabs) · ' +
+                (thera ? coverage.thera + ' Thera' : 'Thera off') + ' · ' + (turnur ? coverage.turnur + ' Turnur' : 'Turnur off');
+            if (!settings.wormholes) sourceText += ' · Mapped wormholes off';
+            if ((thera || turnur) && scoutLoading) sourceText += ' · Loading public connections; preview may improve.';
+            if ((thera || turnur) && scoutError) sourceText += ' · Public connections unavailable; showing known routes only. Retrying automatically.';
+            $('#route-coverage').text(sourceText);
+            // Use analysed security so invasion adjustments apply to routing too.
+            var systems = {};
+            Object.keys(tripwire.systems).forEach(function(id) { systems[id] = systemAnalysis.analyse(Number(id)); });
+            if (stops.length < 2) throw new Error('Enter a destination to see the route.');
+            var plans = recipients().map(function(pilot) {
+                if (!routeTracker.ready(pilot, Date.now())) throw new Error(pilot.characterName + ': an online pilot with a fresh location is required.');
+                var pilotStops = $('#route-origin-mode').val() === 'current' ? [Number(pilot.systemID)].concat(stops.slice(1)) :
+                    stops.slice();
+                return {pilot: pilot, stops: pilotStops, result: routePlanner.calculate(graph, systems, pilotStops, settings)};
+            });
+            var result = plans.length ? plans[0].result : routePlanner.calculate(graph, systems, stops, settings);
+            preview = {result: result, stops: stops, settings: settings, assignments: plans};
+            $('#route-start').prop('disabled', !plans.length || !!((thera || turnur) && scoutLoading));
+            var previews = plans.length ? plans : [{result: result}];
+            // Share a preview only when the complete path, connections and stop markers match.
+            // Keep the original per-pilot plans for independent assignment and tracking.
+            var previewGroups = new Map();
+            previews.forEach(function(plan) {
+                var key = JSON.stringify([plan.result.systems, plan.result.edges, plan.stops || stops]);
+                if (!previewGroups.has(key)) previewGroups.set(key, {plan: plan, pilots: []});
+                if (plan.pilot) previewGroups.get(key).pilots.push(plan.pilot.characterName);
+            });
+            markup = Array.from(previewGroups.values()).map(function(group) {
+            var plan = group.plan, result = plan.result;
+            var markup = group.pilots.length ? '<h4>' + group.pilots.map(function(name) { return _.escape(name); }).join(', ') + '</h4>' : '';
+            var holes = result.edges.filter(function(edge) { return edge.kind === 'wormhole'; }).length;
+            var gates = result.edges.length - holes;
+            markup += '<p><strong>' + result.edges.length + (result.edges.length === 1 ? ' jump' : ' jumps') + '</strong> · ' +
+                holes + (holes === 1 ? ' wormhole' : ' wormholes') + ' · ' + gates + (gates === 1 ? ' gate' : ' gates') + '</p>';
+            var timeline = {systems: result.systems, edges: result.edges, stops: plan.stops || stops};
+            markup += '<div class="route-compact">' + routeTimeline(timeline, 0, false) + '</div>' +
+                '<details class="route-itinerary"><summary>Show route systems</summary>' + routeTimeline(timeline, 0, true) + '</details>';
+            return '<section class="route-preview-plan">' + markup + '</section>';
+            }).join('');
+        } catch (error) { markup = '<p>' + _.escape(error.message) + '</p>'; }
+        if (markup !== lastMarkup) { $('#route-result').html(markup); lastMarkup = markup; }
+    }
+    function selectWorkspace(route) {
+        try { sessionStorage.setItem(storageKey + '.workspace', route ? 'route' : 'map'); }
+        catch (error) { /* Tab switching still works when storage is unavailable. */ }
+        panel.prop('hidden', !route);
+        $('#map-workspace').prop('hidden', route);
+        $('#open-route-planner').attr('aria-selected', String(route)).attr('tabindex', route ? '0' : '-1');
+        $('#map-workspace-tab').attr('aria-selected', String(!route)).attr('tabindex', route ? '-1' : '0');
+        if (!route && typeof chain !== 'undefined' && chain.redraw) requestAnimationFrame(function() { chain.redraw(); });
+    }
+    $('#map-workspace-tab').on('click', function() { selectWorkspace(false); });
+    $('#workspace-tabs').on('keydown', '[role="tab"]', function(event) {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        var route = event.key === 'End' || (event.key !== 'Home' && this.id === 'map-workspace-tab');
+        $(route ? '#open-route-planner' : '#map-workspace-tab').trigger('click').trigger('focus');
+    });
+    $('#open-route-planner').on('click', function() {
+        plannedPilotID = null;
+        renderPilots();
+
+        if (!plannerInitialized) {
+            plannerInitialized = true;
+            $('#route-preference').val(options.chain.routeSecurity || 'shortest').trigger('change');
+            $('#route-avoid').val(options.chain.routeIgnore.enabled ? options.chain.routeIgnore.systems.join(', ') : '');
+        }
+        applyNavigationDraft();
+        updateOrigin();
+        selectWorkspace(true);
+        render();
+    });
+    $('#route-origin, #route-stop-input').on('input', function() {
+        var query = this.value.trim().toLowerCase();
+        var matches = Object.values(tripwire.systems || {}).filter(function(system) { return query && system.name.toLowerCase().startsWith(query); }).slice(0, 15);
+        $('#route-system-options').empty();
+        matches.forEach(function(system) { $('<option>').val(system.name).appendTo('#route-system-options'); });
+    });
+    function schedulePreview() {
+        clearTimeout(previewTimer);
+        preview = null;
+        $('#route-start').prop('disabled', true);
+        $('#route-result').empty(); lastMarkup = '';
+        $('#route-coverage').text('Updating route…');
+        previewTimer = setTimeout(render, 200);
+    }
+    $('#route-add-stop').on('click', function() {
+        var value = $('#route-stop-input').val().trim();
+        if (!value) return;
+        $('#route-stops').val(names($('#route-stops').val()).concat([value]).join('\n'));
+        $('#route-stop-input').val('');
+        schedulePreview();
+    });
+    $('#route-preference').on('change', function() { $('#route-strictness').prop('disabled', this.value === 'shortest'); });
+    panel.on('input', 'input[type="text"], input[type="number"], textarea', schedulePreview);
+    panel.on('change', 'input[type="checkbox"], input[type="hidden"], select', schedulePreview);
+    $('#route-form').on('submit', function(event) {
+        event.preventDefault();
+        render();
+    });
+    var savedWorkspace;
+    try { savedWorkspace = sessionStorage.getItem(storageKey + '.workspace'); } catch (error) {}
+    if (savedWorkspace === 'route') $('#open-route-planner').trigger('click');
+
+    // Rebuild from current mask data; never retain a topology cache across syncs.
+    setInterval(function() {
+        if (!panel.prop('hidden')) { renderPilots(); updateOrigin(); render(); }
+        updateTracker();
+    }, 3000);
+})();
 // #endregion

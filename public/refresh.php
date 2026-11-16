@@ -133,7 +133,7 @@ if (isset($_REQUEST['esiDelete'])) {
 }
 
 $query = 'SELECT e.characterID, e.characterName,
-		e.online, t.systemID, t.systemName, t.stationID,
+		e.online, e.locationObservedAt, t.systemID, t.systemName, t.stationID,
 		t.stationName, t.shipID, t.shipName, t.shipTypeID, t.shipTypeName
 		FROM esi e
 		LEFT JOIN tracking t ON t.userID = e.userID

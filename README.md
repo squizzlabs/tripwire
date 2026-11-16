@@ -82,6 +82,49 @@ What the refit changes, in one screen:
   systems; the System panel fits without scrolling; three columns from 960px.
 - **Command palette** (`/` or Ctrl-K): jump to a system, a chain tab or a
   mask; set life or mass on the selection; show or hide panels.
+- **Map / Route tabs**: Map contains the mapping workspace. Route places
+  settings on the left and assigned-route progress and previews on the right
+  (stacked on phones). Switching tabs preserves inputs and keeps tracking active.
+  Plan an ordered series of system stops
+  over stargates and known wormholes in the active mask, including connections
+  outside the visible chain tab. Choose Shortest, Safest, Less secure (favoring
+  low-sec), or Avoid null-sec, with adjustable security strictness and an avoid
+  list. Explicit origins and stops remain reachable even when listed as avoided.
+  Wormhole steps show the departure and return signatures, life, remaining mass,
+  expiry, and known maximum jump mass. Expired and unresolved connections are
+  excluded. End-of-life and critical-mass holes are excluded by default;
+  you can turn either exclusion off, or use gates only. Thera and Turnur are enabled by default and add completed, unexpired
+  public EVE-Scout connections, independently of the chain tab overlay and
+  mapped-wormhole toggle. Public data refreshes every five minutes while routes
+  are displayed; feed failures are shown explicitly. Results refresh while the
+  planner is open. Ship mass is informational,
+  not a routing constraint. Choose **Current Location**, **Viewed System**, or **Enter a system** as
+  the origin. Routes calculate automatically as you type or change options.
+  Connection counts show the gate links and mapped/public wormholes considered.
+  You can turn off individual sources; failed public feeds are clearly marked.
+  Current Location follows each selected pilot as they move; Viewed
+  System follows the map selection. A successful **Set Destination** from the
+  map context menu carries into the planner for that pilot; **Add Waypoint**
+  appends a stop. These choices survive reloads in this tab. Context-menu
+  navigation pauses an active route for that pilot so it cannot overwrite the
+  new waypoints. With Current Location selected, enter a destination, choose pilot portraits
+  beside the preview, and **Assign route**. Portraits are sorted alphabetically;
+  **Select all** chooses pilots with fresh online locations. Every selected pilot
+  receives the entire route, calculated from their own location. Fixed/viewed
+  origins require the recipients to be at that origin before assignment.
+  Each pilot has independent progress, pause/retry/replan/stop controls, and
+  waypoint delivery. One pilot's error or completion does not stop the others.
+  Assignments survive reloads paused until individually resumed. Each gate system in the
+  next segment is sent as an EVE waypoint, replacing the existing queue; at a
+  wormhole, the tracker shows the departure signature and waits for the crossing
+  before loading the next segment. Keep the tab open for automatic delivery.
+  Offline/stale locations wait; missing connections, mask changes, off-route
+  travel and delivery failures pause progress. Resume/retry replaces a partial
+  segment, Replan starts from the pilot, and Stop tracking leaves EVE waypoints
+  untouched. The route survives reloads in this tab, paused until you resume.
+  Tracking uses observed locations; travel through repeated systems while the
+  page is closed cannot be reconstructed. Destinations are solar systems, not
+  docking targets.
 - **Settings** in tabs: characters, map, signatures, panels, statistics.
 - Fixed upstream: the TQ counter flicker after the tab sits in the
   background, and the background poll that had stopped polling.
@@ -437,6 +480,9 @@ focus. Each test creates and removes its own `ZZQ-*` signatures.
 
 The suite signs in once (Tripwire rate-limits logins to one per IP per 30s)
 and keeps the session in `e2e/.auth/`, which is git-ignored.
+
+`npm run test:routes` runs isolated browser tests of route tracking and staged
+waypoint delivery with a simulated ESI transport; no login or live pilot is needed.
 
 ## Brand packs
 
