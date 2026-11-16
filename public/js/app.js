@@ -10269,17 +10269,16 @@ var systemFit = new function() {
 // #endregion
 
 // #region theme-toggle
-// The room lights. Sun and moon on the letterhead: the
-// button shows the light you would switch to. A stored choice wins over the
-// OS; with no choice the page follows the OS and the button still works.
+// Appearance settings: the button names the mode you would switch to.
+// A stored choice wins;
+// with no choice the page defaults to dark regardless of the OS.
 var themeToggle = new function() {
 	var KEY = "tripwire.theme", self = this;
-	var media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
 
 	this.effective = function() {
 		var set = document.documentElement.getAttribute("data-theme");
 		if (set === "dark" || set === "light") return set;
-		return (media && media.matches) ? "dark" : "light";
+		return "dark";
 	};
 
 	this.apply = function(theme) {
@@ -10292,14 +10291,13 @@ var themeToggle = new function() {
 
 	this.paint = function() {
 		var dark = self.effective() === "dark";
-		var label = dark ? "Switch to light" : "Switch to dark";
-		$("#theme-toggle").text(dark ? "☀" : "☾").attr({title: label, "aria-label": label});
+		var label = dark ? "Switch to light mode" : "Switch to dark mode";
+		$("#theme-toggle").text(label).attr({title: label, "aria-label": label});
 	};
 
 	$(function() {
 		self.paint();
 		$("#theme-toggle").on("click", function() { self.apply(self.effective() === "dark" ? "light" : "dark"); });
-		if (media && media.addEventListener) media.addEventListener("change", self.paint);
 	});
 };
 ;

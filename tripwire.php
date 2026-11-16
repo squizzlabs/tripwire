@@ -17,7 +17,7 @@ require('lib.inc.php');
 $system = $_REQUEST['system'] ?? '';
 ?>
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" data-theme="dark">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -25,7 +25,7 @@ $system = $_REQUEST['system'] ?? '';
 	<meta name="server" content="<?= CDN_DOMAIN ?>">
 	<meta name="app_name" content="<?= APP_NAME ?>">
 	<meta name="version" content="<?= VERSION ?>">
-	<script>/* The room lights, before first paint: a stored choice wins over the OS. */
+	<script>/* Before first paint: use dark by default, or the user's stored choice. */
 	try { var t = localStorage.getItem("tripwire.theme"); if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
 	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/jquery.duration-picker.css?v=<?= VERSION ?>">
 	<link rel="stylesheet" type="text/css" href="//<?= CDN_DOMAIN ?>/css/jquery.jbox.css?v=<?= VERSION ?>">
@@ -135,7 +135,6 @@ $system = $_REQUEST['system'] ?? '';
 			<span class="hdr-tools">
 				<span class="hdr-tool-buttons">
 					<span class="voice-control"><button id="toggle-jspace-voice" type="button" class="themebtn" aria-pressed="false" aria-describedby="voice-startup-hint" aria-label="Voice announcements for J-space jumps" data-tooltip="Announce enabled parts on New or All J-space jumps, as chosen in Voice settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4Z"/><path class="voice-sound" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="voice-muted" d="m16 9 6 6m0-6-6 6"/></svg><span class="voice-waiting-dot" aria-hidden="true"></span></button><span id="voice-startup-hint" role="status" hidden><span class="voice-startup-message"></span><span class="voice-startup-progress" aria-hidden="true"><span></span></span></span></span>
-					<button id="theme-toggle" class="themebtn" type="button" aria-label="Switch to light" title="Switch to light">&#9788;</button>
 					<i id="settings" data-icon="settings" class="options" data-tooltip="Settings"></i>
 				</span>
 				<span class="hdr-mask"><a href="#" id="mask-menu-link" data-tooltip="Current mask"><span id="mask">(???)</span></a></span>
@@ -900,6 +899,9 @@ $system = $_REQUEST['system'] ?? '';
 					<div class="field-value" id="panel-settings"></div>
 				</div>
 				<h4 class="field-group">Appearance</h4>
+				<div class="field"><span class="field-label">Color theme <small>Saved automatically for this browser; dark by default</small></span>
+					<button id="theme-toggle" type="button" aria-label="Switch to light mode" title="Switch to light mode">Switch to light mode</button>
+				</div>
 				<div class="field"><label class="field-label" for="background-image">Background image <small>URL</small></label>
 					<input type="text" id="background-image" maxlength="200" />
 				</div>
