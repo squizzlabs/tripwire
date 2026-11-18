@@ -1111,6 +1111,7 @@ $("#follow").click(function(e) {
 		$(this).addClass("active");
 
 	options.buttons.follow = $(this).hasClass("active");
+	tripwire.EVE(tripwire.esi.characters[options.tracking.active], true);
 	options.save();
 })
 
@@ -5386,8 +5387,8 @@ function trackedSystemID(character, systems) {
 }
 
 function shouldFollowTrackedSystem(previousSystemID, currentSystemID, followEnabled, characterChange) {
-    return !characterChange && followEnabled && previousSystemID !== null
-        && currentSystemID !== null && previousSystemID !== currentSystemID;
+    return followEnabled && currentSystemID !== null
+        && (characterChange || previousSystemID !== currentSystemID);
 }
 
 function shouldUseTrackedSystemAsInitialView(defaultPending, currentSystemID) {
@@ -5404,15 +5405,24 @@ tripwire.EVE = function(EVE, characterChange) {
         // Location transitions and automapping are handled by the background
         // scheduler. The browser only follows and renders the selected pilot.
 
-        // System follower
+        // Keep a deferred follow target until dialogs close. Updating client.EVE
+        // below must not consume a jump that we have not followed yet.
         if (shouldUseTrackedSystemAsInitialView(defaultToTrackedSystem, currentSystemID)) {
             defaultToTrackedSystem = false;
             if (currentSystemID != viewingSystemID) {
                 tripwire.systemChange(currentSystemID);
             }
-        } else if (shouldFollowTrackedSystem(previousSystemID, currentSystemID, options.buttons.follow, characterChange)
-            && $(".ui-dialog:visible").length == 0) {
-            tripwire.systemChange(currentSystemID);
+        } else {
+            if (shouldFollowTrackedSystem(previousSystemID, currentSystemID, options.buttons.follow, characterChange)) {
+                this.pendingFollowSystemID = currentSystemID;
+            }
+            if (!options.buttons.follow) this.pendingFollowSystemID = null;
+            if (this.pendingFollowSystemID != null && $(".ui-dialog:visible").length == 0) {
+                if (this.pendingFollowSystemID != viewingSystemID) {
+                    tripwire.systemChange(this.pendingFollowSystemID);
+                }
+                this.pendingFollowSystemID = null;
+            }
         }
 
         if (!$("#search").hasClass("active")) {
@@ -5430,12 +5440,14 @@ tripwire.EVE = function(EVE, characterChange) {
         }
         $("#EVEsystem").html(systemRendering.renderSystem(systemAnalysis.analyse(currentSystemID)));
     } else if (EVE) {
+        this.pendingFollowSystemID = null;
         // ESI may report online before the first backend location observation.
         // Keep follow mode inert until a real, known system is available.
         $("#EVEsystem").text("Locating...");
         $("#currentSpan").show();
         $("#toggle-automapper").addClass("disabled");
     } else {
+        this.pendingFollowSystemID = null;
         // Update current system
         $("#EVEsystem").html("Not tracking");
         $("#currentSpan").hide();
@@ -6844,6 +6856,7 @@ tripwire.sync = function(mode, data, successCallback, alwaysCallback) {
 
     this.xhr = $.ajax({
         url: "refresh.php",
+        timeout: 30000,
         data: data,
         type: "POST",
         dataType: "JSON",
