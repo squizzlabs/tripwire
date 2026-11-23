@@ -6747,6 +6747,12 @@ h4.chip,
 	width: auto !important;
 }
 
+.signature-select-menu .ui-menu {
+	max-height: calc(100vh - 16px);
+	box-sizing: border-box;
+	overflow-y: auto;
+}
+
 #dialog-signature .custom-combobox { display: inline-flex; align-items: stretch; }
 
 #dialog-signature .custom-combobox input { border-top-right-radius: 0; border-bottom-right-radius: 0; }

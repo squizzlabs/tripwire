@@ -12174,7 +12174,17 @@ sigDialog.openSignatureDialog = function(e) {
 					});
 				}
 
-				$("#dialog-signature [name='signatureType'], #dialog-signature [name='signatureLife']").selectmenu({width: 100});
+				$("#dialog-signature [name='signatureType'], #dialog-signature [name='signatureLife']").selectmenu({
+					width: 100,
+					// The dialog clips overflow; keep the menu outside it and within the viewport.
+					appendTo: "body",
+					position: {my: "left top", at: "left bottom", collision: "flipfit"},
+					classes: {"ui-selectmenu-menu": "signature-select-menu"},
+					open: function() {
+						$(this).selectmenu("menuWidget").parent().css("z-index",
+							(Number($(this).closest(".ui-dialog").css("z-index")) || 100) + 1);
+					}
+				});
 				$("#dialog-signature [data-autocomplete='sigSystems']").inlinecomplete({source: tripwire.aSigSystems, renderer: 'system', select_item_mapper: system_select_item_mapper, extraMatch: (term, value) => term.toUpperCase() === value.systemTypeName, maxSize: 10, delay: 0});
 				
 				function getTargetName() { return $("#dialog-signature .leadsTo:visible").val(); }
