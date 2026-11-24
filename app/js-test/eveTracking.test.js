@@ -41,26 +41,34 @@ describe('Backend ESI tracking handoff', function() {
 describe('Map follow recovery', function() {
     const vm = require('vm');
     const { readSource } = require('./helpers/source');
-    let context, navigations, dialogOpen;
+    let context, navigations, dialogOpen, saves, classes;
     const pilot = systemID => ({characterID: 1, systemID});
 
     beforeEach(function() {
         navigations = [];
         dialogOpen = false;
+        saves = 0;
+        classes = new Set(['active']);
         const element = {
             hasClass: () => false,
             show() { return this; }, hide() { return this; },
-            addClass() { return this; }, removeClass() { return this; },
+            addClass(name) { classes.add(name); return this; },
+            removeClass(name) { classes.delete(name); return this; },
             html() { return this; }, text() { return this; }
         };
         context = {
             tripwire: {client: {EVE: pilot(1)}, systems: {1: {}, 2: {}, 3: {}}},
-            options: {buttons: {follow: true}}, defaultToTrackedSystem: false,
+            options: {buttons: {follow: true}, save: () => saves++}, defaultToTrackedSystem: false,
             viewingSystemID: 1, window: {},
+            setTimeout: () => 1, clearTimeout: () => {},
             $: selector => selector === '.ui-dialog:visible' ? {length: dialogOpen ? 1 : 0} : element,
             systemRendering: {renderSystem: () => ''}, systemAnalysis: {analyse: () => ({})}
         };
-        context.tripwire.systemChange = id => { navigations.push(id); context.viewingSystemID = id; };
+        context.tripwire.systemChange = (id, mode) => {
+            context.stopFollowForNavigation(id, mode);
+            navigations.push(id);
+            context.viewingSystemID = id;
+        };
         vm.runInNewContext(readSource('tripwire/eve'), context);
     });
 
@@ -100,6 +108,39 @@ describe('Map follow recovery', function() {
         context.viewingSystemID = 3;
         context.tripwire.EVE(pilot(1));
         assert.deepEqual(navigations, []);
+    });
+
+    it('turns follow off and flashes the button when browsing another system', function() {
+        context.tripwire.systemChange(3);
+        context.tripwire.EVE(pilot(1));
+        context.tripwire.EVE(pilot(2));
+        assert.deepEqual(navigations, [3]);
+        assert.equal(context.options.buttons.follow, false);
+        assert.equal(classes.has('active'), false);
+        assert.equal(classes.has('follow-paused'), true);
+        assert.equal(saves, 1);
+    });
+
+    it('cancels deferred follow and initial location navigation when browsing', function() {
+        dialogOpen = true;
+        context.tripwire.EVE(pilot(2));
+        context.defaultToTrackedSystem = true;
+        context.tripwire.systemChange(3);
+        assert.equal(context.tripwire.pendingFollowSystemID, null);
+        assert.equal(context.defaultToTrackedSystem, false);
+        dialogOpen = false;
+        context.tripwire.EVE(pilot(2));
+        assert.deepEqual(navigations, [3]);
+    });
+
+    it('keeps follow enabled for automatic jumps, initialization, and the same system', function() {
+        context.stopFollowForNavigation(3, 'init');
+        context.stopFollowForNavigation('1');
+        context.tripwire.EVE(pilot(2));
+        context.tripwire.EVE(pilot(3));
+        assert.deepEqual(navigations, [2, 3]);
+        assert.equal(context.options.buttons.follow, true);
+        assert.equal(saves, 0);
     });
 
     it('clears deferred navigation when tracking stops', function() {

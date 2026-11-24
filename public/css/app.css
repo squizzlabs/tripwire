@@ -5829,6 +5829,28 @@ h4.chip,
 
 #topbar #follow.active:hover { color: var(--primary); }
 
+#topbar #follow.follow-paused { animation: follow-paused 1500ms ease-out; }
+
+@keyframes follow-paused {
+	0%, 40% {
+		color: var(--primary-foreground);
+		background-color: var(--primary);
+		box-shadow: 0 0 0 4px var(--primary);
+	}
+	20%, 65%, 100% {
+		color: var(--muted-foreground);
+		background-color: transparent;
+		box-shadow: 0 0 0 0 transparent;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#topbar #follow.follow-paused {
+		animation: none;
+		box-shadow: 0 0 0 3px var(--primary);
+	}
+}
+
 #topbar #searchSpan input {
 	font-family: var(--font-mono);
 	font-size: 11px;

@@ -1110,6 +1110,7 @@ $("#follow").click(function(e) {
 	else
 		$(this).addClass("active");
 
+	$(this).removeClass("follow-paused");
 	options.buttons.follow = $(this).hasClass("active");
 	tripwire.EVE(tripwire.esi.characters[options.tracking.active], true);
 	options.save();
@@ -5395,6 +5396,20 @@ function shouldUseTrackedSystemAsInitialView(defaultPending, currentSystemID) {
     return defaultPending && currentSystemID !== null;
 }
 
+function stopFollowForNavigation(systemID, mode) {
+    if (mode === "init" || mode === "follow" || systemID == viewingSystemID) return;
+    defaultToTrackedSystem = false;
+    tripwire.pendingFollowSystemID = null;
+    if (!options.buttons.follow) return;
+    options.buttons.follow = false;
+    $("#follow").removeClass("active").addClass("follow-paused");
+    clearTimeout(tripwire.followPauseTimer);
+    tripwire.followPauseTimer = setTimeout(function() {
+        $("#follow").removeClass("follow-paused");
+    }, 1600);
+    options.save();
+}
+
 // Handles data from EVE in-game data
 tripwire.EVE = function(EVE, characterChange) {
     var systemChange = this.client.EVE && this.client.EVE.systemChange || false;
@@ -5410,7 +5425,7 @@ tripwire.EVE = function(EVE, characterChange) {
         if (shouldUseTrackedSystemAsInitialView(defaultToTrackedSystem, currentSystemID)) {
             defaultToTrackedSystem = false;
             if (currentSystemID != viewingSystemID) {
-                tripwire.systemChange(currentSystemID);
+                tripwire.systemChange(currentSystemID, "follow");
             }
         } else {
             if (shouldFollowTrackedSystem(previousSystemID, currentSystemID, options.buttons.follow, characterChange)) {
@@ -5419,7 +5434,7 @@ tripwire.EVE = function(EVE, characterChange) {
             if (!options.buttons.follow) this.pendingFollowSystemID = null;
             if (this.pendingFollowSystemID != null && $(".ui-dialog:visible").length == 0) {
                 if (this.pendingFollowSystemID != viewingSystemID) {
-                    tripwire.systemChange(this.pendingFollowSystemID);
+                    tripwire.systemChange(this.pendingFollowSystemID, "follow");
                 }
                 this.pendingFollowSystemID = null;
             }
@@ -6991,6 +7006,7 @@ tripwire.sync("init");
 tripwire.systemChange = function(systemID, mode) {
 	const system = systemAnalysis.analyse(systemID);
 	if(!system || !system.name) { return; }
+	stopFollowForNavigation(systemID, mode);
 	// Hourly ESI activity is unavailable for wormhole systems.
 	$("#infoWidget").toggleClass("is-wormhole", !!system.class);
 	if (window.placeSystemLinks) placeSystemLinks();
