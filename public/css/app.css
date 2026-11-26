@@ -3568,12 +3568,14 @@ body .mask .corporate { color: var(--foreground); }
 /* Desktop panel layout */
 
 @media (min-width: 960px) {
+	/* The desktop shell must not scroll when dialogs restore focus.
+	   hidden suppresses scrollbars but still permits focus-driven scrolling. */
 	html,
-	body { height: 100%; overflow: hidden; }
+	body { height: 100%; overflow: clip; }
 
 	#wrapper {
 		height: 100vh;
-		overflow: hidden;
+		overflow: clip;
 		display: flex;
 		flex-direction: column;
 	}
