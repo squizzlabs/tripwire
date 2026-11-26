@@ -1,4 +1,13 @@
+import { readFileSync } from 'node:fs';
 import bookmarkDestinations from '../../../public/js/bookmark-destinations.js';
+
+const connectionLifetimes = JSON.parse(readFileSync(new URL('../../../tools/signature-connections.json', import.meta.url), 'utf8'));
+
+export function unknownWormholeLifetime(sourceId, targetId) {
+  const source = connectionLifetimes.systems[sourceId] ?? 0;
+  const target = connectionLifetimes.systems[targetId] ?? 0;
+  return connectionLifetimes.maximum[source][target];
+}
 
 const GENERIC_SYSTEM_TYPES = [
   'Null-Sec', 'Low-Sec', 'High-Sec',
@@ -56,18 +65,20 @@ export function candidateMatches(candidate, targetSystem, wormholeTypes) {
   return targetClass !== null && classesForTypeName(genericName).includes(targetClass);
 }
 
-async function insertSignature(connection, { systemId, row, maskId, observedAt }) {
+async function insertSignature(connection, { systemId, row, maskId, observedAt, lifeLength }) {
   const [result] = await connection.execute(
     `INSERT INTO signatures
        (signatureID, systemID, type, name, bookmark, lifeTime, lifeLeft,
         lifeLength, createdByID, createdByName, modifiedByID, modifiedByName,
         modifiedTime, maskID)
-     VALUES (NULL, ?, 'wormhole', NULL, NULL, ?, DATE_ADD(?, INTERVAL 72 HOUR),
-             259200, ?, ?, ?, ?, ?, ?)`,
+     VALUES (NULL, ?, 'wormhole', NULL, NULL, ?, DATE_ADD(?, INTERVAL ? SECOND),
+             ?, ?, ?, ?, ?, ?, ?)`,
     [
       systemId,
       observedAt,
       observedAt,
+      lifeLength,
+      lifeLength,
       row.characterID,
       row.characterName,
       row.characterID,
@@ -116,6 +127,7 @@ export async function automapTransition({
     return notMapped('pod_out_system');
   }
 
+  const lifeLength = unknownWormholeLifetime(fromSystemId, toSystemId);
   const connection = await database.getConnection();
   const low = Math.min(fromSystemId, toSystemId);
   const high = Math.max(fromSystemId, toSystemId);
@@ -167,10 +179,10 @@ export async function automapTransition({
       // signature it used. Create a safe connection now, then let the browser
       // either keep it or replace it with one of the matching signatures.
       const initialId = await insertSignature(connection, {
-        systemId: fromSystemId, row, maskId, observedAt,
+        systemId: fromSystemId, row, maskId, observedAt, lifeLength,
       });
       const secondaryId = await insertSignature(connection, {
-        systemId: toSystemId, row, maskId, observedAt,
+        systemId: toSystemId, row, maskId, observedAt, lifeLength,
       });
       const [wormholeResult] = await connection.execute(
         `INSERT INTO wormholes
@@ -241,10 +253,10 @@ export async function automapTransition({
       );
     } else {
       const initialId = await insertSignature(connection, {
-        systemId: fromSystemId, row, maskId, observedAt,
+        systemId: fromSystemId, row, maskId, observedAt, lifeLength,
       });
       const secondaryId = await insertSignature(connection, {
-        systemId: toSystemId, row, maskId, observedAt,
+        systemId: toSystemId, row, maskId, observedAt, lifeLength,
       });
       await connection.execute(
         `INSERT INTO wormholes

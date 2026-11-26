@@ -7,6 +7,7 @@ RUN npm ci --omit=dev
 
 COPY cron/src ./src
 COPY public/js/combine.js public/js/bookmark-destinations.js /opt/public/js/
+COPY tools/signature-connections.json /opt/tools/signature-connections.json
 
 USER node
 

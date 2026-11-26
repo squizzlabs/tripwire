@@ -1,5 +1,29 @@
 // Tripwire application. Sections execute in dependency order.
 
+// #region signatureLifetime
+function signatureLifetime(type, wormholeTypes, requested, sourceID, targetID) {
+    type = String(type || 'unknown').toLowerCase();
+    var maximum = type === 'unknown' ? 86400 : 259200;
+    if (type === 'wormhole') {
+        var known = (wormholeTypes || []).map(function(key) {
+            var info = appData.wormholes[String(key || '').toUpperCase()];
+            return info ? parseFloat(info.life) * 3600 : NaN;
+        }).filter(function(seconds) { return Number.isFinite(seconds) && seconds > 0; });
+        if (known.length) {
+            maximum = Math.min.apply(Math, known);
+        } else {
+            var eligible = wormholeAnalysis.eligibleWormholeTypes(sourceID, targetID);
+            var candidates = eligible ? eligible.from.concat(eligible.to) : [];
+            // With no usable endpoint evidence, retain the global upper bound.
+            if (!candidates.length) candidates = Object.values(appData.wormholes);
+            maximum = Math.max.apply(Math, candidates.map(function(hole) { return parseFloat(hole.life) * 3600; }));
+        }
+    }
+    var duration = Number(requested);
+    return Number.isFinite(duration) && duration > 0 ? Math.min(duration, maximum) : maximum;
+}
+// #endregion
+
 // #region helpers
 Object.sort = function(obj, prop) {
 	var swapped, prev;
@@ -393,6 +417,8 @@ var options = new function() {
 				}
 			}
 		}
+
+        this.signatures.pasteLife = Math.min(72, Math.max(1, Number(this.signatures.pasteLife) || 72));
 
         // Bookmark conventions belong to the authenticated account, including
         // when an older account has no server-side preferences yet.
@@ -12253,11 +12279,15 @@ sigDialog.openSignatureDialog = function(e) {
 
 				$("#dialog-signature #durationPicker").durationPicker();
 				$("#dialog-signature #durationPicker").on("change", function() {
-					// prevent negative values
-					if (this.value < 0) {
-						this.value = 0;
-						$(this).change();
-					}
+                    var maximum = signatureLifetime($("#dialog-signature [name='signatureType']").val(),
+                        $("#dialog-signature .wormholeType").map(function() { return this.value; }).get(), undefined, sigDialogVM.viewingSystemID, getTargetSystem());
+                    var followsMaximum = Number(this.value) === $(this).data('lifetimeMaximum');
+                    var duration = followsMaximum || !(Number(this.value) > 0) ? maximum : Math.min(Number(this.value), maximum);
+                    $(this).data('lifetimeMaximum', maximum);
+                    if (Number(this.value) !== duration) {
+                        this.value = duration;
+                        $(this).change();
+                    }
 				});
 
 				// A whole id in the first field -- "ABC-123" pasted from the
@@ -12317,7 +12347,10 @@ sigDialog.openSignatureDialog = function(e) {
 				});
 				
 				// Update quick selectors when the leadsTo system changes
-				$("#dialog-signature [name='leadsTo']").on("change", updateQuickSelects);
+				$("#dialog-signature [name='leadsTo']").on("change", function() {
+                    updateQuickSelects();
+                    $("#dialog-signature #durationPicker").change();
+                });
 				
 				// Shortcut buttons to update leadsTo
 				$('#leadsToQuickBar').on('click', e => {
@@ -12333,7 +12366,7 @@ sigDialog.openSignatureDialog = function(e) {
 
 						// Also auto calculate duration
 						if (appData.wormholes[this.value.toUpperCase()]) {
-							$("#dialog-signature #durationPicker").val(appData.wormholes[this.value.toUpperCase()].life.substring(0, 2) * 60 * 60).change();
+							$("#dialog-signature #durationPicker").val(parseFloat(appData.wormholes[this.value.toUpperCase()].life) * 60 * 60).change();
 						}
 					} else if (this.value.toUpperCase() === "K162") {
 						if (aSigWormholes[$("#dialog-signature .wormholeType").not(this).val().toUpperCase()] || $("#dialog-signature .wormholeType").not(this).val().toUpperCase() === "K162") {
@@ -12346,6 +12379,7 @@ sigDialog.openSignatureDialog = function(e) {
 
 				// Toggle between wormhole and regular signatures
 				$("#dialog-signature").on("selectmenuchange", "[name='signatureType']", function() {
+                    $("#dialog-signature #durationPicker").change();
 					if (this.value == "wormhole") {
 						$("#dialog-signature #site").slideUp(200, function() {
 							$(this).hide(0);
@@ -12369,6 +12403,7 @@ sigDialog.openSignatureDialog = function(e) {
 
 				$("#form-signature").submit(function(e) {
 					e.preventDefault();
+                    $("#dialog-signature #durationPicker").change();
 					var form = $(this).serializeObject();
 					var lifePresets = {critical4: 4, critical1: 1, expiring: 1};
 					var valid = true;

@@ -269,6 +269,46 @@ OAuth access and refresh tokens remain server-side. Authenticated ESI search,
 waypoint, and information-window requests are proxied through `public/esi.php`;
 browser refresh responses contain only character identity and tracking state.
 
+### Signature expiration
+
+Unknown signatures expire within 24 hours of their recorded age; non-wormhole
+sites within 72 hours. Known wormholes use their type's lifetime. Unidentified and K162-only
+connections use the longest lifetime among types eligible for their endpoints,
+considering both directions, named systems, and generic class/security hints.
+With one unknown endpoint, the known endpoint still constrains the candidates.
+With neither endpoint known (or no matching types), use the table's overall
+maximum, currently 48 hours. Earlier explicit/EOL deadlines remain intact. These are
+tracking deadlines, not guarantees that an in-game hole remains open. CCP now
+calls the nominal duration a “Reliable Lifetime”; holes may close later, but
+Tripwire deliberately gives them no extra grace period.
+
+The server caps manual entries, scanner/bookmark imports, and restored records.
+Both ends of a wormhole share the earliest recorded age and deadline. EOL
+observations shorten deadlines; duration edits cannot restart the age. Zero no
+longer disables expiration. The duration picker and saved paste preferences are
+bounded as well.
+
+Apply `tripwire_update.sql` with the application update. It caps existing rows
+without renewing their age, and updates the one-minute MySQL cleanup events.
+`event_scheduler=ON` is required. The migration may make old records immediately
+eligible for normal cleanup; it does not alter history rows.
+
+Lifetime data was checked on 2026-11-26 against the
+[EVE University attribute table](https://wiki.eveuniversity.org/Wormhole_attributes)
+and [DOTLAN's J492 entry](https://evemaps.dotlan.net/wormholes).
+The Pochven overrides follow CCP's
+[23.02 patch notes](https://www.eveonline.com/news/view/patch-notes-version-23-02)
+(12 hours for C729/F216/R081/U372/X450) and
+[24.01 patch notes](https://www.eveonline.com/news/view/patch-notes-version-24-01)
+(12 hours for I078/L687/O546). Fractional lifetimes such as 4.5 and 23.5 hours
+are preserved. When updating `tools/wormholes.json`, update the browser data in
+`public/js/combine.js` and run `python tools/build-signature-expiry.py` to refresh
+the migration, seed policy, and `tools/signature-connections.json`. Regenerate
+also when system data or endpoint eligibility changes. The generated categories
+let PHP, cron, and SQL use identical connection limits without querying an
+external data source. `npm test` checks their consistency and runs the
+PHP lifetime regression checks; PHP CLI must be installed.
+
 ### Local testing: complete Docker environment
 
 The root `Dockerfile` is a complete local environment: Nginx, PHP-FPM, MySQL,

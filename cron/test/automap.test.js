@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   automapTransition,
+  unknownWormholeLifetime,
   isBlockedPodOutTransition,
 } from '../src/jobs/automap.js';
 
@@ -128,6 +129,12 @@ test('automapping creates a real loop when both systems already appear in the ch
     calls.some(({ sql }) => sql.includes('COUNT(DISTINCT systemID)')),
     false,
   );
+  const signatures = calls.filter(({ sql }) => sql.includes('INSERT INTO signatures'));
+  assert.equal(signatures.length, 2);
+  for (const inserted of signatures) {
+    assert.equal(inserted.values[3], unknownWormholeLifetime(31000005, 30000143));
+    assert.equal(inserted.values[4], inserted.values[3]);
+  }
   assert.ok(calls.some(({ sql }) => sql.includes('INSERT INTO wormholes')));
   assert.ok(calls.some(({ sql }) => sql === 'COMMIT'));
 });
@@ -219,3 +226,11 @@ test('canonical bookmark hints do not depend on account aliases or custom displa
   assert.equal(candidateMatches({targetSystemID: 2, targetBookmark: 'bm1:@f500001'}, caldari, {}), true);
   assert.equal(candidateMatches({targetSystemID: 2, targetName: 'RUST'}, caldari, {}), true);
 });
+
+test('unknown wormhole expiration uses both endpoint constraints', () => {
+   assert.equal(unknownWormholeLifetime(6, 3), 16 * 3600);
+   assert.equal(unknownWormholeLifetime(8, 2), 48 * 3600);
+   assert.equal(unknownWormholeLifetime(9, 3), 4.5 * 3600);
+   assert.equal(unknownWormholeLifetime(10, 10), 12 * 3600);
+   assert.equal(unknownWormholeLifetime(null, null), 48 * 3600);
+ });

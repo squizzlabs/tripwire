@@ -67091,7 +67091,7 @@ var appData = {
     },
     "wormholes": {
         "Z142": {
-            "life": "16 Hours",
+            "life": "24 Hours",
             "from": [
                 "Class-6",
                 "Class-5"
@@ -67111,21 +67111,21 @@ var appData = {
             "jump": 2000000000
         },
         "C248": {
-            "life": "16 Hours",
+            "life": "24 Hours",
             "from": "Class-6",
             "leadsTo": "Null-Sec",
             "mass": 3300000000,
             "jump": 2000000000
         },
         "C391": {
-            "life": "48 Hours",
+            "life": "24 Hours",
             "from": "Class-6",
             "leadsTo": "Low-Sec",
             "mass": 3300000000,
             "jump": 2000000000
         },
         "B520": {
-            "life": "48 Hours",
+            "life": "24 Hours",
             "from": "Class-6",
             "leadsTo": "High-Sec",
             "mass": 3000000000,
@@ -67223,7 +67223,7 @@ var appData = {
             "jump": 62000000
         },
         "K329": {
-            "life": "16 Hours",
+            "life": "24 Hours",
             "from": "Class-4",
             "leadsTo": "Null-Sec",
             "mass": 3000000000,
@@ -67286,7 +67286,7 @@ var appData = {
             "jump": 62000000
         },
         "K346": {
-            "life": "16 Hours",
+            "life": "24 Hours",
             "from": [
                 "Class-3",
                 "Class-4",
@@ -67298,7 +67298,7 @@ var appData = {
             "jump": 375000000
         },
         "U210": {
-            "life": "24 Hours",
+            "life": "23.5 Hours",
             "from": [
                 "Class-3",
                 "Class-4",
@@ -67379,7 +67379,7 @@ var appData = {
             "jump": 62000000
         },
         "E545": {
-            "life": "16 Hours",
+            "life": "24 Hours",
             "from": "Class-2",
             "leadsTo": "Null-Sec",
             "mass": 2000000000,
@@ -67498,7 +67498,7 @@ var appData = {
             "jump": 62000000
         },
         "Z060": {
-            "life": "16 Hours",
+            "life": "24 Hours",
             "from": "Class-1",
             "leadsTo": "Null-Sec",
             "mass": 1000000000,
@@ -67644,7 +67644,7 @@ var appData = {
             "jump": 2000000000
         },
         "S199": {
-            "life": "16 Hours",
+            "life": "24 Hours",
             "from": [
                 "Low-Sec",
                 "Null-Sec"
@@ -67664,7 +67664,7 @@ var appData = {
             "jump": 1000000000
         },
         "V283": {
-            "life": "16 Hours",
+            "life": "24 Hours",
             "from": "High-Sec",
             "leadsTo": "Null-Sec",
             "mass": 3000000000,
@@ -67685,7 +67685,7 @@ var appData = {
             "jump": 1000000000
         },
         "Q003": {
-            "life": "5 Hours",
+            "life": "4.5 Hours",
             "from": [
                 "Class-1",
                 "Class-2",
@@ -67700,7 +67700,7 @@ var appData = {
             "jump": 5000000
         },
         "G008": {
-            "life": "5 Hours",
+            "life": "4.5 Hours",
             "from": [
                 "Class-1",
                 "Class-2",
@@ -67715,7 +67715,7 @@ var appData = {
             "jump": 5000000
         },
         "C008": {
-            "life": "5 Hours",
+            "life": "4.5 Hours",
             "from": [
                 "Class-1",
                 "Class-2",
@@ -67730,7 +67730,7 @@ var appData = {
             "jump": 5000000
         },
         "M001": {
-            "life": "5 Hours",
+            "life": "4.5 Hours",
             "from": [
                 "Class-1",
                 "Class-2",
@@ -67745,7 +67745,7 @@ var appData = {
             "jump": 5000000
         },
         "Z006": {
-            "life": "5 Hours",
+            "life": "4.5 Hours",
             "from": [
                 "Class-1",
                 "Class-2",
@@ -67760,7 +67760,7 @@ var appData = {
             "jump": 5000000
         },
         "L005": {
-            "life": "5 Hours",
+            "life": "4.5 Hours",
             "from": [
                 "Class-1",
                 "Class-2",
@@ -67775,7 +67775,7 @@ var appData = {
             "jump": 5000000
         },
         "E004": {
-            "life": "5 Hours",
+            "life": "4.5 Hours",
             "from": [
                 "Class-1",
                 "Class-2",
@@ -67790,7 +67790,7 @@ var appData = {
             "jump": 5000000
         },
         "A009": {
-            "life": "16 Hours",
+            "life": "4.5 Hours",
             "from": [
                 "Class-1",
                 "Class-2",
@@ -67935,7 +67935,7 @@ var appData = {
             "jump": 410000000
         },
         "F216": {
-            "life": "16 Hours",
+            "life": "12 Hours",
             "from": [
                 "Class-2",
                 "Class-3",
@@ -67948,21 +67948,21 @@ var appData = {
             "jump": 300000000
         },
         "U372": {
-            "life": "16 Hours",
+            "life": "12 Hours",
             "from": "Null-Sec",
             "leadsTo": "Triglavian",
             "mass": 1000000000,
             "jump": 375000000
         },
         "R081": {
-            "life": "16 Hours",
+            "life": "12 Hours",
             "from": "Triglavian",
             "leadsTo": "Class-4",
             "mass": 1000000000,
             "jump": 375000000
         },
         "X450": {
-            "life": "16 Hours",
+            "life": "12 Hours",
             "from": "Triglavian",
             "leadsTo": "Null-Sec",
             "mass": 1000000000,

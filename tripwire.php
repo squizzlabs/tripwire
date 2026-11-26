@@ -851,13 +851,11 @@ $system = $_REQUEST['system'] ?? '';
 						<option value="relic">Relic</option>
 					</select>
 				</div>
-				<div class="field"><label class="field-label" for="pasteLife">Lifetime for pasted signatures</label>
+				<div class="field"><label class="field-label" for="pasteLife">Lifetime for pasted signatures <small>Unknown: up to 24h; sites: up to 72h; wormholes: type limit</small></label>
 					<select id="pasteLife">
 						<option value="24">24 hours</option>
 						<option value="48">48 hours</option>
 						<option value="72">72 hours</option>
-						<option value="168">7 days</option>
-						<option value="672">28 days</option>
 					</select>
 				</div>
 				<div class="field"><label class="field-label" for="copySeparator">Separator when copying</label>
